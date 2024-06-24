@@ -1,0 +1,63 @@
+* {
+    text-align: center;
+    align-content: center;
+    color: white;
+    font-size: large;
+    font-weight: bold;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    height: 100vh;
+    display: grid;
+    gap: 4px;
+    align-content: stretch;
+    grid-template-columns: 20% auto auto;
+    grid-template-rows: max-content auto auto max-content;
+    grid-template-areas:
+        "h h h"
+        "s c1 c1"
+        "s c2 c3"
+        "f f f";
+}
+
+header {
+    grid-area: h;
+}
+
+.sidebar {
+    grid-area: s;
+    padding: 50px;
+    background-color: aqua;
+    height: auto;
+}
+
+.content1 {
+    grid-area: c1;
+}
+
+.content2 {
+    grid-area: c2;
+}
+
+.content3 {
+    grid-area: c3;
+}
+
+.content1,
+.content2,
+.content3 {
+    background: linear-gradient(to bottom right, blueviolet, blue, aqua);
+}
+
+footer {
+    grid-area: f;
+}
+
+header,
+footer {
+    padding: 30px;
+    text-align: center;
+    background-color: blueviolet;
+}

@@ -1,0 +1,49 @@
+* {
+    text-align: center;
+    align-content: center;
+    color: white;
+    font-size: large;
+    font-weight: bold;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 4px;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.grid-container {
+    flex-grow: 1;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: 20% auto auto;
+    align-content: stretch;
+    height: 100%;
+}
+
+.content1 {
+    grid-column: 2/2 span;
+}
+
+.sidebar {
+    grid-row: 1/3;
+    padding: 50px;
+    background-color: aqua;
+    height: auto;
+}
+
+.content1,
+.content2,
+.content3 {
+    background: linear-gradient(to bottom right, blueviolet, blue, aqua);
+}
+
+header,
+footer {
+    padding: 30px;
+    text-align: center;
+    background-color: blueviolet;
+}

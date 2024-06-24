@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Quantum</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <nav>
+        <div class="logo">
+            <img src="./images/Capture.PNG" alt="">
+            <span>Quantum</span>
+        </div>
+    </nav>
+    <main>
+        <div class="login-container">
+            <div class="header">
+                <i class="fa fa-arrow-left fa-lg back-icon"></i>
+                <h2>Log in with Quantum</h2>
+            </div>
+            <div class="input-container">
+                <label class="input-check">
+                    <input type="radio" name="type" checked>
+                    <span>District</span>
+                </label>
+                <label class="input-check">
+                    <input type="radio" name="type">
+                    <span>Independent School</span>
+                </label>
+            </div>
+            <div class="input-container">
+                <div class="mini-label">State*</div>
+                <select name="state" id="">
+                    <option>Andaman and Nicobar Islands</option>
+                    <option>Andhra Pradesh</option>
+                    <option>Arunachal Pradesh</option>
+                    <option>Assam</option>
+                    <option>Bihar</option>
+                    <option>Chandigarh</option>
+                    <option>Chhattisgarh</option>
+                    <option>Dadra and Nagar Haveli</option>
+                    <option>Daman and Diu</option>
+                    <option>Delhi</option>
+                    <option>Goa</option>
+                    <option>Gujarat</option>
+                    <option>Haryana</option>
+                    <option>Himachal Pradesh</option>
+                    <option>Jammu and Kashmir</option>
+                    <option>Jharkhand</option>
+                    <option>Karnataka</option>
+                    <option>Kerala</option>
+                    <option>Lakshadweep</option>
+                    <option>Madhya Pradesh</option>
+                    <option selected>Maharashtra</option>
+                    <option>Manipur</option>
+                    <option>Meghalaya</option>
+                    <option>Mizoram</option>
+                    <option>Nagaland</option>
+                    <option>Orissa</option>
+                    <option>Pondicherry</option>
+                    <option>Punjab</option>
+                    <option>Rajasthan</option>
+                    <option>Sikkim</option>
+                    <option>Tamil Nadu</option>
+                    <option>Telangana</option>
+                    <option>Tripura</option>
+                    <option>Uttaranchal</option>
+                    <option>Uttar Pradesh</option>
+                    <option>West Bengal</option>
+                </select>
+                <!-- <div class="dropdown">
+                    <div class="title">
+                        <span>Alabama</span>
+                        <i class="fa fa-caret-down"></i>
+                    </div>
+                </div> -->
+            </div>
+            <div class="input-container">
+                <div class="mini-label">District*</div>
+                <select name="state" id="">
+                    <option>Ahmednagar </option>
+                    <option>Akola </option>
+                    <option>Amravati </option>
+                    <option>Beed </option>
+                    <option>Bhandara </option>
+                    <option>Buldhana </option>
+                    <option>Chandrapur </option>
+                    <option>Chhatrapati Sambhajinagar </option>
+                    <option>Dharashiv </option>
+                    <option>Dhule </option>
+                    <option>Gadchiroli </option>
+                    <option>Gondia </option>
+                    <option>Hingoli </option>
+                    <option>Jalgaon </option>
+                    <option>Jalna </option>
+                    <option>Kolhapur </option>
+                    <option>Latur </option>
+                    <option selected>Mumbai </option>
+                    <option>Mumbai Suburban </option>
+                    <option>Nagpur </option>
+                    <option>Nanded </option>
+                    <option>Nandurbar </option>
+                    <option>Nashik </option>
+                    <option>Palghar </option>
+                    <option>Parbhani </option>
+                    <option>Pune </option>
+                    <option>Raigad </option>
+                    <option>Ratnagiri </option>
+                    <option>Sangli </option>
+                    <option>Satara </option>
+                    <option>Sindhudurg </option>
+                    <option>Solapur </option>
+                    <option>Thane </option>
+                    <option>Wardha </option>
+                    <option>Washim </option>
+                    <option>Yavatmal </option>
+                </select>
+
+                <!-- <div class="dropdown">
+                    <div class="title">
+                        <span>Alabama School District</span>
+                        <i class="fa fa-caret-down"></i>
+                    </div>
+                </div> -->
+            </div>
+            <div class="input-container">
+                <input type="text" name="username" placeholder="Username/Email ID*">
+                <span class="helper-text">FORGOT USERNAME?</span>
+            </div>
+            <div class="input-container">
+                <div class="input-pwd-wrapper">
+                    <input type="text" name="password" placeholder="Password*">
+                    <i class="fa fa-eye fa-lg"></i>
+                </div>
+                <span class="helper-text">FORGOT PASSWORD?</span>
+            </div>
+            <label class="input-check remember-container">
+                <input type="checkbox" checked>
+                <span>Remember Me</span>
+            </label>
+            <div class="btn-container">
+                <button class="btn-login">LOG IN</button>
+            </div>
+        </div>
+    </main>
+    <section>
+        <a href="#about">About</a>
+        <a href="#contact">Contact Us</a>
+    </section>
+    <footer>
+        <img src="./images/quantum_footer.PNG" alt="">
+        <span>Copyright &copy; 2020-2021 <b>Zeus Systems Pvt. Ltd. </b> All rights reserved</span>
+    </footer>
+</body>
+
+</html>

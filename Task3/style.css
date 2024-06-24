@@ -1,0 +1,532 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: "Roboto", sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+nav {
+    display: flex;
+    background-color: #1c2530;
+    color: white;
+    border-bottom: 3px solid #3ac7ec;
+    justify-content: space-between;
+    /* align-items: center; */
+    padding: 0 20px;
+}
+
+nav.noborder {
+    border: 0;
+}
+
+nav a,
+i {
+    color: #3fd28b;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: small;
+    padding-left: 14px;
+    padding-right: 14px;
+    align-content: center;
+}
+
+nav .fa {
+    color: #3fd28b;
+}
+
+nav .links {
+    display: flex;
+}
+
+nav .links .hidden-sm {
+    transition-duration: 1s;
+    display: flex;
+}
+
+nav .links .show-sm {
+    align-content: center;
+    display: none;
+}
+
+nav .avatar img {
+    height: 25px;
+    border-radius: 50%;
+    border: 2px solid #3fd28b;
+}
+
+nav .avatar {
+    /* display: flex; */
+    align-content: center;
+    position: relative;
+}
+
+.notifications {
+    position: relative;
+}
+
+.notifications::after {
+    font-size: xx-small;
+    position: absolute;
+    margin-top: -14px;
+    margin-left: -8px;
+    border-radius: 50%;
+    padding: 4px;
+    height: 5px;
+    width: 5px;
+    align-content: center;
+    color: white;
+    background-color: #2a7ff3;
+}
+
+.badge-bell::after {
+    content: "2";
+}
+
+.badge-horn::after {
+    content: "1";
+}
+
+.badge-avatar {
+    position: absolute;
+    font-size: x-small;
+    color: black;
+    border-radius: 50%;
+    background-color: white;
+    height: 14px;
+    width: 14px;
+    right: 0;
+    top: -4;
+    text-align: center;
+    align-items: center;
+}
+
+.links a.active {
+    color: white;
+    border-bottom: 4px solid white;
+    box-sizing: border-box;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.logo img {
+    margin: auto;
+    height: 50px;
+    padding: 2px;
+}
+
+
+.logo span {
+    height: auto;
+    font-size: large;
+    font-weight: bold;
+}
+
+main {
+    flex-grow: 1;
+    background-color: #eeeeee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.dashboard-container {
+    flex-grow: 1;
+    background-color: #eeeeee;
+    padding: 30px;
+}
+
+.tabs {
+    background-color: #8ddc97;
+    display: flex;
+    border-radius: 4px;
+}
+
+.tab {
+    flex-grow: 1;
+    padding: 20px;
+    text-align: center;
+    font-size: large;
+}
+
+.tab.active {
+    border-bottom: 4px solid black;
+}
+
+.tab span {
+    font-size: larger;
+    font-weight: bold;
+}
+
+.tab i {
+    color: black;
+}
+
+.login-container {
+    border-radius: 5px;
+    margin: 30px auto;
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+    background-color: #fff;
+    border-top: 4px solid #3ac7ec;
+}
+
+.login-container .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.login-container .header h2 {
+    text-align: center;
+    flex-grow: 1;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.back-icon {
+    color: green;
+}
+
+.input-container {
+    padding: 24px 0;
+
+}
+
+.input-container .input-check {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin-right: 20px;
+    font-size: large;
+}
+
+.input-container input[type="text"]:not(.input-pwd-wrapper input) {
+    padding: 4px;
+    border: 0;
+    font-size: large;
+    border-bottom: 1px solid #d1cdcd;
+    width: 100%;
+    outline: none;
+}
+
+.input-check span {
+    padding: 4px;
+}
+
+.input-check input[type="radio"] {
+    padding: 8px;
+    accent-color: green;
+    width: 20px;
+    height: 20px;
+}
+
+.input-check input[type="checkbox"] {
+    padding: 8px;
+    accent-color: green;
+    width: 20px;
+    height: 20px;
+}
+
+.input-pwd-wrapper {
+    display: flex;
+    align-items: center;
+    border: 0;
+    border-bottom: 1px solid #d1cdcd;
+    width: 100%;
+    outline: none;
+}
+
+.fa {
+    color: green;
+}
+
+.fa.disabled {
+    color: rgba(56, 161, 56, 0.568);
+
+}
+
+.expired {
+    background-color: rgba(255, 167, 167, 0.397);
+    color: red;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 2px 4px;
+    font-size: 10px;
+
+}
+
+.fa.fa-star {
+    color: gold;
+    position: absolute;
+    right: 10px;
+}
+
+.fa.fa-star.disabled {
+    color: rgba(192, 192, 192, 0.356);
+}
+
+.input-pwd-wrapper input {
+    outline: none;
+    border: 0;
+    width: 100%;
+    font-size: large;
+    padding: 4px;
+}
+
+.mini-label {
+    color: #959595;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.remember-container {
+    margin: 10px 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+select {
+    outline: none;
+    width: 100%;
+    border: 0;
+    font-size: large;
+    border-bottom: 1px solid #d1cdcd;
+}
+
+.dropdown .title {
+    display: flex;
+    padding: 4px;
+    border-bottom: 1px solid #d1cdcd;
+}
+
+.dropdown .title span {
+    flex-grow: 1;
+}
+
+.btn-container {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.btn-login {
+    transition-duration: 200ms;
+    background-color: #3fd28b;
+    box-shadow: 0px 4px 7px 1px #959595;
+    color: #000000;
+    padding: 10px 80px;
+    font-size: 16px;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-login:hover {
+    background-color: #18a561;
+}
+
+.helper-text {
+    font-size: small;
+    color: green;
+    font-weight: 400;
+    margin-top: 6px;
+    float: right;
+}
+
+.course-options {
+    padding: 18px 0;
+    margin: 10px 0;
+    border-bottom: 1px solid #d1cdcd;
+    display: flex;
+    justify-content: space-between;
+}
+
+.course-options .text-muted {
+    color: #616161;
+    font-size: small;
+}
+
+.course-options .sortby {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    min-width: 200px;
+}
+
+.sortby select {
+    background-color: #eeeeee;
+    font-size: medium;
+}
+
+.grid {
+    padding: 30px;
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 30px;
+    justify-content: center;
+}
+
+.course-card {
+    padding: 30px 30px 0 30px;
+    background-color: white;
+    border-radius: 4px;
+    max-width: 550px;
+    position: relative;
+}
+
+.course-details {
+    display: flex;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #d1cdcd;
+}
+
+.course-details img {
+    height: 150px;
+    width: 130px;
+    border-radius: 4px;
+}
+
+.course-details .grow {
+    padding: 0 20px;
+    flex-grow: 1;
+}
+
+.grow .title {
+    font-size: large;
+}
+
+.subject-grade {
+    font-size: small;
+    margin: 10px 0;
+    color: #616161;
+}
+
+.green {
+    color: green;
+}
+
+.action-buttons {
+    display: flex;
+    background-color: white;
+}
+
+.action-buttons i {
+    flex-grow: 1;
+    text-align: center;
+    min-height: 50px;
+}
+
+section {
+    text-align: center;
+    padding: 14px;
+    background-color: #eeeeee;
+}
+
+section a {
+    display: inline-block;
+    text-decoration: none;
+    padding: 0 10px;
+    color: green;
+}
+
+section :not(:first-child) {
+    border-left: 1px solid #cccccc;
+}
+
+footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e0e1e1;
+    padding: 0 10px;
+}
+
+footer img {
+    display: block;
+    height: 40px;
+    padding: 4px;
+    padding-right: 10px;
+}
+
+footer span {
+    padding-left: 10px;
+    font-size: 12px;
+    color: #616161;
+    border-left: 1px solid #959595;
+}
+
+
+@media screen and (max-width: 1000px) {
+    nav {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    .grid {
+        grid-template-columns: auto;
+        justify-content: center;
+        padding: 24px 0;
+    }
+
+    nav .links .hidden-sm {
+        /* display: none; */
+        animation: animate-height 0.2s linear 1;
+        overflow: hidden;
+        flex-direction: column;
+        position: fixed;
+        top: 50px;
+        left: 0;
+    }
+
+    nav .links .hidden-sm a {
+        transition-duration: 200ms;
+        background-color: #1c2530;
+        padding: 12px 20px;
+        width: 100vw;
+    }
+
+    nav .links .hidden-sm a:hover {
+        background-color: #313b47;
+        color: white;
+    }
+
+    nav .links .hidden-sm a.active {
+        border: 0;
+    }
+
+    nav .links .hidden-sm {
+        display: none;
+    }
+
+    nav .links .hidden-sm.open {
+        display: flex;
+    }
+
+    nav .links .show-sm {
+        display: block;
+    }
+}
+
+@keyframes animate-height {
+    0% {
+        height: 0;
+    }
+
+    100% {
+        height: 200px;
+    }
+}

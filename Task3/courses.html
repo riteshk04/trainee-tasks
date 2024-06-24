@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses - Quantum</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <nav class="noborder">
+        <div class="logo">
+            <img src="./images/Capture.PNG" alt="">
+            <span>Quantum</span>
+        </div>
+        <div class="links">
+            <div class="hidden-sm">
+                <a href="#" class="active">Dashboard</a>
+                <a href="#">Content</a>
+                <a href="#">Users</a>
+                <a href="#">Reports</a>
+                <a href="#">Admin</a>
+            </div>
+            <i class="fa fa-lg fa-bell notifications badge-bell"></i>
+            <i class="fa fa-lg fa-bullhorn notifications badge-horn"></i>
+            <div class="avatar">
+                <div class="badge-avatar">T</div>
+                <img src="./images/avatar.png" alt="">
+            </div>
+            <div class="show-sm" onclick="toggleNavbar()">
+                <i class="fa fa-bars fa-lg"></i>
+            </div>
+        </div>
+    </nav>
+    <div class="dashboard-container">
+        <div class="tabs">
+            <div class="tab active">
+                <i class="fa fa-book fa-lg"></i>
+                <span>4</span> Courses
+            </div>
+            <div class="tab">
+                <i class="fa fa-users fa-lg"></i>
+                <span>4</span> Classes
+            </div>
+        </div>
+        <div class="course-options">
+            <div class="text-muted">
+                Showing 4 of 4 courses
+            </div>
+            <div class="sortby">
+                <div class="text-muted">Sort by:</div>
+                <select>
+                    <option value="name">Course name</option>
+                </select>
+                <i class="fa fa-arrow-up fa-lg"></i>
+            </div>
+        </div>
+        <div class="grid">
+            <div class="course-card">
+                <i class="fa fa-star fa-lg"></i>
+                <div class="course-details">
+                    <img src="./images/acceleration.PNG" alt="">
+                    <div class="grow">
+                        <div class="title"><b>Acceleration</b></div>
+                        <div class="subject-grade">
+                            Physics | Grade 7 <span class="green">+2</span>
+                        </div>
+                        <div class="subject-grade">
+                            <b>4</b> Units
+                            <b>18</b> Lessons
+                            <b>24</b> Topics
+                        </div>
+                        <select>
+                            <option value="name">Mr. Frank's Class B</option>
+                        </select>
+                        <div class="subject-grade">
+                            50 Students | 21-Jan-2020 - 21-Aug-2010
+                        </div>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <i class="fa fa-eye fa-lg"></i>
+                    <i class="fa fa-calendar fa-lg"></i>
+                    <i class="fa fa-calendar fa-lg"></i>
+                    <i class="fa fa-chart-simple fa-lg"></i>
+                </div>
+            </div>
+            <div class="course-card">
+                <i class="fa fa-star fa-lg"></i>
+                <div class="course-details">
+                    <img src="./images/displacement.PNG" alt="">
+                    <div class="grow">
+                        <div class="title"><b>Displacement, Velocity and Speed</b></div>
+                        <div class="subject-grade">
+                            Physics 2 | Grade 6 <span class="green">+3</span>
+                        </div>
+                        <div class="subject-grade">
+                            <b>2</b> Units
+                            <b>15</b> Lessons
+                            <b>20</b> Topics
+                        </div>
+                        <select disabled>
+                            <option value="name">No classes</option>
+                        </select>
+                        <!-- <div class="subject-grade">
+                            50 Students | 21-Jan-2020 - 21-Aug-2010
+                        </div> -->
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <i class="fa fa-eye fa-lg"></i>
+                    <i class="fa fa-calendar fa-lg disabled"></i>
+                    <i class="fa fa-calendar fa-lg disabled"></i>
+                    <i class="fa fa-chart-simple fa-lg"></i>
+                </div>
+            </div>
+            <div class="course-card">
+                <i class="fa fa-star fa-lg"></i>
+                <div class="course-details">
+                    <img src="./images/biology.PNG" alt="">
+                    <div class="grow">
+                        <div class="title"><b>Introduction to biology: Micro organism and how they affect...</b></div>
+                        <div class="subject-grade">
+                            Physics | Grade 4 <span class="green">+1</span>
+                        </div>
+                        <div class="subject-grade">
+                            <b>4</b> Units
+                            <b>18</b> Lessons
+                            <b>24</b> Topics
+                        </div>
+                        <select>
+                            <option value="name">All Classes</option>
+                        </select>
+                        <div class="subject-grade">
+                            300 Students
+                        </div>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <i class="fa fa-eye fa-lg"></i>
+                    <i class="fa fa-calendar fa-lg disabled"></i>
+                    <i class="fa fa-calendar fa-lg disabled"></i>
+                    <i class="fa fa-chart-simple fa-lg"></i>
+                </div>
+            </div>
+            <div class="course-card">
+                <div class="expired">EXPIRED</div>
+                <i class="fa fa-star fa-lg disabled"></i>
+                <div class="course-details">
+                    <img src="./images/mathematics.PNG" alt="">
+                    <div class="grow">
+                        <div class="title"><b>Introduction to high school Mathematics</b></div>
+                        <div class="subject-grade">
+                            Mathematics | Grade 8 <span class="green">+3</span>
+                        </div>
+                        <div class="subject-grade">
+                            <b>4</b> Units
+                            <b>18</b> Lessons
+                            <b>24</b> Topics
+                        </div>
+                        <select>
+                            <option value="name">Mr. Frank's Class A</option>
+                        </select>
+                        <div class="subject-grade">
+                            44 Students | 14-Oct-2019 - 20-Oct-2020
+                        </div>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <i class="fa fa-eye fa-lg"></i>
+                    <i class="fa fa-calendar fa-lg"></i>
+                    <i class="fa fa-calendar fa-lg"></i>
+                    <i class="fa fa-chart-simple fa-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section>
+        <a href="#about">About</a>
+        <a href="#contact">Contact Us</a>
+    </section>
+    <footer>
+        <img src="./images/quantum_footer.PNG" alt="">
+        <span>Copyright &copy; 2020-2021 <b>Zeus Systems Pvt. Ltd. </b> All rights reserved</span>
+    </footer>
+    <script>
+        function toggleNavbar() {
+            let menus = document.querySelector(".hidden-sm")
+            let button = document.querySelector(".show-sm i")
+            menus.classList.toggle("open")
+            button.classList.toggle("fa-bars")
+            button.classList.toggle("fa-close")
+        }
+    </script>
+</body>
+
+</html>
