@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Quantum</title>
+    <link rel="stylesheet" href="./styles/style.css">
+</head>
+
+<body>
+    <nav>
+        <img src="./assets/icons/logo used in header.svg" alt="Quantum">
+        <div class="links hidden">
+            <a href="#" class="active">DASHBOARD</a>
+            <a href="#">CONTENT</a>
+            <a href="#">USERS</a>
+            <a href="#">REPORTS</a>
+            <a href="#">ADMIN</a>
+        </div>
+        <div class="icons">
+            <div class="icon">
+                <img src="./assets/icons/alerts.svg" alt="">
+                <div class="badge">2</div>
+                <div class="alerts">
+                    <div class="alerts-content">
+                        <div class="alert unseen">
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                15-Sep-2018 at 07:21 pm
+                            </div>
+                        </div>
+                        <div class="alert unseen">
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                15-Sep-2018 at 07:21 pm
+                            </div>
+                        </div>
+                        <div class="alert">
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                15-Sep-2018 at 07:21 pm
+                            </div>
+                        </div>
+                        <div class="alert">
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                15-Sep-2018 at 07:21 pm
+                            </div>
+                        </div>
+                        <div class="alert">
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                15-Sep-2018 at 07:21 pm
+                            </div>
+                        </div>
+                        <div class="alert">
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                15-Sep-2018 at 07:21 pm
+                            </div>
+                        </div>
+                        <div class="alert">
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                15-Sep-2018 at 07:21 pm
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bulk-action-btns">
+                        <button class="action-btn">
+                            SHOW ALL
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="icon">
+                <img src="./assets/icons/announcements.svg" alt="">
+                <div class="badge">1</div>
+                <div class="announcements">
+                    <div class="alerts-content">
+                        <div class="alert unseen">
+                            <div class="username">PA: <b>Wilson Kumar</b></div>
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                <span>15-Sep-2018 at 07:21 pm</span>
+                                <span>2 files attached</span>
+                            </div>
+                        </div>
+                        <div class="alert">
+                            <div class="username">PA: <b>Wilson Kumar</b></div>
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                <span>15-Sep-2018 at 07:21 pm</span>
+                                <span>2 files attached</span>
+                            </div>
+                        </div>
+                        <div class="alert">
+                            <div class="username">PA: <b>Wilson Kumar</b></div>
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                <span>15-Sep-2018 at 07:21 pm</span>
+                                <span>2 files attached</span>
+                            </div>
+                        </div>
+                        <div class="alert">
+                            <div class="username">PA: <b>Wilson Kumar</b></div>
+                            <div class="alert-content">
+                                License for Introduction to Algebra has been assigned to your school
+                            </div>
+                            <div class="datetime">
+                                <span>15-Sep-2018 at 07:21 pm</span>
+                                <span>2 files attached</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bulk-action-btns">
+                        <button class="action-btn">
+                            SHOW ALL
+                        </button>
+                        <button class="action-btn">
+                            CREATE NEW
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="avatar">
+                <img src="https://placehold.co/40x40" alt="" class="avatar-img">
+                <div class="badge">T</div>
+            </div>
+            <div class="icon hamburger">
+                <img src="./assets/icons/hamburger-menu.svg" alt="">
+            </div>
+        </div>
+    </nav>
+    <script>
+        (function () {
+            let bars = document.querySelector(".icon.hamburger")
+            let content = document.querySelector(".links")
+            let visible = false
+            bars.addEventListener("click", function () {
+                content.classList.toggle("hidden")
+                // if (!visible) {
+                //     document.body.addEventListener("click",
+                //         function (event) {
+                //             if (event.target !== content) {
+                //                 content.classList.toggle("hidden")
+                //                 document.body.removeEventListener("click")
+                //             }
+                //         }
+                //     )
+                //     visible = true
+                // } else {
+
+                // }
+
+            })
+        })()
+    </script>
+</body>
+
+</html>
