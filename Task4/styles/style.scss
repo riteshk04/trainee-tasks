@@ -228,6 +228,7 @@ nav {
                         border-bottom: 1px solid #d6d6d6;
                         cursor: default;
                         background-color: white;
+                        position: relative;
 
                         &.unseen {
                             background-color: $alert-unseen;
@@ -235,9 +236,20 @@ nav {
                             cursor: pointer;
                         }
 
+
+                        .fa-circle-check{
+                            position: absolute;
+                            right: 8px;
+                            color: $primary;
+                        }
+
+                        .fa-circle-minus{
+                            @extend .fa-circle-check
+                        }
+
                         .alert-content {
                             color: $alert-content;
-                            padding-right: 1rem;
+                            padding-right: 1.2rem;
                             padding-bottom: 10px;
                         }
 
@@ -622,6 +634,11 @@ main {
                             font-size: small;
                             margin: 10px 0;
                             color: #616161;
+
+                            .green {
+                                color: $primary;
+                                font-weight: 700;
+                            }
                         }
                     }
                 }
@@ -635,9 +652,13 @@ main {
                 }
 
                 .fa.fa-star {
-                    color: $gold;
                     position: absolute;
-                    right: 10px;
+                    right: 14px;
+                    color: silver;
+
+                    &.gold {
+                        color: $gold;
+                    }
 
                     &.disabled {
                         color: rgba(192, 192, 192, 0.356);

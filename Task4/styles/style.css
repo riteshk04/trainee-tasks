@@ -169,15 +169,21 @@ nav .icons .icon .alerts .alerts-content .alert, nav .icons .avatar .alerts .ale
   border-bottom: 1px solid #d6d6d6;
   cursor: default;
   background-color: white;
+  position: relative;
 }
 nav .icons .icon .alerts .alerts-content .alert.unseen, nav .icons .avatar .alerts .alerts-content .alert.unseen, nav .icons .icon .announcements .alerts-content .alert.unseen, nav .icons .avatar .announcements .alerts-content .alert.unseen {
   background-color: #FFFFEE;
   font-weight: 600;
   cursor: pointer;
 }
+nav .icons .icon .alerts .alerts-content .alert .fa-circle-check, nav .icons .avatar .alerts .alerts-content .alert .fa-circle-check, nav .icons .icon .announcements .alerts-content .alert .fa-circle-check, nav .icons .avatar .announcements .alerts-content .alert .fa-circle-check, nav .icons .icon .alerts .alerts-content .alert .fa-circle-minus, nav .icons .avatar .alerts .alerts-content .alert .fa-circle-minus, nav .icons .icon .announcements .alerts-content .alert .fa-circle-minus, nav .icons .avatar .announcements .alerts-content .alert .fa-circle-minus {
+  position: absolute;
+  right: 8px;
+  color: #1F7A54;
+}
 nav .icons .icon .alerts .alerts-content .alert .alert-content, nav .icons .avatar .alerts .alerts-content .alert .alert-content, nav .icons .icon .announcements .alerts-content .alert .alert-content, nav .icons .avatar .announcements .alerts-content .alert .alert-content {
   color: #222222;
-  padding-right: 1rem;
+  padding-right: 1.2rem;
   padding-bottom: 10px;
 }
 nav .icons .icon .alerts .alerts-content .alert .datetime, nav .icons .avatar .alerts .alerts-content .alert .datetime, nav .icons .icon .announcements .alerts-content .alert .datetime, nav .icons .avatar .announcements .alerts-content .alert .datetime {
@@ -501,6 +507,10 @@ main .container .grid .course-card .course-details .grow .subject-grade {
   margin: 10px 0;
   color: #616161;
 }
+main .container .grid .course-card .course-details .grow .subject-grade .green {
+  color: #1F7A54;
+  font-weight: 700;
+}
 main .container .grid .course-card .action-buttons {
   display: flex;
   justify-content: space-between;
@@ -508,9 +518,12 @@ main .container .grid .course-card .action-buttons {
   background-color: white;
 }
 main .container .grid .course-card .fa.fa-star {
-  color: #EDC900;
   position: absolute;
-  right: 10px;
+  right: 14px;
+  color: silver;
+}
+main .container .grid .course-card .fa.fa-star.gold {
+  color: #EDC900;
 }
 main .container .grid .course-card .fa.fa-star.disabled {
   color: rgba(192, 192, 192, 0.356);

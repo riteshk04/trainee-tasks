@@ -31,6 +31,7 @@
                 <div class="alerts">
                     <div class="alerts-content">
                         <div class="alert unseen">
+                            <i class="fa-solid fa-circle-minus"></i>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
                             </div>
@@ -39,6 +40,7 @@
                             </div>
                         </div>
                         <div class="alert unseen">
+                            <i class="fa-solid fa-circle-minus"></i>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
                             </div>
@@ -47,6 +49,7 @@
                             </div>
                         </div>
                         <div class="alert">
+                            <i class="fa-solid fa-circle-check"></i>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
                             </div>
@@ -55,6 +58,7 @@
                             </div>
                         </div>
                         <div class="alert">
+                            <i class="fa-solid fa-circle-check"></i>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
                             </div>
@@ -63,6 +67,7 @@
                             </div>
                         </div>
                         <div class="alert">
+                            <i class="fa-solid fa-circle-check"></i>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
                             </div>
@@ -71,6 +76,7 @@
                             </div>
                         </div>
                         <div class="alert">
+                            <i class="fa-solid fa-circle-check"></i>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
                             </div>
@@ -79,6 +85,7 @@
                             </div>
                         </div>
                         <div class="alert">
+                            <i class="fa-solid fa-circle-check"></i>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
                             </div>
@@ -100,6 +107,8 @@
                 <div class="announcements">
                     <div class="alerts-content">
                         <div class="alert unseen">
+                            <i class="fa-solid fa-circle-minus"></i>
+
                             <div class="username">PA: <b>Wilson Kumar</b></div>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
@@ -110,6 +119,7 @@
                             </div>
                         </div>
                         <div class="alert">
+                            <i class="fa-solid fa-circle-check"></i>
                             <div class="username">PA: <b>Wilson Kumar</b></div>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
@@ -120,6 +130,7 @@
                             </div>
                         </div>
                         <div class="alert">
+                            <i class="fa-solid fa-circle-check"></i>
                             <div class="username">PA: <b>Wilson Kumar</b></div>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
@@ -130,6 +141,7 @@
                             </div>
                         </div>
                         <div class="alert">
+                            <i class="fa-solid fa-circle-check"></i>
                             <div class="username">PA: <b>Wilson Kumar</b></div>
                             <div class="alert-content">
                                 License for Introduction to Algebra has been assigned to your school
@@ -164,7 +176,7 @@
             <div class="tabs">
                 <div class="tab active">
                     <i class="fa fa-book fa-lg"></i>
-                    <span>4</span> Courses
+                    <span class="courses-count"></span> Courses
                 </div>
                 <div class="tab">
                     <i class="fa fa-users fa-lg"></i>
@@ -173,7 +185,7 @@
             </div>
             <div class="course-options">
                 <div class="text-muted">
-                    Showing 4 of 4 courses
+                    Showing <span class="courses-count"></span> of <span class="courses-count"></span> courses
                 </div>
                 <div class="sortby">
                     <div class="text-muted">Sort by:</div>
@@ -266,20 +278,6 @@
             let visible = false
             bars.addEventListener("click", function () {
                 content.classList.toggle("hidden")
-                // if (!visible) {
-                //     document.body.addEventListener("click",
-                //         function (event) {
-                //             if (event.target !== content) {
-                //                 content.classList.toggle("hidden")
-                //                 document.body.removeEventListener("click")
-                //             }
-                //         }
-                //     )
-                //     visible = true
-                // } else {
-
-                // }
-
             })
         })()
     </script>

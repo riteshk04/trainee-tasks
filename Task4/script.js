@@ -71,7 +71,7 @@ const courses = [
         "classes": [
         ],
 
-        "starred": true
+        "starred": false
     },
     {
         "name": "Displacement, Velocity and Speed",
@@ -164,7 +164,7 @@ const courses = [
         "classes": [
         ],
 
-        "starred": true
+        "starred": false
     },
     {
         "name": "Displacement, Velocity and Speed",
@@ -206,9 +206,9 @@ const courses = [
     },
 ];
 
-
 (function () {
     let cardContainer = document.querySelector(".container .grid");
+    let courseCountElements = document.querySelectorAll(".courses-count")
     let cards = courses.map(({
         image,
         name,
@@ -221,10 +221,8 @@ const courses = [
     }) => `
         <div class="course-card">
         ${expired ? `<div class="expired">EXPIRED</div>` : ``}
-        ${starred ?
-            `<i class="fa fa-star fa-lg gold"></i>` :
-            `<i class="fa fa-star fa-lg"></i>`
-        }
+        
+            <i class="fa fa-star fa-lg ${starred ? `gold` : ``}"></i>
             <div class="course-details">
                 <img src="${image}" alt="">
                 <div class="grow">
@@ -239,12 +237,12 @@ const courses = [
                     </div>
                     <select ${!!!classes.length ? "disabled" : ""}>
                     ${!!!classes.length ? `<option> No classes </option>` : ``}
-                    ${classes.map((c, i) => `<option value="name" ${c.selected ? `selected` : ``}>${c.name}</option>`)}
+                    ${classes.map((c, i) => `<option value="name" ${c.selected ? `selected` : ``}>${c.name}</option>`).join("")}
                     </select>
                     <div class="subject-grade">
                        ${[...classes.filter(c => c.selected)].map(e =>
-            `${e.students} Students | ${e.date.from} - ${e.date.to}`
-        )}
+                        `${e.students || 0} Students | ${e.date.from} - ${e.date.to}`
+                    ).join("")}
                     </div>
                 </div>
             </div>
@@ -256,5 +254,6 @@ const courses = [
             </div>
         </div>
     `).join("")
+    courseCountElements.forEach(ele => { ele.innerHTML = courses.length })
     cardContainer.innerHTML = cards
 }())
