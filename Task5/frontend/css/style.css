@@ -148,44 +148,50 @@ body {
 .container .dialogue-wrapper .upload-container .main .dotted label input {
   display: none;
 }
-.container .dialogue-wrapper .upload-container .main .dotted label button {
+.container .dialogue-wrapper .upload-container .main .dotted label span {
+  margin-top: 5px;
+  display: inline-block;
   padding: 10px 20px;
   border: 1px solid #959595;
   border-radius: 5px;
   background-color: white;
 }
-.container .dialogue-wrapper .upload-container .main .file {
+.container .dialogue-wrapper .upload-container .main .dotted label span:hover {
+  background-color: rgba(235, 235, 235, 0.8);
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file {
   padding: 10px;
   border-radius: 5px;
   background-color: rgba(235, 235, 235, 0.8);
   display: flex;
   gap: 14px;
+  margin-bottom: 10px;
 }
-.container .dialogue-wrapper .upload-container .main .file img {
+.container .dialogue-wrapper .upload-container .main .file-uploads .file img {
   height: 50px;
 }
-.container .dialogue-wrapper .upload-container .main .file .content {
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content {
   flex-grow: 1;
   position: relative;
 }
-.container .dialogue-wrapper .upload-container .main .file .content i.fa-close {
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content i.fa-close {
   position: absolute;
   top: 0;
   right: 0;
 }
-.container .dialogue-wrapper .upload-container .main .file .content .title {
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content .title {
   font-size: large;
 }
-.container .dialogue-wrapper .upload-container .main .file .content .size {
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content .size {
   font-size: 14px;
   color: #959595;
   margin-bottom: 6px;
 }
-.container .dialogue-wrapper .upload-container .main .file .content .progress-bar {
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content .progress-bar {
   border-radius: 5px;
   background-color: #a0a0a0;
 }
-.container .dialogue-wrapper .upload-container .main .file .content .progress-bar .progress {
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content .progress-bar .progress {
   padding: 4px;
   width: 50%;
   background-color: #03723c;
@@ -377,6 +383,17 @@ body {
   padding: 10px;
   background-color: rgba(235, 235, 235, 0.8);
   text-align: center;
+}
+.container .functions {
+  padding: 1rem;
+}
+.container .excel {
+  flex-grow: 1;
+  width: 100vw;
+  overflow-x: scroll;
+}
+.container .excel canvas {
+  margin: 0;
 }
 
 .hidden {

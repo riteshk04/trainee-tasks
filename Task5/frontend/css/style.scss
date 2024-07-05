@@ -182,56 +182,66 @@ body {
                             display: none;
                         }
 
-                        button {
+                        span {
+                            margin-top: 5px;
+                            display: inline-block;
                             padding: 10px 20px;
                             border: 1px solid #959595;
                             border-radius: 5px;
                             background-color: white;
+
+                            &:hover{
+                                background-color: $dull;
+                            }
                         }
                     }
                 }
 
-                .file {
-                    padding: 10px;
-                    border-radius: 5px;
-                    background-color: $dull;
-                    display: flex;
-                    gap: 14px;
+                .file-uploads{
 
-                    img {
-                        height: 50px;
-                    }
-
-                    .content {
-                        flex-grow: 1;
-                        position: relative;
-
-                        i.fa-close {
-                            position: absolute;
-                            top: 0;
-                            right: 0;
-
+                    .file {
+                        padding: 10px;
+                        border-radius: 5px;
+                        background-color: $dull;
+                        display: flex;
+                        gap: 14px;
+                        margin-bottom: 10px;
+    
+                        img {
+                            height: 50px;
                         }
-
-                        .title {
-                            font-size: large;
-                        }
-
-                        .size {
-                            font-size: 14px;
-                            color: #959595;
-                            margin-bottom: 6px;
-                        }
-
-                        .progress-bar {
-                            border-radius: 5px;
-                            background-color: #a0a0a0;
-
-                            .progress {
-                                padding: 4px;
-                                width: 50%;
-                                background-color: $primary;
+    
+                        .content {
+                            flex-grow: 1;
+                            position: relative;
+    
+                            i.fa-close {
+                                position: absolute;
+                                top: 0;
+                                right: 0;
+    
+                            }
+    
+                            .title {
+                                font-size: large;
+                            }
+    
+                            .size {
+                                font-size: 14px;
+                                color: #959595;
+                                margin-bottom: 6px;
+                            }
+    
+                            .progress-bar {
                                 border-radius: 5px;
+                                background-color: #a0a0a0;
+    
+                                .progress {
+                                    padding: 4px;
+                                    width: 50%;
+                                    background-color: $primary;
+                                    border-radius: 5px;
+                                }
                             }
                         }
                     }
@@ -469,6 +479,20 @@ body {
         padding: 10px;
         background-color: $dull;
         text-align: center;
+    }
+
+    .functions{
+        padding: 1rem;
+    }
+
+    .excel{
+        flex-grow: 1;
+        width: 100vw;
+        overflow-x: scroll;
+        canvas{
+            margin: 0;
+        }
+
     }
 
 }
