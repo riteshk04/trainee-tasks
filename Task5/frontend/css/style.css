@@ -391,9 +391,21 @@ body {
   flex-grow: 1;
   width: 100vw;
   overflow-x: scroll;
+  position: relative;
 }
 .container .excel canvas {
   margin: 0;
+}
+.container .excel input {
+  outline: none;
+  border: 2px solid #000000;
+  font-size: 16px;
+  font-family: Arial, Helvetica, sans-serif;
+  box-sizing: border-box;
+  position: absolute;
+  padding: 0 4px;
+  transition: none;
+  display: none;
 }
 
 .hidden {

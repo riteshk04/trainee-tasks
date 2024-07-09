@@ -1,3 +1,146 @@
+function init(canvas, input, DATA) {
+    const COLHEIGHT = 30;
+    const COLWIDTH = 120;
+    const HEADERS = Object.keys(DATA[0])
+    const COLWIDTHS = [...Array(HEADERS.length)].map(() => COLWIDTH);
+    const COLHEIGHTS = [...Array(DATA.length)].map(() => COLHEIGHT);
+
+    const ctx = canvas.getContext("2d")
+
+    canvas.setAttribute("height", DATA.length * COLHEIGHT + COLHEIGHT)
+    canvas.setAttribute("width", HEADERS.length * COLWIDTH)
+
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.font = "16px Arial";
+
+    for (let j = 0; j < HEADERS.length; j++) {
+        let title = HEADERS[j];
+        ctx.save()
+        ctx.rect(COLWIDTHS[j] * j, 0, COLWIDTHS[j], COLHEIGHTS[0])
+        ctx.clip()
+        ctx.fillText(title, j * COLWIDTHS[j] + 5, COLHEIGHTS[0] - 10)
+        ctx.restore()
+        ctx.stroke()
+    }
+
+    for (let i = 0; i < DATA.length; i++) {
+        for (let j = 0; j < HEADERS.length; j++) {
+            let value = DATA[i][HEADERS[j]];
+            ctx.save()
+            ctx.rect(COLWIDTHS[j] * j, i * COLHEIGHTS[i] + COLHEIGHT, COLWIDTHS[j], COLHEIGHTS[i])
+            ctx.clip()
+            ctx.fillText(value, j * COLWIDTHS[j] + 5, (i + 2) * COLHEIGHTS[i] - 10)
+            ctx.restore()
+            ctx.stroke()
+        }
+    }
+
+    // resizer(canvas, COLHEIGHTS, COLWIDTHS)
+    editor(canvas, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS)
+    rangeselector(canvas, COLHEIGHTS, COLWIDTHS)
+
+}
+
+function getCoordinates(event, canvas) {
+    let rect = canvas.getBoundingClientRect()
+    let x = event.clientX - rect.left
+    let y = event.clientY - rect.top
+    return [x, y]
+}
+
+function getColumn(x, y, COLHEIGHTS, COLWIDTHS) {
+    let sumY = COLHEIGHTS[0];
+    let row = 0;
+    for (let i = 0; i < COLHEIGHTS.length; i++) {
+        sumY += COLHEIGHTS[i];
+        if (sumY <= y)
+            row++
+        else
+            break
+    }
+    let sumX = 0;
+    let col = 0;
+    for (let i = 0; i < COLWIDTHS.length; i++) {
+        sumX += COLWIDTHS[i];
+        if (sumX <= x)
+            col++
+        else
+            break
+    }
+    return [row, col, sumX - COLWIDTHS[col], sumY - COLHEIGHTS[row]]
+}
+
+function getCurrentValue(DATA, HEADERS, row, col) {
+    return DATA[row][HEADERS[col]];
+}
+function setCurrentValue(DATA, HEADERS, row, col, value) {
+    return DATA[row][HEADERS[col]] = value;
+}
+function generateInputBox(input, x, y, height, width, value) {
+    input.style.top = `${x}px`
+    input.style.left = `${y}px`
+    input.style.height = `${height}px`
+    input.style.width = `${width}px`
+    input.style.display = `block`
+    input.value = value
+    input.focus()
+}
+
+function editor(canvas, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS) {
+    canvas.addEventListener("click", function (event) {
+        let [x, y] = getCoordinates(event, canvas)
+        let [row, col, leftX, topY] = getColumn(x, y, COLHEIGHTS, COLWIDTHS)
+        let value = getCurrentValue(DATA, HEADERS, row, col)
+        generateInputBox(input, topY, leftX, COLHEIGHTS[row], COLWIDTHS[col], value)
+        // input.addEventListener("blur", function save(event) {
+        //     let value = this.value
+        //     setCurrentValue(DATA, HEADERS, row, col, value)
+        // })
+    })
+}
+
+function rangeselector(canvas, COLHEIGHTS, COLWIDTHS) {
+
+}
+
+
+function startDrag(event, canvas) {
+    let [x, y] = getCoordinates(event, canvas)
+    console.log(x)
+}
+
+function resizer(canvas, COLHEIGHTS, COLWIDTHS) {
+    let LEFTGAP = 10
+    let RIGHTGAP = 10
+
+    let hoverareas = COLWIDTHS.reduce((acc, val, i, arr) => {
+        if (i == 0) {
+            acc.push(val)
+            return acc
+        }
+        let sum = acc[Math.max(i - 1, 0)] + val
+        acc.push(sum)
+        return acc
+    }, [])
+
+    canvas.addEventListener("mousemove", function (event) {
+        let [x, y] = getCoordinates(event, canvas)
+
+        for (let i = 0; i < hoverareas.length; i++) {
+            const EDGE = hoverareas[i];
+            if (EDGE - LEFTGAP < x && x < EDGE + RIGHTGAP) {
+                canvas.style.cursor = "e-resize"
+                // canvas.addEventListener("mousedown", startDrag(e))
+                break
+            } else {
+                canvas.style.cursor = "cell"
+                // canvas.removeEventListener("mousedown", startDrag(e))
+            }
+        }
+    })
+}
+
 $(function () {
     const data =
         [
@@ -200,43 +343,9 @@ $(function () {
                 "FY2023-24": "904465"
             },
         ]
-    const headers = Object.keys(data[0])
-
     const canvas = $(".container .excel canvas")[0]
-    const colheight = 30;
-    const colwidth = 120;
-    const strlimit = 12
-    const ctx = canvas.getContext("2d")
+    const input = $(".container .excel input")[0]
+    console.log("🚀 ~ input:", input)
+    init(canvas, input, data)
 
-    canvas.setAttribute("height", data.length * colheight)
-    canvas.setAttribute("width", headers.length * colwidth)
-
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 1;
-    ctx.font = "16px Arial";
-
-    for (let j = 0; j < headers.length; j++) {
-        let title = headers[j];
-        title = title?.length > strlimit ? title.substring(0, strlimit) + "..." : title
-
-        ctx.strokeRect(colwidth * j, 0, colwidth, colheight);
-        ctx.fillText(title, j * colwidth + 5, colheight - 5)
-    }
-
-    for (let i = 1; i < data.length; i++) {
-        for (let j = 0; j < headers.length; j++) {
-            let value = data[i][headers[j]];
-            value = value?.length > strlimit ? value.substring(0, strlimit) + "..." : value
-
-            ctx.strokeRect(colwidth * j, i * colheight, colwidth, colheight);
-            ctx.fillText(value, j * colwidth + 4, i * colheight + 26)
-            // const metrics = context.measureText(value);
-            // const width = metrics.width;
-        }
-    }
-
-
-    canvas.addEventListener("mousemove", function(event){
-        console.log(event)
-    })
 })
