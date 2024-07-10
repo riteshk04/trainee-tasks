@@ -2,44 +2,65 @@ function init(canvas, input, DATA) {
     const COLHEIGHT = 30;
     const COLWIDTH = 120;
     const HEADERS = Object.keys(DATA[0])
-    const COLWIDTHS = [...Array(HEADERS.length)].map(() => COLWIDTH);
-    const COLHEIGHTS = [...Array(DATA.length)].map(() => COLHEIGHT);
+
+    const COLWIDTHS = [...Array(HEADERS.length)].map((_a, i) => i == 0 ? 50 : COLWIDTH);
+    const COLHEIGHTS = [COLHEIGHT, ...Array(DATA.length)].map((_a, i) => i == 2 ? 100 : COLHEIGHT);
+    const totalHeight = COLHEIGHTS.reduce((s, v) => s + v, 0)
+    const totalWidth = COLWIDTHS.reduce((s, v) => s + v, 0)
 
     const ctx = canvas.getContext("2d")
 
-    canvas.setAttribute("height", DATA.length * COLHEIGHT + COLHEIGHT)
-    canvas.setAttribute("width", HEADERS.length * COLWIDTH)
+    canvas.setAttribute("height", totalHeight)
+    canvas.setAttribute("width", totalWidth)
 
     ctx.strokeStyle = "black";
     ctx.lineWidth = 1;
     ctx.font = "16px Arial";
 
+    let currentPosX = 0;
+    let currentPosY = 0;
     for (let j = 0; j < HEADERS.length; j++) {
         let title = HEADERS[j];
         ctx.save()
-        ctx.rect(COLWIDTHS[j] * j, 0, COLWIDTHS[j], COLHEIGHTS[0])
+        ctx.rect(currentPosX, currentPosY, COLWIDTHS[j], COLHEIGHTS[0])
         ctx.clip()
-        ctx.fillText(title, j * COLWIDTHS[j] + 5, COLHEIGHTS[0] - 10)
+        ctx.fillText(title, currentPosX + 5, currentPosY + COLHEIGHTS[0] - 10)
         ctx.restore()
         ctx.stroke()
+        currentPosX += COLWIDTHS[j]
     }
 
+    currentPosY += COLHEIGHTS[0]
+
     for (let i = 0; i < DATA.length; i++) {
+        currentPosX = 0
         for (let j = 0; j < HEADERS.length; j++) {
             let value = DATA[i][HEADERS[j]];
             ctx.save()
-            ctx.rect(COLWIDTHS[j] * j, i * COLHEIGHTS[i] + COLHEIGHT, COLWIDTHS[j], COLHEIGHTS[i])
+            ctx.rect(currentPosX, currentPosY, COLWIDTHS[j], COLHEIGHTS[i])
             ctx.clip()
-            ctx.fillText(value, j * COLWIDTHS[j] + 5, (i + 2) * COLHEIGHTS[i] - 10)
+            ctx.fillText(value, currentPosX + 5, (COLHEIGHTS[i] / 2 + currentPosY) + 5)
             ctx.restore()
             ctx.stroke()
+            currentPosX += COLWIDTHS[j]
         }
+        currentPosY += COLHEIGHTS[i]
     }
 
     // resizer(canvas, COLHEIGHTS, COLWIDTHS)
-    editor(canvas, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS)
+    editor(canvas, ctx, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS)
     rangeselector(canvas, COLHEIGHTS, COLWIDTHS)
 
+}
+
+function drawColumn(ctx, x, y, width, height, text) {
+    ctx.save()
+    ctx.clearRect(x, y, width, height)
+    ctx.rect(x, y, width, height)
+    ctx.clip()
+    ctx.fillText(text, x + 5, (height / 2 + y) + 5)
+    ctx.restore()
+    ctx.stroke()
 }
 
 function getCoordinates(event, canvas) {
@@ -77,30 +98,39 @@ function getCurrentValue(DATA, HEADERS, row, col) {
 function setCurrentValue(DATA, HEADERS, row, col, value) {
     return DATA[row][HEADERS[col]] = value;
 }
-function generateInputBox(input, x, y, height, width, value) {
+
+function generateInputBox(input, x, y, height, width, row, col, value) {
     input.style.top = `${x}px`
     input.style.left = `${y}px`
     input.style.height = `${height}px`
     input.style.width = `${width}px`
     input.style.display = `block`
     input.value = value
+    input.setAttribute("data-row", row)
+    input.setAttribute("data-col", col)
     input.focus()
+    return input
 }
 
-function editor(canvas, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS) {
+function editor(canvas, ctx, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS) {
+    input.addEventListener("blur", function (e) {
+        let value = e.target.value
+        let row = parseInt(this.getAttribute("data-row"))
+        let col = parseInt(this.getAttribute("data-col"))
+        let left = parseInt(this.style.left.replace("left", ""))
+        let top = parseInt(this.style.top.replace("left", ""))
+        setCurrentValue(DATA, HEADERS, row, col, value)
+        drawColumn(ctx, left, top, COLWIDTHS[col], COLHEIGHTS[row], value)
+    })
     canvas.addEventListener("click", function (event) {
         let [x, y] = getCoordinates(event, canvas)
         let [row, col, leftX, topY] = getColumn(x, y, COLHEIGHTS, COLWIDTHS)
         let value = getCurrentValue(DATA, HEADERS, row, col)
-        generateInputBox(input, topY, leftX, COLHEIGHTS[row], COLWIDTHS[col], value)
-        // input.addEventListener("blur", function save(event) {
-        //     let value = this.value
-        //     setCurrentValue(DATA, HEADERS, row, col, value)
-        // })
+        generateInputBox(input, topY, leftX, COLHEIGHTS[row], COLWIDTHS[col], row, col, value)
     })
 }
 
-function rangeselector(canvas, COLHEIGHTS, COLWIDTHS) {
+function rangeselector(_canvas, _COLHEIGHTS, _COLWIDTHS) {
 
 }
 
@@ -110,11 +140,11 @@ function startDrag(event, canvas) {
     console.log(x)
 }
 
-function resizer(canvas, COLHEIGHTS, COLWIDTHS) {
+function resizer(canvas, _COLHEIGHTS, COLWIDTHS) {
     let LEFTGAP = 10
     let RIGHTGAP = 10
 
-    let hoverareas = COLWIDTHS.reduce((acc, val, i, arr) => {
+    let hoverareas = COLWIDTHS.reduce((acc, val, i, _arr) => {
         if (i == 0) {
             acc.push(val)
             return acc
@@ -134,7 +164,7 @@ function resizer(canvas, COLHEIGHTS, COLWIDTHS) {
                 // canvas.addEventListener("mousedown", startDrag(e))
                 break
             } else {
-                canvas.style.cursor = "cell"
+                canvas.style.cursor = "col-resize"
                 // canvas.removeEventListener("mousedown", startDrag(e))
             }
         }
