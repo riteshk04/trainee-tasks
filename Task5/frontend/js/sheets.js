@@ -1,10 +1,13 @@
+var COLHEIGHTS = []
+var COLWIDTHS = []
+
 function init(canvas, input, DATA) {
     const COLHEIGHT = 30;
     const COLWIDTH = 120;
     const HEADERS = Object.keys(DATA[0])
 
-    const COLWIDTHS = [...Array(HEADERS.length)].map((_a, i) => i == 0 ? 50 : COLWIDTH);
-    const COLHEIGHTS = [COLHEIGHT, ...Array(DATA.length)].map((_a, i) => i == 2 ? 100 : COLHEIGHT);
+    COLWIDTHS = [...Array(HEADERS.length)].map((_a, i) => i == 0 ? 50 : COLWIDTH);
+    COLHEIGHTS = [COLHEIGHT, ...Array(DATA.length)].map((_a, i) => i == 2 ? 100 : COLHEIGHT);
     const totalHeight = COLHEIGHTS.reduce((s, v) => s + v, 0)
     const totalWidth = COLWIDTHS.reduce((s, v) => s + v, 0)
 
@@ -49,19 +52,33 @@ function init(canvas, input, DATA) {
 
     // resizer(canvas, COLHEIGHTS, COLWIDTHS)
     editor(canvas, ctx, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS)
-    rangeselector(canvas, COLHEIGHTS, COLWIDTHS)
+    rangeselector(canvas, COLHEIGHTS, COLWIDTHS, DATA, HEADERS)
 
 }
 
 function drawColumn(ctx, x, y, width, height, text) {
-    ctx.save()
+    // TODO: overflow issue
     ctx.clearRect(x, y, width, height)
+    ctx.save()
     ctx.rect(x, y, width, height)
     ctx.clip()
     ctx.fillText(text, x + 5, (height / 2 + y) + 5)
     ctx.restore()
     ctx.stroke()
 }
+
+function highlightColumn(ctx, x, y, width, height, text) {
+    ctx.clearRect(x, y, width, height)
+    ctx.save()
+    ctx.rect(x, y, width, height)
+    ctx.fillStyle = "#88d9ff33"
+    ctx.fillRect(x, y, width, height)
+    ctx.clip()
+    ctx.fillText(text, x + 5, (height / 2 + y) + 5)
+    ctx.restore()
+    // ctx.stroke()
+}
+
 
 function getCoordinates(event, canvas) {
     let rect = canvas.getBoundingClientRect()
@@ -120,7 +137,7 @@ function editor(canvas, ctx, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS) {
         let left = parseInt(this.style.left.replace("left", ""))
         let top = parseInt(this.style.top.replace("left", ""))
         setCurrentValue(DATA, HEADERS, row, col, value)
-        drawColumn(ctx, left, top, COLWIDTHS[col], COLHEIGHTS[row], value)
+        drawColumn(ctx, left, top, COLWIDTHS[col], COLHEIGHTS[row], value, true)
     })
     canvas.addEventListener("click", function (event) {
         let [x, y] = getCoordinates(event, canvas)
@@ -130,8 +147,21 @@ function editor(canvas, ctx, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS) {
     })
 }
 
-function rangeselector(_canvas, _COLHEIGHTS, _COLWIDTHS) {
+function renderSelection(event, canvas, startCoordinates) {
+    let [endx, endy] = getCoordinates(event, canvas)
+    let [endrow, endcol, startcolx, startcoly] = getColumn(endx, endy, COLHEIGHTS, COLWIDTHS)
+    let [startrow, startcol, endcolx, endcoly] = startCoordinates
+    
+}
 
+function startSelection(event, canvas) {
+    let [startx, starty] = getCoordinates(event, canvas)
+    let startCoordinates = getColumn(startx, starty, COLHEIGHTS, COLWIDTHS)
+    canvas.addEventListener("mousemove", (e) => renderSelection(e, canvas, startCoordinates))
+}
+
+function rangeselector(canvas) {
+    canvas.addEventListener("mousedown", (e) => startSelection(e, canvas))
 }
 
 
