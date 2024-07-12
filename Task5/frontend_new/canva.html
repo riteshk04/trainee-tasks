@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canva</title>
+</head>
+
+<body>
+    <div class="canvas-wrapper">
+
+    </div>
+    <script src="./build/js/canva.js"></script>
+    <script>
+        const csv = `id,name,country,email_id,gender,telephone_number,state,city,addr1,addr2,dob,FY2019-20,FY2020-21,FY2021-22,FY2022-23,FY2023-24
+1,Perice,Zambia,pkneeshaw0@si.edu,Male,583-125-0584,,Mungwi,Room 390,Apt 299,2/7/2002,588941,610137,745617,807292,927796
+2,Marci,Mayotte,mlorman1@about.com,Female,860-560-7873,,Chirongui,Apt 678,Room 389,11/5/2004,587098,680356,718990,886035,902030
+3,Karoly,China,kbeal2@yahoo.com,Female,855-469-8973,,Sanjie,Apt 405,Suite 5,5/19/2006,546864,680819,771538,882994,1040143
+4,Dulce,Indonesia,dricardou3@shinystat.com,Female,684-642-7087,,Sumurgung,Room 1300,Room 1228,9/19/2009,533020,659810,744962,815186,929364
+5,Barrie,Vietnam,byushmanov4@slideshare.net,Female,533-119-5194,,Cà Mau,17th Floor,11th Floor,9/11/2006,597458,627644,792878,834491,1029385
+6,Merna,Sweden,morro5@tumblr.com,Female,806-308-1096,Stockholm,Södertälje,Suite 50,Room 1361,11/9/2008,578472,611664,736827,874343,901968
+7,Maura,China,mglassborow6@163.com,Female,179-160-6151,,Ningtang,Suite 2,Apt 496,4/29/2003,520092,694729,784070,806163,956583
+8,Hollie,Guatemala,hdunbavin7@nifty.com,Female,985-937-3816,,Monjas,Suite 59,12th Floor,9/26/2006,593967,691998,765226,893432,992291
+9,Glendon,Portugal,graoult8@boston.com,Male,473-922-8183,Porto,Vila Verde,PO Box 4255,PO Box 1998,4/22/2006,563961,695090,791257,883935,925655
+10,Tiphani,Thailand,tgentzsch9@rediff.com,Female,730-331-7955,,Wat Bot,17th Floor,Suite 89,9/18/2001,518558,683932,720123,803959,928845
+`
+        const wrapper = document.querySelector(".canvas-wrapper")
+
+        let excel = new Excel(wrapper, csv)
+        excel.init()
+        
+    </script>
+</body>
+
+</html>

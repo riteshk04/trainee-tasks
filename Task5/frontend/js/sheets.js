@@ -1,5 +1,8 @@
 var COLHEIGHTS = []
 var COLWIDTHS = []
+var SELECTED_COLS = []
+var PREV_COLS = []
+var ctx = null
 
 function init(canvas, input, DATA) {
     const COLHEIGHT = 30;
@@ -11,7 +14,7 @@ function init(canvas, input, DATA) {
     const totalHeight = COLHEIGHTS.reduce((s, v) => s + v, 0)
     const totalWidth = COLWIDTHS.reduce((s, v) => s + v, 0)
 
-    const ctx = canvas.getContext("2d")
+    ctx = canvas.getContext("2d")
 
     canvas.setAttribute("height", totalHeight)
     canvas.setAttribute("width", totalWidth)
@@ -67,14 +70,14 @@ function drawColumn(ctx, x, y, width, height, text) {
     ctx.stroke()
 }
 
-function highlightColumn(ctx, x, y, width, height, text) {
-    ctx.clearRect(x, y, width, height)
+function highlightColumn(x, y, text) {
+    ctx.clearRect(x, y, COLWIDTHS[x], COLHEIGHTS[y])
     ctx.save()
-    ctx.rect(x, y, width, height)
+    ctx.rect(x, y, COLWIDTHS[x], COLHEIGHTS[y])
     ctx.fillStyle = "#88d9ff33"
-    ctx.fillRect(x, y, width, height)
+    ctx.fillRect(x, y, COLWIDTHS[x], COLHEIGHTS[y])
     ctx.clip()
-    ctx.fillText(text, x + 5, (height / 2 + y) + 5)
+    ctx.fillText(text, x + 5, (COLHEIGHTS[y] / 2 + y) + 5)
     ctx.restore()
     // ctx.stroke()
 }
@@ -87,7 +90,7 @@ function getCoordinates(event, canvas) {
     return [x, y]
 }
 
-function getColumn(x, y, COLHEIGHTS, COLWIDTHS) {
+function getColumn(x, y, COLHEIGHTS = COLHEIGHTS, COLWIDTHS = COLWIDTHS) {
     let sumY = COLHEIGHTS[0];
     let row = 0;
     for (let i = 0; i < COLHEIGHTS.length; i++) {
@@ -107,6 +110,18 @@ function getColumn(x, y, COLHEIGHTS, COLWIDTHS) {
             break
     }
     return [row, col, sumX - COLWIDTHS[col], sumY - COLHEIGHTS[row]]
+}
+
+function getTopLeft(row, col) {
+    let sumY = COLHEIGHTS[0];
+    for (let i = 1; i <= row; i++) {
+        sumY += COLHEIGHTS[i];
+    }
+    let sumX = 0;
+    for (let i = 0; i <= col; i++) {
+        sumX += COLWIDTHS[i];
+    }
+    return [sumX - COLWIDTHS[col], sumY - COLHEIGHTS[row]]
 }
 
 function getCurrentValue(DATA, HEADERS, row, col) {
@@ -139,7 +154,7 @@ function editor(canvas, ctx, input, COLHEIGHTS, COLWIDTHS, DATA, HEADERS) {
         setCurrentValue(DATA, HEADERS, row, col, value)
         drawColumn(ctx, left, top, COLWIDTHS[col], COLHEIGHTS[row], value, true)
     })
-    canvas.addEventListener("click", function (event) {
+    canvas.addEventListener("dblclick", function (event) {
         let [x, y] = getCoordinates(event, canvas)
         let [row, col, leftX, topY] = getColumn(x, y, COLHEIGHTS, COLWIDTHS)
         let value = getCurrentValue(DATA, HEADERS, row, col)
@@ -151,7 +166,22 @@ function renderSelection(event, canvas, startCoordinates) {
     let [endx, endy] = getCoordinates(event, canvas)
     let [endrow, endcol, startcolx, startcoly] = getColumn(endx, endy, COLHEIGHTS, COLWIDTHS)
     let [startrow, startcol, endcolx, endcoly] = startCoordinates
-    
+    let start = Math.min(startrow, endrow)
+    let end = Math.max(startrow, endrow)
+    PREV_COLS = SELECTED_COLS
+    SELECTED_COLS = []
+
+    for (let i = start; i <= end; i++) {
+        SELECTED_COLS.push([i, startcol])
+    }
+    if (PREV_COLS.length) {
+        let toRemove = PREV_COLS.filter(col => !SELECTED_COLS.map(e => JSON.stringify(e)).includes(JSON.stringify(col)) && col != JSON.stringify([startrow, startcol]))
+        toRemove.forEach(([row, col]) => {
+            let [x, y] = getTopLeft(row, col)
+            // highlightColumn(x, y, "m")
+        })
+    }
+
 }
 
 function startSelection(event, canvas) {
