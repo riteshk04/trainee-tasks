@@ -5,12 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Canva</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="canvas-wrapper">
-
-    </div>
+    <div class="demo" style="height: 600px; "></div>
     <script src="./build/js/canva.js"></script>
     <script>
         const csv = `id,name,country,email_id,gender,telephone_number,state,city,addr1,addr2,dob,FY2019-20,FY2020-21,FY2021-22,FY2022-23,FY2023-24
@@ -25,11 +29,10 @@
 9,Glendon,Portugal,graoult8@boston.com,Male,473-922-8183,Porto,Vila Verde,PO Box 4255,PO Box 1998,4/22/2006,563961,695090,791257,883935,925655
 10,Tiphani,Thailand,tgentzsch9@rediff.com,Female,730-331-7955,,Wat Bot,17th Floor,Suite 89,9/18/2001,518558,683932,720123,803959,928845
 `
-        const wrapper = document.querySelector(".canvas-wrapper")
+        const wrapper = document.querySelector(".demo")
 
         let excel = new Excel(wrapper, csv)
         excel.init()
-        
     </script>
 </body>
 
