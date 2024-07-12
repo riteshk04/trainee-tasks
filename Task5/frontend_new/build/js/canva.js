@@ -1,11 +1,25 @@
 "use strict";
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 var Excel = /** @class */ (function () {
     function Excel(parentElement, csv) {
         this.header = null;
         this.sidebar = null;
         this.ctx = null;
+        this.headers = [];
+        this.sidebarcells = [];
         this.cellheight = 30;
         this.cellwidth = 100;
+        this.mincellwidth = 60;
+        this.scrollX = 0;
+        this.scrollY = 0;
         this.data = [];
         this.wrapper = parentElement;
         this.csv = csv.trim();
@@ -14,7 +28,9 @@ var Excel = /** @class */ (function () {
         this.createData();
         this.createMarkup();
         this.drawHeader();
+        this.drawSidebar();
         this.drawGrid();
+        // this.extendData(5,"X")
     };
     Excel.prototype.createMarkup = function () {
         this.wrapper.style.boxSizing = "border-box";
@@ -23,10 +39,10 @@ var Excel = /** @class */ (function () {
         header.height = this.cellheight;
         this.wrapper.appendChild(header);
         var sidebar = document.createElement("canvas");
-        sidebar.width = this.cellwidth;
+        sidebar.width = this.mincellwidth;
         sidebar.height = this.wrapper.offsetHeight - this.cellheight;
         var canvas = document.createElement("canvas");
-        canvas.width = this.wrapper.offsetWidth - this.cellwidth;
+        canvas.width = this.wrapper.offsetWidth - this.mincellwidth;
         canvas.height = this.wrapper.offsetHeight - this.cellheight;
         this.wrapper.appendChild(sidebar);
         this.wrapper.appendChild(canvas);
@@ -77,7 +93,7 @@ var Excel = /** @class */ (function () {
             context.save();
             context.rect(cell.left, cell.top, cell.width, cell.height);
             context.clip();
-            context.fillText(cell.data, center ? (cell.width / 2 + cell.left) : cell.left + 5, (cell.height / 2 + cell.top) + 5);
+            context.fillText(cell.data, center ? (cell.width / 2 + cell.left - 4) : cell.left + 5, (cell.height / 2 + cell.top) + 5);
             context.restore();
             context.stroke();
         }
@@ -91,7 +107,7 @@ var Excel = /** @class */ (function () {
                 var cell = {
                     data: c,
                     top: 0,
-                    left: (j + 1) * _this.cellwidth,
+                    left: _this.mincellwidth + j * _this.cellwidth,
                     height: _this.cellheight,
                     width: _this.cellwidth,
                     row: 0,
@@ -103,6 +119,31 @@ var Excel = /** @class */ (function () {
                     font: "Arial"
                 };
                 _this.drawCell(cell, _this.header, true);
+                _this.headers.push(cell);
+            });
+        }
+    };
+    Excel.prototype.drawSidebar = function () {
+        var _this = this;
+        var arr = __spreadArray([], Array(50), true).map(function (_, i) { return i; });
+        if (this.header) {
+            arr.forEach(function (c, i) {
+                var cell = {
+                    data: String(c),
+                    top: i * _this.cellheight,
+                    left: 0,
+                    height: _this.cellheight,
+                    width: _this.mincellwidth,
+                    row: 0,
+                    col: i,
+                    isbold: false,
+                    strokeStyle: "#959595",
+                    lineWidth: 1,
+                    fontSize: 16,
+                    font: "Arial"
+                };
+                _this.drawCell(cell, _this.sidebar, true);
+                _this.sidebarcells.push(cell);
             });
         }
     };

@@ -14,14 +14,22 @@ type Cell = {
 }
 
 class Excel {
-    data: Cell[][]
-    wrapper: HTMLElement;
     header: CanvasRenderingContext2D | null = null;
     sidebar: CanvasRenderingContext2D | null = null;
-    ctx: CanvasRenderingContext2D | null = null
+    ctx: CanvasRenderingContext2D | null = null;
+
+    data: Cell[][]
+    headers: Cell[] = []
+    sidebarcells: Cell[] = []
+    wrapper: HTMLElement;
+
     cellheight: number = 30
     cellwidth: number = 100
+    mincellwidth: number = 60
     csv: string;
+
+    scrollX: number = 0
+    scrollY: number = 0
 
     constructor(parentElement: HTMLElement, csv: string) {
         this.data = []
@@ -33,7 +41,9 @@ class Excel {
         this.createData()
         this.createMarkup()
         this.drawHeader()
+        this.drawSidebar()
         this.drawGrid()
+        // this.extendData(5,"X")
     }
 
     createMarkup() {
@@ -44,11 +54,11 @@ class Excel {
         this.wrapper.appendChild(header)
 
         let sidebar = document.createElement("canvas")
-        sidebar.width = this.cellwidth
+        sidebar.width = this.mincellwidth
         sidebar.height = this.wrapper.offsetHeight - this.cellheight
 
         let canvas = document.createElement("canvas")
-        canvas.width = this.wrapper.offsetWidth - this.cellwidth
+        canvas.width = this.wrapper.offsetWidth - this.mincellwidth
         canvas.height = this.wrapper.offsetHeight - this.cellheight
 
         this.wrapper.appendChild(sidebar)
@@ -103,7 +113,7 @@ class Excel {
             context.save()
             context.rect(cell.left, cell.top, cell.width, cell.height)
             context.clip()
-            context.fillText(cell.data, center ? (cell.width / 2 + cell.left) : cell.left + 5, (cell.height / 2 + cell.top) + 5)
+            context.fillText(cell.data, center ? (cell.width / 2 + cell.left - 4) : cell.left + 5, (cell.height / 2 + cell.top) + 5)
             context.restore()
             context.stroke()
         }
@@ -118,7 +128,7 @@ class Excel {
                 let cell: Cell = {
                     data: c,
                     top: 0,
-                    left: (j + 1) * this.cellwidth,
+                    left: this.mincellwidth + j * this.cellwidth,
                     height: this.cellheight,
                     width: this.cellwidth,
                     row: 0,
@@ -130,7 +140,60 @@ class Excel {
                     font: "Arial"
                 }
                 this.drawCell(cell, this.header, true)
+                this.headers.push(cell)
             })
         }
     }
+
+    drawSidebar() {
+        let arr = [...Array(50)].map((_, i) => i)
+        if (this.header) {
+            arr.forEach((c, i) => {
+                let cell: Cell = {
+                    data: String(c),
+                    top: i * this.cellheight,
+                    left: 0,
+                    height: this.cellheight,
+                    width: this.mincellwidth,
+                    row: 0,
+                    col: i,
+                    isbold: false,
+                    strokeStyle: "#959595",
+                    lineWidth: 1,
+                    fontSize: 16,
+                    font: "Arial"
+                }
+                this.drawCell(cell, this.sidebar, true)
+                this.sidebarcells.push(cell)
+            })
+        }
+    }
+    // extendData(count: number, axis: "X" | "Y") {
+    //     if (axis == "X") {
+    //         this.data.forEach((row, i) => {
+    //             let left = row[row.length - 1].left + row[row.length - 1].width
+    //             let top = row[row.length - 1].top
+    //             let height = this.cellheight
+    //             let width = this.cellwidth
+    //             for (let j = row.length; j < row.length + count; j++) {
+    //                 let cell: Cell = {
+    //                     data: "",
+    //                     top: top,
+    //                     left: left,
+    //                     height: height,
+    //                     width: width,
+    //                     row: i,
+    //                     col: j,
+    //                     isbold: false,
+    //                     strokeStyle: "#959595",
+    //                     lineWidth: 1,
+    //                     fontSize: 16,
+    //                     font: "Arial"
+    //                 }
+    //                 row.push(cell)
+    //                 this.drawCell(cell)
+    //             }
+    //         })
+    //     }
+    // }
 }
