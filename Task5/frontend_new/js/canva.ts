@@ -14,6 +14,8 @@ type Cell = {
 }
 
 const primaryColor = "#03723c"
+const strokeColor = "#dadada"
+
 
 class Excel {
     header: CanvasRenderingContext2D | null = null;
@@ -21,7 +23,7 @@ class Excel {
     ctx: CanvasRenderingContext2D | null = null;
 
     data: Cell[][]
-    headers: Cell[] = []
+    headers: Cell[][] = []
     sidebarcells: Cell[] = []
     activeInputCell!: Cell
     wrapper: HTMLElement;
@@ -34,6 +36,7 @@ class Excel {
     cellwidth: number = 100
     mincellwidth: number = 60
     startx: number = 0
+    prevWidth: number = 0
     csv: string;
 
     scrollX: number = 0
@@ -72,6 +75,7 @@ class Excel {
         this.headerElement.addEventListener("mousemove", this.headerMouseMoveObserver.bind(this))
         this.headerElement.addEventListener("mouseup", this.headerMouseUpObserver.bind(this))
         this.headerElement.addEventListener("mousedown", this.headerMouseDownObserver.bind(this))
+        this.headerElement.addEventListener("mouseout", () => { this.isDragging = false })
         window.addEventListener("keydown", this.windowKeypressHandler.bind(this))
     }
 
@@ -132,36 +136,48 @@ class Excel {
     }
 
     headerMouseMoveObserver(event: MouseEvent) {
-        const gap = 5
-        const { x, y } = this.getCoordinates(event, this.headerElement)
-        for (let i = 1; i < this.headers.length; i++) {
-            const edge = this.headers[i].left;
+        const gap = 2
+        const { x } = this.getCoordinates(event, this.headerElement)
+
+        for (let i = 1; i < this.headers[0].length; i++) {
+            const edge = this.headers[0][i].left;
+
             if (Math.max(edge - gap, 0) < x && x < edge + gap) {
                 this.edgeDetected = true
                 this.headerElement.style.cursor = "col-resize"
-                this.edgeCell = this.headers[i - 1]
+                if (!this.isDragging) {
+                    this.edgeCell = this.headers[0][i - 1]
+                    this.prevWidth = this.edgeCell.width
+                }
                 break
             }
             if (!this.isDragging)
                 this.headerElement.style.cursor = "default"
             this.edgeDetected = false
         }
+
+        if (this.isDragging) {
+            let diff = x - this.startx
+            let newWidth = this.prevWidth + diff
+            this.widthShifter(this.edgeCell, newWidth, this.headers)
+            this.widthShifter(this.edgeCell, newWidth, this.data)
+            this.drawHeader()
+            this.drawGrid()
+        }
     }
+
     headerMouseUpObserver(event: MouseEvent) {
         if (this.isDragging) {
             this.isDragging = false
-            const { x } = this.getCoordinates(event)
-            let draggedDistance = x - this.startx
-            this.headerShifter(this.edgeCell, draggedDistance)
-            this.drawHeader()
-            console.log(this.headers)
         }
     }
+
     headerMouseDownObserver(event: MouseEvent) {
         if (this.edgeDetected) {
             this.isDragging = true
             const { x } = this.getCoordinates(event)
             this.startx = x
+            this.prevWidth = this.edgeCell.width
         }
     }
 
@@ -196,44 +212,52 @@ class Excel {
     createHeader() {
         let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         let arr = chars.split("")
+        let arr1d: Cell[] = []
 
         if (this.header) {
             arr.forEach((c, j) => {
                 let cell: Cell = {
                     data: c,
                     top: 0,
-                    left: this.mincellwidth + j * this.cellwidth,
+                    left: j * this.cellwidth,
                     height: this.cellheight,
                     width: this.cellwidth,
                     row: 0,
                     col: j,
                     isbold: false,
-                    strokeStyle: "#dadada96",
+                    strokeStyle: strokeColor,
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial"
                 }
-                this.headers.push(cell)
+                arr1d.push(cell)
             })
+            this.headers.push(arr1d)
         }
     }
 
-    headerShifter(cell: Cell, width: number) {
-        let shifted = false
-        this.headers.forEach(c => {
-            if (!shifted) {
-                if (this.checkSameCell(c, cell)) {
-                    c.width = Math.max(this.mincellwidth, c.width + width)
-                    shifted = true
+    widthShifter(cell: Cell, newWidth: number, data: Cell[][]) {
+        if (newWidth < 60) {
+            newWidth = 60
+        }
+
+        data.forEach(row => {
+            let widthChanged = false
+            row.forEach((c, i) => {
+                if (!widthChanged) {
+                    if (c.left === cell.left) {
+                        c.width = newWidth
+                        widthChanged = true
+                    }
+                } else {
+                    c.left = row[i - 1].left + row[i - 1].width
                 }
-            } else {
-                c.width = Math.max(this.mincellwidth, c.width + width)
-            }
+            })
         })
     }
 
     drawHeader() {
-        this.headers.forEach(cell => {
+        this.headers[0].forEach(cell => {
             this.drawCell(cell, this.header, true)
         })
     }
@@ -251,7 +275,7 @@ class Excel {
                     row: 0,
                     col: i,
                     isbold: false,
-                    strokeStyle: "#dadada96",
+                    strokeStyle: strokeColor,
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial"
@@ -274,9 +298,19 @@ class Excel {
         inputBox.style.boxSizing = "border-box"
         inputBox.style.outline = "none"
 
+        let emptyBox = document.createElement("div")
+        emptyBox.style.width = `${this.mincellwidth}px`
+        emptyBox.style.height = `${this.cellheight}px`
+        emptyBox.style.boxSizing = "border-box"
+        emptyBox.style.display = "inline-block"
+
+
         let header = document.createElement("canvas")
-        header.width = this.wrapper.offsetWidth
+        header.width = this.wrapper.offsetWidth - this.mincellwidth
         header.height = this.cellheight
+        header.style.boxSizing = "border-box"
+
+        this.wrapper.appendChild(emptyBox)
         this.wrapper.appendChild(header)
 
         let sidebar = document.createElement("canvas")
@@ -322,13 +356,13 @@ class Excel {
                 let cell: Cell = {
                     data: col,
                     top: i * this.cellheight,
-                    left: j * this.cellwidth + 1,
+                    left: j * this.cellwidth,
                     height: this.cellheight,
                     width: this.cellwidth,
                     row: i,
                     col: j,
                     isbold: false,
-                    strokeStyle: "#dadada96",
+                    strokeStyle: strokeColor,
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial"
@@ -357,7 +391,7 @@ class Excel {
                         row: i,
                         col: j,
                         isbold: false,
-                        strokeStyle: "#dadada96",
+                        strokeStyle: strokeColor,
                         lineWidth: 1,
                         fontSize: 16,
                         font: "Arial"
@@ -367,6 +401,7 @@ class Excel {
                 }
             })
         } else {
+            // TODO: Extend data
             // this.data.forEach((row, i) => {
             //     let left = row[row.length - 1].left + row[row.length - 1].width
             //     let top = row[row.length - 1].top
@@ -408,6 +443,12 @@ class Excel {
         window.addEventListener("resize", resizeEventHandler.bind(this))
     }
 
+    clearElement(ele: HTMLElement, context?: CanvasRenderingContext2D | null) {
+        if (!context) context = this.ctx!
+        context.clearRect(0, 0, ele.offsetWidth, ele.offsetHeight)
+    }
+
+
     // cell methods
 
     getCoordinates(event: MouseEvent, canvasElement?: HTMLCanvasElement) {
@@ -433,6 +474,7 @@ class Excel {
         }
         return { cell: this.data[0][0], x, y }
     }
+
     drawCell(cell: Cell, ctx?: CanvasRenderingContext2D | null, center?: boolean, clear: boolean = true) {
         let context = null
         context = ctx ? ctx : this.ctx
@@ -444,6 +486,7 @@ class Excel {
             if (clear)
                 context.clearRect(this.scrollX + cell.left - 2, this.scrollY + cell.top - 2, cell.width + 4, cell.height + 4)
             context.clearRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height)
+            context.beginPath()
             context.save()
             context.rect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height)
             context.clip()
@@ -452,6 +495,7 @@ class Excel {
             context.stroke()
         }
     }
+
     moveActiveCell(direction: "TOP" | "LEFT" | "RIGHT" | "BOTTOM") {
         let { row, col } = this.activeInputCell
         if (!this.activeInputCell)
@@ -475,11 +519,13 @@ class Excel {
         }
         this.highLightCell(this.activeInputCell)
     }
+
     setActiveCell(cell: Cell) {
         this.drawCell(this.activeInputCell)
         this.activeInputCell = cell
         this.highLightCell(this.activeInputCell)
     }
+
     highLightCell(cell: Cell) {
         let context = this.ctx
         if (!context) return;
@@ -489,6 +535,7 @@ class Excel {
         context.strokeRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height)
         context.stroke()
     }
+
     checkSameCell(cell1: Cell, cell2: Cell) {
         const { top, left } = cell1
         return cell2.top === top && cell2.left == left
@@ -515,10 +562,8 @@ class Excel {
 
     // scroller(event: WheelEvent, element: HTMLCanvasElement) {
     //     let { deltaX, deltaY } = event
-    //     console.log("🚀 ~ Excel ~ scroller ~ deltaX:", event)
     //     this.scrollX = Math.max(0, this.scrollX + deltaX)
     //     this.scrollY = Math.max(0, this.scrollY + deltaY)
-    //     console.log("🚀 ~ Excel ~ scroller ~ this.scrollY :", this.scrollX)
     //     // this.ctx?.translate(this.scrollX, this.scrollY)
     //     // this.drawGrid()
     // }

@@ -1,5 +1,6 @@
 "use strict";
 const primaryColor = "#03723c";
+const strokeColor = "#dadada";
 class Excel {
     constructor(parentElement, csv) {
         this.header = null;
@@ -13,6 +14,7 @@ class Excel {
         this.cellwidth = 100;
         this.mincellwidth = 60;
         this.startx = 0;
+        this.prevWidth = 0;
         this.scrollX = 0;
         this.scrollY = 0;
         this.isDragging = false;
@@ -40,6 +42,7 @@ class Excel {
         this.headerElement.addEventListener("mousemove", this.headerMouseMoveObserver.bind(this));
         this.headerElement.addEventListener("mouseup", this.headerMouseUpObserver.bind(this));
         this.headerElement.addEventListener("mousedown", this.headerMouseDownObserver.bind(this));
+        this.headerElement.addEventListener("mouseout", () => { this.isDragging = false; });
         window.addEventListener("keydown", this.windowKeypressHandler.bind(this));
     }
     canvasMouseupHandler(event) {
@@ -98,29 +101,35 @@ class Excel {
         }
     }
     headerMouseMoveObserver(event) {
-        const gap = 5;
-        const { x, y } = this.getCoordinates(event, this.headerElement);
-        for (let i = 1; i < this.headers.length; i++) {
-            const edge = this.headers[i].left;
+        const gap = 2;
+        const { x } = this.getCoordinates(event, this.headerElement);
+        for (let i = 1; i < this.headers[0].length; i++) {
+            const edge = this.headers[0][i].left;
             if (Math.max(edge - gap, 0) < x && x < edge + gap) {
                 this.edgeDetected = true;
                 this.headerElement.style.cursor = "col-resize";
-                this.edgeCell = this.headers[i - 1];
+                if (!this.isDragging) {
+                    this.edgeCell = this.headers[0][i - 1];
+                    this.prevWidth = this.edgeCell.width;
+                }
                 break;
             }
             if (!this.isDragging)
                 this.headerElement.style.cursor = "default";
             this.edgeDetected = false;
         }
+        if (this.isDragging) {
+            let diff = x - this.startx;
+            let newWidth = this.prevWidth + diff;
+            this.widthShifter(this.edgeCell, newWidth, this.headers);
+            this.widthShifter(this.edgeCell, newWidth, this.data);
+            this.drawHeader();
+            this.drawGrid();
+        }
     }
     headerMouseUpObserver(event) {
         if (this.isDragging) {
             this.isDragging = false;
-            const { x } = this.getCoordinates(event);
-            let draggedDistance = x - this.startx;
-            this.headerShifter(this.edgeCell, draggedDistance);
-            this.drawHeader();
-            console.log(this.headers);
         }
     }
     headerMouseDownObserver(event) {
@@ -128,6 +137,7 @@ class Excel {
             this.isDragging = true;
             const { x } = this.getCoordinates(event);
             this.startx = x;
+            this.prevWidth = this.edgeCell.width;
         }
     }
     // removeHighLight(cell: Cell) {
@@ -157,42 +167,49 @@ class Excel {
     createHeader() {
         let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let arr = chars.split("");
+        let arr1d = [];
         if (this.header) {
             arr.forEach((c, j) => {
                 let cell = {
                     data: c,
                     top: 0,
-                    left: this.mincellwidth + j * this.cellwidth,
+                    left: j * this.cellwidth,
                     height: this.cellheight,
                     width: this.cellwidth,
                     row: 0,
                     col: j,
                     isbold: false,
-                    strokeStyle: "#dadada96",
+                    strokeStyle: strokeColor,
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial"
                 };
-                this.headers.push(cell);
+                arr1d.push(cell);
             });
+            this.headers.push(arr1d);
         }
     }
-    headerShifter(cell, width) {
-        let shifted = false;
-        this.headers.forEach(c => {
-            if (!shifted) {
-                if (this.checkSameCell(c, cell)) {
-                    c.width = Math.max(this.mincellwidth, c.width + width);
-                    shifted = true;
+    widthShifter(cell, newWidth, data) {
+        if (newWidth < 60) {
+            newWidth = 60;
+        }
+        data.forEach(row => {
+            let widthChanged = false;
+            row.forEach((c, i) => {
+                if (!widthChanged) {
+                    if (c.left === cell.left) {
+                        c.width = newWidth;
+                        widthChanged = true;
+                    }
                 }
-            }
-            else {
-                c.width = Math.max(this.mincellwidth, c.width + width);
-            }
+                else {
+                    c.left = row[i - 1].left + row[i - 1].width;
+                }
+            });
         });
     }
     drawHeader() {
-        this.headers.forEach(cell => {
+        this.headers[0].forEach(cell => {
             this.drawCell(cell, this.header, true);
         });
     }
@@ -209,7 +226,7 @@ class Excel {
                     row: 0,
                     col: i,
                     isbold: false,
-                    strokeStyle: "#dadada96",
+                    strokeStyle: strokeColor,
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial"
@@ -228,9 +245,16 @@ class Excel {
         inputBox.style.position = "absolute";
         inputBox.style.boxSizing = "border-box";
         inputBox.style.outline = "none";
+        let emptyBox = document.createElement("div");
+        emptyBox.style.width = `${this.mincellwidth}px`;
+        emptyBox.style.height = `${this.cellheight}px`;
+        emptyBox.style.boxSizing = "border-box";
+        emptyBox.style.display = "inline-block";
         let header = document.createElement("canvas");
-        header.width = this.wrapper.offsetWidth;
+        header.width = this.wrapper.offsetWidth - this.mincellwidth;
         header.height = this.cellheight;
+        header.style.boxSizing = "border-box";
+        this.wrapper.appendChild(emptyBox);
         this.wrapper.appendChild(header);
         let sidebar = document.createElement("canvas");
         sidebar.width = this.mincellwidth;
@@ -267,13 +291,13 @@ class Excel {
                 let cell = {
                     data: col,
                     top: i * this.cellheight,
-                    left: j * this.cellwidth + 1,
+                    left: j * this.cellwidth,
                     height: this.cellheight,
                     width: this.cellwidth,
                     row: i,
                     col: j,
                     isbold: false,
-                    strokeStyle: "#dadada96",
+                    strokeStyle: strokeColor,
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial"
@@ -301,7 +325,7 @@ class Excel {
                         row: i,
                         col: j,
                         isbold: false,
-                        strokeStyle: "#dadada96",
+                        strokeStyle: strokeColor,
                         lineWidth: 1,
                         fontSize: 16,
                         font: "Arial"
@@ -312,6 +336,7 @@ class Excel {
             });
         }
         else {
+            // TODO: Extend data
             // this.data.forEach((row, i) => {
             //     let left = row[row.length - 1].left + row[row.length - 1].width
             //     let top = row[row.length - 1].top
@@ -351,6 +376,11 @@ class Excel {
         };
         window.addEventListener("resize", resizeEventHandler.bind(this));
     }
+    clearElement(ele, context) {
+        if (!context)
+            context = this.ctx;
+        context.clearRect(0, 0, ele.offsetWidth, ele.offsetHeight);
+    }
     // cell methods
     getCoordinates(event, canvasElement) {
         if (!canvasElement) {
@@ -384,6 +414,7 @@ class Excel {
             if (clear)
                 context.clearRect(this.scrollX + cell.left - 2, this.scrollY + cell.top - 2, cell.width + 4, cell.height + 4);
             context.clearRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
+            context.beginPath();
             context.save();
             context.rect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
             context.clip();
