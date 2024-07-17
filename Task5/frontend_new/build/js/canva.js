@@ -1,4 +1,5 @@
 "use strict";
+const primaryColor = "#03723c";
 class Excel {
     constructor(parentElement, csv) {
         this.header = null;
@@ -14,6 +15,7 @@ class Excel {
         this.scrollX = 0;
         this.scrollY = 0;
         this.isDragging = false;
+        this.inputActive = false;
         this.data = [];
         this.wrapper = parentElement;
         this.csv = csv.trim();
@@ -28,13 +30,28 @@ class Excel {
         this.extendData(5, "X");
         this.attachEventHandlers();
     }
+    // Event handlers
     attachEventHandlers() {
-        this.canvasElement.addEventListener("keyup", this.keyupHandler.bind(this));
-        this.canvasElement.addEventListener("keydown", this.keyupHandler.bind(this));
+        this.canvasElement.addEventListener("mouseup", this.mouseupHandler.bind(this));
+        // this.canvasElement.addEventListener("mousedown", this.keyupHandler.bind(this))
         window.addEventListener("keydown", this.keypressHandler.bind(this));
     }
-    keyupHandler(event) {
+    mouseupHandler(event) {
+        if (this.inputActive) {
+            this.inputBox.style.display = "none";
+        }
         if (!this.isDragging) {
+            const { cell } = this.getCell(event);
+            if (!this.checkSameCell(cell, this.activeInputCell)) {
+                if (this.inputActive) {
+                    this.inputBox.style.display = "none";
+                    this.inputActive = false;
+                }
+                this.setActiveCell(cell);
+            }
+            else {
+                this.createInputBox(cell);
+            }
         }
     }
     keypressHandler(event) {
@@ -58,7 +75,6 @@ class Excel {
                 this.moveActiveCell("BOTTOM");
                 break;
             case "Escape":
-                // Do something for "esc" key press.
                 break;
             case "Backspace":
                 let value = this.activeInputCell.data;
@@ -67,123 +83,13 @@ class Excel {
                 this.highLightCell(this.activeInputCell);
                 break;
             default:
-                if (event.key.match(/^\w$/))
-                    this.activeInputCell.data += event.key;
+                if (event.key.match(/^\w$/)) {
+                    this.createInputBox(this.activeInputCell);
+                }
                 this.drawCell(this.activeInputCell);
                 this.highLightCell(this.activeInputCell);
                 return;
         }
-    }
-    moveActiveCell(direction) {
-        let { row, col } = this.activeInputCell;
-        if (!this.activeInputCell)
-            return;
-        this.drawCell(this.activeInputCell);
-        // this.removeHighLight(this.activeInputCell)
-        switch (direction) {
-            case "TOP":
-                this.activeInputCell = this.data[Math.max(row - 1, 0)][col];
-                break;
-            case "LEFT":
-                this.activeInputCell = this.data[row][Math.max(col - 1, 0)];
-                break;
-            case "RIGHT":
-                this.activeInputCell = this.data[row][Math.min(this.data[0].length - 1, col + 1)];
-                break;
-            case "BOTTOM":
-                this.activeInputCell = this.data[Math.min(this.data.length - 1, row + 1)][col];
-                break;
-        }
-        this.highLightCell(this.activeInputCell);
-    }
-    createMarkup() {
-        this.wrapper.style.boxSizing = "border-box";
-        let header = document.createElement("canvas");
-        header.width = this.wrapper.offsetWidth;
-        header.height = this.cellheight;
-        this.wrapper.appendChild(header);
-        let sidebar = document.createElement("canvas");
-        sidebar.width = this.mincellwidth;
-        sidebar.height = this.wrapper.offsetHeight - this.cellheight;
-        let canvas = document.createElement("canvas");
-        canvas.width = this.wrapper.offsetWidth - this.mincellwidth;
-        canvas.height = this.wrapper.offsetHeight - this.cellheight;
-        this.wrapper.appendChild(sidebar);
-        this.wrapper.appendChild(canvas);
-        this.ctx = canvas.getContext("2d");
-        this.header = header.getContext("2d");
-        this.sidebar = sidebar.getContext("2d");
-        // canvas.addEventListener("wheel", (e) => this.scroller(e, canvas))
-        // sidebar.addEventListener("wheel", (e) => this.scroller(e, sidebar))
-        // header.addEventListener("wheel", (e) => this.scroller(e, header))
-        this.canvasElement = canvas;
-        this.sidebarElement = sidebar;
-        this.headerElement = header;
-    }
-    createData() {
-        this.data = [];
-        let rows = this.csv.split("\n");
-        rows.forEach((row, i) => {
-            let cols = row.split(",");
-            let dataRow = [];
-            cols.forEach((col, j) => {
-                let cell = {
-                    data: col,
-                    top: i * this.cellheight,
-                    left: j * this.cellwidth + 1,
-                    height: this.cellheight,
-                    width: this.cellwidth,
-                    row: i,
-                    col: j,
-                    isbold: false,
-                    strokeStyle: "#dadada96",
-                    lineWidth: 1,
-                    fontSize: 16,
-                    font: "Arial"
-                };
-                dataRow.push(cell);
-            });
-            this.data.push(dataRow);
-        });
-    }
-    drawGrid() {
-        var _a;
-        (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
-        this.data.forEach(row => row.forEach(cell => {
-            this.drawCell(cell, this.ctx, false, false);
-        }));
-        if (this.data.length && this.data[0].length) {
-            this.activeInputCell = this.data[0][0];
-            this.highLightCell(this.activeInputCell);
-        }
-    }
-    drawCell(cell, ctx, center, clear = true) {
-        let context = null;
-        context = ctx ? ctx : this.ctx;
-        if (context) {
-            context.strokeStyle = cell.strokeStyle;
-            context.lineWidth = cell.lineWidth;
-            context.font = `${cell.fontSize}px ${cell.font}`;
-            if (clear)
-                context.clearRect(this.scrollX + cell.left - 2, this.scrollY + cell.top - 2, cell.width + 4, cell.height + 4);
-            context.clearRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
-            context.save();
-            context.rect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
-            context.clip();
-            context.fillText(cell.data, center ? (cell.width / 2 + cell.left - 4) : cell.left + 5, (cell.height / 2 + cell.top) + 5);
-            context.restore();
-            context.stroke();
-        }
-    }
-    highLightCell(cell) {
-        let context = this.ctx;
-        if (!context)
-            return;
-        context.strokeStyle = "#03723c";
-        context.lineWidth = 4;
-        context.beginPath();
-        context.strokeRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
-        context.stroke();
     }
     // removeHighLight(cell: Cell) {
     //     let context = this.ctx
@@ -197,6 +103,18 @@ class Excel {
     //         context.stroke()
     //     })
     // }
+    // Draw methods
+    drawGrid() {
+        var _a;
+        (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
+        this.data.forEach(row => row.forEach(cell => {
+            this.drawCell(cell, this.ctx, false, false);
+        }));
+        if (this.data.length && this.data[0].length) {
+            this.activeInputCell = this.data[0][0];
+            this.highLightCell(this.activeInputCell);
+        }
+    }
     drawHeader() {
         let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let arr = chars.split("");
@@ -243,6 +161,69 @@ class Excel {
                 this.sidebarcells.push(cell);
             });
         }
+    }
+    // Data methods
+    createMarkup() {
+        this.wrapper.style.boxSizing = "border-box";
+        this.wrapper.style.position = "relative";
+        let inputBox = document.createElement("input");
+        inputBox.style.display = "none";
+        inputBox.style.position = "absolute";
+        inputBox.style.boxSizing = "border-box";
+        inputBox.style.outline = "none";
+        let header = document.createElement("canvas");
+        header.width = this.wrapper.offsetWidth;
+        header.height = this.cellheight;
+        this.wrapper.appendChild(header);
+        let sidebar = document.createElement("canvas");
+        sidebar.width = this.mincellwidth;
+        sidebar.height = this.wrapper.offsetHeight - this.cellheight;
+        let inputBoxWrapper = document.createElement("div");
+        inputBoxWrapper.style.position = "relative";
+        inputBoxWrapper.style.display = "inline-block";
+        let canvas = document.createElement("canvas");
+        canvas.width = this.wrapper.offsetWidth - this.mincellwidth;
+        canvas.height = this.wrapper.offsetHeight - this.cellheight;
+        inputBoxWrapper.appendChild(canvas);
+        inputBoxWrapper.appendChild(inputBox);
+        this.wrapper.appendChild(sidebar);
+        this.wrapper.appendChild(inputBoxWrapper);
+        this.ctx = canvas.getContext("2d");
+        this.header = header.getContext("2d");
+        this.sidebar = sidebar.getContext("2d");
+        // canvas.addEventListener("wheel", (e) => this.scroller(e, canvas))
+        // sidebar.addEventListener("wheel", (e) => this.scroller(e, sidebar))
+        // header.addEventListener("wheel", (e) => this.scroller(e, header))
+        this.canvasElement = canvas;
+        this.sidebarElement = sidebar;
+        this.headerElement = header;
+        this.inputBox = inputBox;
+    }
+    createData() {
+        this.data = [];
+        let rows = this.csv.split("\n");
+        rows.forEach((row, i) => {
+            let cols = row.split(",");
+            let dataRow = [];
+            cols.forEach((col, j) => {
+                let cell = {
+                    data: col,
+                    top: i * this.cellheight,
+                    left: j * this.cellwidth + 1,
+                    height: this.cellheight,
+                    width: this.cellwidth,
+                    row: i,
+                    col: j,
+                    isbold: false,
+                    strokeStyle: "#dadada96",
+                    lineWidth: 1,
+                    fontSize: 16,
+                    font: "Arial"
+                };
+                dataRow.push(cell);
+            });
+            this.data.push(dataRow);
+        });
     }
     extendData(count, axis) {
         if (axis == "X") {
@@ -311,5 +292,98 @@ class Excel {
             this.drawSidebar();
         };
         window.addEventListener("resize", resizeEventHandler.bind(this));
+    }
+    // cell methods
+    getCell(event) {
+        let rect = this.canvasElement.getBoundingClientRect();
+        let x = event.clientX - rect.left;
+        let y = event.clientY - rect.top;
+        for (let i = 0; i < this.data.length; i++) {
+            const row = this.data[i];
+            for (let j = 0; j < row.length; j++) {
+                const cell = row[j];
+                if (cell.left < x && x < cell.left + cell.width && cell.top < y && y < cell.top + cell.height) {
+                    return { cell, x, y };
+                }
+            }
+        }
+        return { cell: this.data[0][0], x, y };
+    }
+    drawCell(cell, ctx, center, clear = true) {
+        let context = null;
+        context = ctx ? ctx : this.ctx;
+        if (context) {
+            context.strokeStyle = cell.strokeStyle;
+            context.lineWidth = cell.lineWidth;
+            context.font = `${cell.fontSize}px ${cell.font}`;
+            if (clear)
+                context.clearRect(this.scrollX + cell.left - 2, this.scrollY + cell.top - 2, cell.width + 4, cell.height + 4);
+            context.clearRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
+            context.save();
+            context.rect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
+            context.clip();
+            context.fillText(cell.data, center ? (cell.width / 2 + cell.left - 4) : cell.left + 5, (cell.height / 2 + cell.top) + 5);
+            context.restore();
+            context.stroke();
+        }
+    }
+    moveActiveCell(direction) {
+        let { row, col } = this.activeInputCell;
+        if (!this.activeInputCell)
+            return;
+        this.drawCell(this.activeInputCell);
+        // this.removeHighLight(this.activeInputCell)
+        switch (direction) {
+            case "TOP":
+                this.activeInputCell = this.data[Math.max(row - 1, 0)][col];
+                break;
+            case "LEFT":
+                this.activeInputCell = this.data[row][Math.max(col - 1, 0)];
+                break;
+            case "RIGHT":
+                this.activeInputCell = this.data[row][Math.min(this.data[0].length - 1, col + 1)];
+                break;
+            case "BOTTOM":
+                this.activeInputCell = this.data[Math.min(this.data.length - 1, row + 1)][col];
+                break;
+        }
+        this.highLightCell(this.activeInputCell);
+    }
+    setActiveCell(cell) {
+        this.drawCell(this.activeInputCell);
+        this.activeInputCell = cell;
+        this.highLightCell(this.activeInputCell);
+    }
+    highLightCell(cell) {
+        let context = this.ctx;
+        if (!context)
+            return;
+        context.strokeStyle = primaryColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.strokeRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
+        context.stroke();
+    }
+    checkSameCell(cell1, cell2) {
+        const { top, left } = cell1;
+        return cell2.top === top && cell2.left == left;
+    }
+    // Input box
+    createInputBox(cell) {
+        const { top, left, width, height, font, fontSize, data } = cell;
+        this.inputBox.style.top = `${top}px`;
+        this.inputBox.style.left = `${left}px`;
+        this.inputBox.style.width = `${width}px`;
+        this.inputBox.style.height = `${height}px`;
+        this.inputBox.style.font = `${font}`;
+        this.inputBox.style.fontSize = `${fontSize}px`;
+        this.inputBox.style.paddingLeft = `3px`;
+        this.inputBox.style.border = `2px solid ${primaryColor}`;
+        this.inputBox.value = `${data}`;
+        if (!this.inputActive) {
+            this.inputBox.style.display = `block`;
+            this.inputBox.focus();
+            this.inputActive = true;
+        }
     }
 }
