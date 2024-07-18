@@ -98,8 +98,9 @@ class Excel {
         if (this.selectionMode) {
             const { cell } = this.getCell(event);
             const selectedArea = this.getCellsArea(this.startSelectionCell, cell);
+            this.highlightCells(this.startSelectionCell, cell);
             const toRemoved = this.selectedArea.filter(c => selectedArea.indexOf(c) === -1);
-            selectedArea.forEach(c => this.setSelectionCell(c));
+            // selectedArea.forEach(c => this.drawCell(c))
             toRemoved.forEach(c => this.drawCell(c));
             this.selectedArea = selectedArea;
         }
@@ -494,6 +495,26 @@ class Excel {
         context.lineWidth = 4;
         context.beginPath();
         context.strokeRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
+        context.stroke();
+    }
+    highlightCells(startCell, endCell) {
+        this.selectedArea.forEach(c => this.drawCell(c, undefined, true));
+        let context = this.ctx;
+        if (!context)
+            return;
+        context.strokeStyle = primaryColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        // context.strokeRect(this.scrollX + startCell.left, this.scrollY + startCell.top, cell.width, cell.height)
+        let leftX1 = Math.min(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
+        let leftX2 = Math.max(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
+        let topX1 = Math.min(startCell.top, endCell.top + endCell.height, startCell.top + startCell.height, endCell.top);
+        let topX2 = Math.max(startCell.top, endCell.top + endCell.height, startCell.top + startCell.height, endCell.top);
+        context.moveTo(leftX1, topX1);
+        context.lineTo(leftX2, topX1);
+        context.lineTo(leftX2, topX2);
+        context.lineTo(leftX1, topX2);
+        context.lineTo(leftX1, topX1);
         context.stroke();
     }
     setSelectionCell(cell, ctx) {
