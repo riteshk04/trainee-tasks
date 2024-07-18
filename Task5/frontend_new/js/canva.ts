@@ -79,24 +79,24 @@ class Excel {
         this.canvasElement.addEventListener("mouseup", this.canvasMouseupHandler.bind(this))
         this.canvasElement.addEventListener("mousedown", this.canvasMouseDownHandler.bind(this))
         this.canvasElement.addEventListener("mousemove", this.canvasMouseMoveHandler.bind(this))
+        this.canvasElement.addEventListener("mouseout", () => { this.isDraggingCanvas = false })
 
         this.headerElement.addEventListener("mousemove", this.headerMouseMoveObserver.bind(this))
         this.headerElement.addEventListener("mouseup", this.headerMouseUpObserver.bind(this))
         this.headerElement.addEventListener("mousedown", this.headerMouseDownObserver.bind(this))
-
         this.headerElement.addEventListener("mouseout", () => { this.isDraggingHeader = false })
 
         window.addEventListener("keydown", this.windowKeypressHandler.bind(this))
     }
 
     canvasMouseupHandler(event: MouseEvent) {
-        console.log("up...", this.selectedCells)
         const { cell } = this.getCell(event)
         let newSelectedArea = this.getCellsArea(this.startSelectionCell, cell)
 
         if (!newSelectedArea.length) return
         if (newSelectedArea.length > 1) {
-            console.log(newSelectedArea)
+            this.selectedArea = newSelectedArea
+            this.createStatus()
         } else {
             let cell = newSelectedArea[0]
             this.selectedArea.forEach(c => this.drawCell(c))
@@ -110,6 +110,13 @@ class Excel {
 
         }
         this.selectionMode = false
+    }
+
+    createStatus() {
+        let min = Math.min(...this.selectedArea.map(c => parseInt(c.data) || 0))
+        let max = Math.min(...this.selectedArea.map(c => parseInt(c.data) || 0))
+        let sum = this.selectedArea.map(c => parseInt(c.data) || 0).reduce((a, c) => a + c, 0)
+        console.log("🚀 ~ Excel ~ createStatus ~ min, max, sum:", min, max, sum)
     }
 
     getCellsArea(startCell: Cell, endCell: Cell) {
@@ -132,7 +139,6 @@ class Excel {
     }
 
     canvasMouseDownHandler(event: MouseEvent) {
-        console.log("down...")
         const { cell } = this.getCell(event)
         this.startSelectionCell = cell
         this.selectionMode = true
@@ -590,14 +596,15 @@ class Excel {
         context.stroke()
     }
 
-    highlightCells(startCell: Cell, endCell: Cell) {
+    highlightCells(startCell: Cell, endCell: Cell, ants?: boolean) {
         this.selectedArea.forEach(c => this.drawCell(c, undefined, true))
         let context = this.ctx
         if (!context) return;
         context.strokeStyle = primaryColor
         context.lineWidth = 2
         context.beginPath()
-        // context.setLineDash([5, 3])
+        if (ants)
+            context.setLineDash([5, 3])
         // context.strokeRect(this.scrollX + startCell.left, this.scrollY + startCell.top, cell.width, cell.height)
         let leftX1 = Math.min(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width)
         let leftX2 = Math.max(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width)
@@ -648,7 +655,7 @@ class Excel {
         this.inputBox.style.font = `${font}`
         this.inputBox.style.fontSize = `${fontSize}px`
         this.inputBox.style.paddingLeft = `3px`
-        this.inputBox.style.border = `2px solid ${primaryColor}`
+        this.inputBox.style.border = `1px solid ${primaryColor}`
         this.inputBox.value = `${data}`
         // if (!this.inputActive) {
         this.inputBox.style.display = `block`
