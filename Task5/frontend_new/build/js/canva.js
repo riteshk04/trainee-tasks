@@ -36,7 +36,7 @@ class Excel {
         this.drawSidebar();
         this.drawGrid();
         this.resizer();
-        this.extendData(5, "X");
+        // this.extendData(5, "X")
         this.attachEventHandlers();
     }
     // Event handlers
@@ -53,14 +53,15 @@ class Excel {
     canvasMouseupHandler(event) {
         console.log("up...", this.selectedCells);
         const { cell } = this.getCell(event);
-        this.selectedArea = this.getCellsArea(this.startSelectionCell, cell);
-        if (!this.selectedArea.length)
+        let newSelectedArea = this.getCellsArea(this.startSelectionCell, cell);
+        if (!newSelectedArea.length)
             return;
-        if (this.selectedArea.length > 1) {
-            console.log(this.selectedArea);
+        if (newSelectedArea.length > 1) {
+            console.log(newSelectedArea);
         }
         else {
-            let cell = this.selectedArea[0];
+            let cell = newSelectedArea[0];
+            this.selectedArea.forEach(c => this.drawCell(c));
             if (this.checkSameCell(this.activeInputCell, cell)) {
                 // input box if same cell
                 this.createInputBox(cell);
@@ -69,7 +70,6 @@ class Excel {
                 this.inputBox.style.display = "none";
                 this.setActiveCell(cell);
             }
-            this.selectedArea = [];
         }
         this.selectionMode = false;
     }
@@ -96,6 +96,12 @@ class Excel {
     }
     canvasMouseMoveHandler(event) {
         if (this.selectionMode) {
+            this.inputBox.style.display = "none";
+            if (!this.checkSameCell(this.activeInputCell, this.startSelectionCell)) {
+                this.drawCell(this.activeInputCell);
+                this.activeInputCell = this.startSelectionCell;
+                this.setActiveCell(this.activeInputCell);
+            }
             const { cell } = this.getCell(event);
             const selectedArea = this.getCellsArea(this.startSelectionCell, cell);
             this.highlightCells(this.startSelectionCell, cell);
@@ -191,7 +197,9 @@ class Excel {
             this.drawCell(cell, this.ctx, false);
         }));
         if (this.data.length && this.data[0].length) {
-            this.activeInputCell = this.data[0][0];
+            if (!this.activeInputCell) {
+                this.activeInputCell = this.data[0][0];
+            }
             this.highLightCell(this.activeInputCell);
         }
     }
@@ -445,6 +453,7 @@ class Excel {
         if (context) {
             context.strokeStyle = cell.strokeStyle;
             context.lineWidth = cell.lineWidth;
+            context.setLineDash([]);
             context.font = `${cell.fontSize}px ${cell.font}`;
             if (clear)
                 context.clearRect(this.scrollX + cell.left - 2, this.scrollY + cell.top - 2, cell.width + 4, cell.height + 4);
@@ -492,7 +501,7 @@ class Excel {
         if (!context)
             return;
         context.strokeStyle = primaryColor;
-        context.lineWidth = 4;
+        context.lineWidth = 2;
         context.beginPath();
         context.strokeRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
         context.stroke();
@@ -503,8 +512,9 @@ class Excel {
         if (!context)
             return;
         context.strokeStyle = primaryColor;
-        context.lineWidth = 4;
+        context.lineWidth = 2;
         context.beginPath();
+        // context.setLineDash([5, 3])
         // context.strokeRect(this.scrollX + startCell.left, this.scrollY + startCell.top, cell.width, cell.height)
         let leftX1 = Math.min(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
         let leftX2 = Math.max(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
