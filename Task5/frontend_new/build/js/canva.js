@@ -24,6 +24,7 @@ class Excel {
         this.inputActive = false;
         this.edgeDetected = false;
         this.selectionMode = false;
+        this.horizontalScroll = false;
         this.data = [];
         this.wrapper = parentElement;
         this.csv = csv.trim();
@@ -51,6 +52,7 @@ class Excel {
         this.headerElement.addEventListener("mousedown", this.headerMouseDownObserver.bind(this));
         this.headerElement.addEventListener("mouseout", () => { this.isDraggingHeader = false; });
         window.addEventListener("keydown", this.windowKeypressHandler.bind(this));
+        window.addEventListener("keyup", this.windowKeyupHandler.bind(this));
     }
     canvasMouseupHandler(event) {
         const { cell } = this.getCell(event);
@@ -117,9 +119,26 @@ class Excel {
             this.selectedArea = selectedArea;
         }
     }
+    windowKeyupHandler(event) {
+        this.inputBox.style.display = "none";
+        if (event.shiftKey && event.altKey) {
+            this.horizontalScroll = true;
+            console.log("hsc");
+        }
+        else {
+            this.horizontalScroll = false;
+        }
+    }
     windowKeypressHandler(event) {
         this.inputBox.style.display = "none";
         let ctrlClick = false;
+        if (event.shiftKey && event.altKey) {
+            this.horizontalScroll = true;
+            console.log("hsc");
+        }
+        else {
+            this.horizontalScroll = false;
+        }
         switch (event.key) {
             case "Control":
                 ctrlClick = true;
@@ -237,12 +256,18 @@ class Excel {
                 let initWidth = 0;
                 initHeight += row[0].height;
                 for (let j = 0; j < row.length; j++) {
-                    const col = row[j];
-                    if (initWidth >= newScrollX && initWidth <= canvaWidth) {
+                    if (j === row.length - 1) {
+                        this.extendData(1, "X");
+                        console.log("extendX");
+                    }
+                    if (initWidth > canvaWidth + newScrollX) {
+                        break;
+                    }
+                    else {
+                        initWidth += row[j].width;
+                        const col = row[j];
                         this.drawCell(col);
                     }
-                    if (initWidth > canvaWidth)
-                        break;
                 }
                 // if (initHeight >= newScrollY && initHeight <= canvaHeight) {
                 // }
@@ -440,7 +465,6 @@ class Excel {
             let prevRows = this.data.length;
             for (let i = prevRows; i < prevRows + count; i++) {
                 const prev = this.data[i - 1];
-                console.log("🚀 ~ Excel ~ extendData ~ prev:", prev[i - 1]);
                 let height = this.cellheight;
                 let width = this.cellwidth;
                 let row = [];
@@ -633,8 +657,15 @@ class Excel {
     }
     scroller(event) {
         let { deltaX, deltaY } = event;
-        this.scrollX = Math.max(0, this.scrollX + deltaX);
-        this.scrollY = Math.max(0, this.scrollY + deltaY);
+        if (this.horizontalScroll) {
+            this.scrollY = Math.max(0, this.scrollY + deltaX);
+            this.scrollX = Math.max(0, this.scrollX + deltaY);
+        }
+        else {
+            this.scrollX = Math.max(0, this.scrollX + deltaX);
+            this.scrollY = Math.max(0, this.scrollY + deltaY);
+        }
+        console.log(this.scrollX, this.scrollY);
         this.drawOptimized();
     }
 }
