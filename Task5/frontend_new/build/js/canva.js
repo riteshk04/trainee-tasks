@@ -34,9 +34,9 @@ class Excel {
         this.createHeader();
         this.drawHeader();
         this.drawSidebar();
-        this.drawGrid();
+        // this.drawGrid()
+        this.drawOptimized();
         this.resizer();
-        // this.extendData(5, "X")
         this.attachEventHandlers();
     }
     // Event handlers
@@ -45,6 +45,7 @@ class Excel {
         this.canvasElement.addEventListener("mousedown", this.canvasMouseDownHandler.bind(this));
         this.canvasElement.addEventListener("mousemove", this.canvasMouseMoveHandler.bind(this));
         this.canvasElement.addEventListener("mouseout", () => { this.isDraggingCanvas = false; });
+        this.canvasElement.addEventListener("wheel", this.scroller.bind(this));
         this.headerElement.addEventListener("mousemove", this.headerMouseMoveObserver.bind(this));
         this.headerElement.addEventListener("mouseup", this.headerMouseUpObserver.bind(this));
         this.headerElement.addEventListener("mousedown", this.headerMouseDownObserver.bind(this));
@@ -78,7 +79,6 @@ class Excel {
         let min = Math.min(...this.selectedArea.map(c => parseInt(c.data) || 0));
         let max = Math.min(...this.selectedArea.map(c => parseInt(c.data) || 0));
         let sum = this.selectedArea.map(c => parseInt(c.data) || 0).reduce((a, c) => a + c, 0);
-        console.log("🚀 ~ Excel ~ createStatus ~ min, max, sum:", min, max, sum);
     }
     getCellsArea(startCell, endCell) {
         let { row: starty, col: startx } = startCell;
@@ -119,7 +119,11 @@ class Excel {
     }
     windowKeypressHandler(event) {
         this.inputBox.style.display = "none";
+        let ctrlClick = false;
         switch (event.key) {
+            case "Control":
+                ctrlClick = true;
+                break;
             case "ArrowDown":
                 this.moveActiveCell("BOTTOM");
                 break;
@@ -153,6 +157,9 @@ class Excel {
                 this.drawCell(this.activeInputCell);
                 this.highLightCell(this.activeInputCell);
                 return;
+        }
+        if (!ctrlClick && this.selectedArea.length > 1) {
+            this.selectedArea.forEach(c => this.drawCell(c));
         }
     }
     headerMouseMoveObserver(event) {
@@ -208,6 +215,47 @@ class Excel {
             }
             this.highLightCell(this.activeInputCell);
         }
+    }
+    drawOptimized() {
+        var _a, _b, _c;
+        (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
+        let canvaWidth = this.canvasElement.offsetWidth;
+        let canvaHeight = this.canvasElement.offsetHeight;
+        let initHeight = 0;
+        let newScrollY = (this.scrollY / 100) * this.cellheight;
+        let newScrollX = this.scrollX;
+        (_b = this.ctx) === null || _b === void 0 ? void 0 : _b.translate(-newScrollX, -newScrollY);
+        for (let i = newScrollY / this.cellheight; i < this.data.length; i++) {
+            const row = this.data[i];
+            if (i === this.data.length - 1) {
+                this.extendData(10, "Y");
+            }
+            if (initHeight > canvaHeight + newScrollY) {
+                break;
+            }
+            else {
+                let initWidth = 0;
+                initHeight += row[0].height;
+                for (let j = 0; j < row.length; j++) {
+                    const col = row[j];
+                    if (initWidth >= newScrollX && initWidth <= canvaWidth) {
+                        this.drawCell(col);
+                    }
+                    if (initWidth > canvaWidth)
+                        break;
+                }
+                // if (initHeight >= newScrollY && initHeight <= canvaHeight) {
+                // }
+                // if (initHeight > canvaHeight + newScrollY) break
+            }
+        }
+        (_c = this.ctx) === null || _c === void 0 ? void 0 : _c.setTransform(1, 0, 0, 1, 0, 0);
+        // if (this.data.length && this.data[0].length) {
+        //     if (!this.activeInputCell) {
+        //         this.activeInputCell = this.data[0][0]
+        //     }
+        //     this.highLightCell(this.activeInputCell)
+        // }
     }
     createHeader() {
         let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -298,7 +346,7 @@ class Excel {
         emptyBox.style.boxSizing = "border-box";
         emptyBox.style.display = "inline-block";
         let header = document.createElement("canvas");
-        header.width = this.wrapper.offsetWidth - this.mincellwidth;
+        header.width = this.wrapper.offsetWidth - this.cellwidth;
         header.height = this.cellheight;
         header.style.boxSizing = "border-box";
         this.wrapper.appendChild(emptyBox);
@@ -327,6 +375,10 @@ class Excel {
         this.sidebarElement = sidebar;
         this.headerElement = header;
         this.inputBox = inputBox;
+        this.canvasElement.width = this.wrapper.offsetWidth - this.mincellwidth;
+        this.canvasElement.height = this.wrapper.offsetHeight - this.cellheight;
+        this.headerElement.width = this.wrapper.offsetWidth - this.cellwidth;
+        this.sidebarElement.height = this.wrapper.offsetHeight - this.cellheight;
     }
     createData() {
         this.data = [];
@@ -385,39 +437,43 @@ class Excel {
             });
         }
         else {
-            // TODO: Extend data
-            // this.data.forEach((row, i) => {
-            //     let left = row[row.length - 1].left + row[row.length - 1].width
-            //     let top = row[row.length - 1].top
-            //     let height = this.cellheight
-            //     let width = this.cellwidth
-            //     let prevColumns = row.length
-            //     for (let j = prevColumns; j < prevColumns + count; j++) {
-            //         let cell: Cell = {
-            //             data: "",
-            //             top: top,
-            //             left: left,
-            //             height: height,
-            //             width: width,
-            //             row: i,
-            //             col: j,
-            //             isbold: false,
-            //             strokeStyle: "#959595",
-            //             lineWidth: 1,
-            //             fontSize: 16,
-            //             font: "Arial"
-            //         }
-            //         row.push(cell)
-            //         this.drawCell(cell)
-            //     }
-            // })
+            let prevRows = this.data.length;
+            for (let i = prevRows; i < prevRows + count; i++) {
+                const prev = this.data[i - 1];
+                console.log("🚀 ~ Excel ~ extendData ~ prev:", prev[i - 1]);
+                let height = this.cellheight;
+                let width = this.cellwidth;
+                let row = [];
+                for (let j = 0; j < prev.length; j++) {
+                    let left = prev[j].left;
+                    let top = prev[j].top + prev[j].height;
+                    let cell = {
+                        data: "",
+                        top: top,
+                        left: left,
+                        height: height,
+                        width: width,
+                        row: i,
+                        col: j,
+                        isbold: false,
+                        strokeStyle: strokeColor,
+                        lineWidth: 1,
+                        fontSize: 16,
+                        font: "Arial",
+                        align: "CENTER"
+                    };
+                    this.drawCell(cell);
+                    row.push(cell);
+                }
+                this.data.push(row);
+            }
         }
     }
     resizer() {
         const resizeEventHandler = function () {
             this.canvasElement.width = this.wrapper.offsetWidth - this.mincellwidth;
             this.canvasElement.height = this.wrapper.offsetHeight - this.cellheight;
-            this.headerElement.width = this.wrapper.offsetWidth;
+            this.headerElement.width = this.wrapper.offsetWidth - this.cellwidth;
             this.sidebarElement.height = this.wrapper.offsetHeight - this.cellheight;
             this.drawGrid();
             this.drawHeader();
@@ -462,13 +518,13 @@ class Excel {
             context.setLineDash([]);
             context.font = `${cell.fontSize}px ${cell.font}`;
             if (clear)
-                context.clearRect(this.scrollX + cell.left - 2, this.scrollY + cell.top - 2, cell.width + 4, cell.height + 4);
-            context.clearRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
+                context.clearRect(cell.left - 2, cell.top - 2, cell.width + 4, cell.height + 4);
+            context.clearRect(cell.left, cell.top, cell.width, cell.height);
             context.beginPath();
             context.save();
-            context.rect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height);
+            context.rect(cell.left, cell.top, cell.width, cell.height);
             // context.fillStyle = "#65eaf84a"
-            // context.fillRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height)
+            // context.fillRect(cell.left, cell.top, cell.width, cell.height)
             context.clip();
             context.fillText(cell.data, cell.align === "CENTER" ? (cell.width / 2 + cell.left - 4) : cell.left + 5, (cell.height / 2 + cell.top) + 5);
             context.restore();
@@ -574,5 +630,11 @@ class Excel {
         this.inputBox.focus();
         this.inputActive = true;
         // }
+    }
+    scroller(event) {
+        let { deltaX, deltaY } = event;
+        this.scrollX = Math.max(0, this.scrollX + deltaX);
+        this.scrollY = Math.max(0, this.scrollY + deltaY);
+        this.drawOptimized();
     }
 }
