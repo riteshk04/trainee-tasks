@@ -165,21 +165,17 @@ class Excel {
     }
 
     windowKeyupHandler(event: KeyboardEvent) {
+        if (event.target === this.inputBox) return;
         this.inputBox.style.display = "none"
-        if (event.shiftKey && event.altKey) {
-            this.horizontalScroll = true
-        } else {
-            this.horizontalScroll = false
-        }
+        this.horizontalScroll = event.shiftKey && event.altKey
+
     }
     windowKeypressHandler(event: KeyboardEvent) {
+        if (event.target === this.inputBox) return;
         this.inputBox.style.display = "none"
+        this.horizontalScroll = event.shiftKey && event.altKey
+
         let ctrlClick = false
-        if (event.shiftKey && event.altKey) {
-            this.horizontalScroll = true
-        } else {
-            this.horizontalScroll = false
-        }
 
         switch (event.key) {
             case "Control":
@@ -437,6 +433,7 @@ class Excel {
         inputBox.style.position = "absolute"
         inputBox.style.boxSizing = "border-box"
         inputBox.style.outline = "none"
+        // inputBox.onkeydown = e => e.stopPropagation()
 
         let emptyBox = document.createElement("div")
         emptyBox.style.width = `${this.mincellwidth}px`
@@ -524,7 +521,7 @@ class Excel {
             this.data.forEach((row, i) => {
                 let left = row[row.length - 1].left + row[row.length - 1].width
                 let top = row[row.length - 1].top
-                let height = this.cellheight
+                let height = row[row.length - 1].height
                 let width = this.cellwidth
                 let prevColumns = row.length
                 for (let j = prevColumns; j < prevColumns + count; j++) {
@@ -553,12 +550,12 @@ class Excel {
 
                 const prev = this.data[i - 1];
                 let height = this.cellheight
-                let width = this.cellwidth
                 let row = []
 
                 for (let j = 0; j < prev.length; j++) {
                     let left = prev[j].left
                     let top = prev[j].top + prev[j].height
+                    let width = prev[j].width
                     let cell: Cell = {
                         data: "",
                         top: top,
@@ -572,7 +569,7 @@ class Excel {
                         lineWidth: 1,
                         fontSize: 16,
                         font: "Arial",
-                        align: "CENTER"
+                        align: "LEFT"
                     }
                     this.drawCell(cell)
                     row.push(cell)
@@ -744,7 +741,8 @@ class Excel {
 
     // Input box
     createInputBox(cell: Cell) {
-        const { top, left, width, height, font, fontSize, data } = cell
+        console.log("🚀 ~ Excel ~ createInputBox ~ cell:", cell)
+        const { top, left, width, height, font, fontSize, data, row, col } = cell
         this.inputBox.style.top = `${top - this.scrollY}px`
         this.inputBox.style.left = `${left - this.scrollX}px`
         this.inputBox.style.width = `${width}px`
@@ -758,16 +756,22 @@ class Excel {
         this.inputBox.style.display = `block`
         this.inputBox.focus()
         this.inputActive = true
+        this.inputBox.onchange = (e: any) => {
+            e.stopPropagation()
+            this.data[row][col].data = e.target.value
+            console.log("🚀 ~ Excel ~ createInputBox ~ this.data[row][col]:", this.data[row][col])
+        }
         // }
     }
 
     scroller(event: WheelEvent) {
         let { deltaX, deltaY } = event
         if (this.horizontalScroll) {
-            this.scrollY = Math.max(0, this.scrollY + (deltaX < 0 ? -30 : 30))
+            console.log("🚀 ~ Excel ~ scroller ~ { deltaX, deltaY }:", { deltaX, deltaY })
+            // this.scrollY = Math.max(0, this.scrollY + (deltaX < 0 ? -30 : 30))
             this.scrollX = Math.max(0, this.scrollX + deltaY)
         } else {
-            this.scrollX = Math.max(0, this.scrollX + deltaX)
+            // this.scrollX = Math.max(0, this.scrollX + deltaX)
             this.scrollY = Math.max(0, this.scrollY + (deltaY < 0 ? -30 : 30))
         }
         this.drawOptimized()
