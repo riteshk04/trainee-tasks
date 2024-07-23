@@ -68,8 +68,7 @@ class Excel {
         this.createHeader()
         this.drawHeader()
         this.drawSidebar()
-        // this.drawGrid()
-        this.drawOptimized()
+        this.drawExcel()
         this.resizer()
         this.attachEventHandlers()
     }
@@ -104,7 +103,6 @@ class Excel {
             let cell = newSelectedArea[0]
             this.selectedArea.forEach(c => this.drawCell(c))
             if (this.checkSameCell(this.activeInputCell, cell)) {
-                // input box if same cell
                 this.createInputBox(cell)
             } else {
                 this.inputBox.style.display = "none"
@@ -116,9 +114,6 @@ class Excel {
     }
 
     createStatus() {
-        let min = Math.min(...this.selectedArea.map(c => parseInt(c.data) || 0))
-        let max = Math.min(...this.selectedArea.map(c => parseInt(c.data) || 0))
-        let sum = this.selectedArea.map(c => parseInt(c.data) || 0).reduce((a, c) => a + c, 0)
     }
 
     getCellsArea(startCell: Cell, endCell: Cell) {
@@ -281,8 +276,11 @@ class Excel {
         }
     }
 
-    drawOptimized() {
+    drawExcel() {
         this.ctx?.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height)
+        this.header?.clearRect(0, 0, this.headerElement.width, this.headerElement.height)
+        this.sidebar?.clearRect(0, 0, this.sidebarElement.width, this.sidebarElement.height)
+
         let canvaWidth = this.canvasElement.offsetWidth
         let canvaHeight = this.canvasElement.offsetHeight
 
@@ -304,6 +302,7 @@ class Excel {
             } else {
                 let initWidth = 0
                 initHeight += row[0].height
+                this.drawCell(this.sidebarcells[i], this.sidebar)
 
                 for (let j = 0; j < row.length; j++) {
                     if (j === row.length - 1) {
@@ -315,22 +314,21 @@ class Excel {
                         initWidth += row[j].width
                         const col = row[j];
                         this.drawCell(col)
-                        if (!activeCellCreated) {
+                        this.drawCell(this.headers[0][j], this.header)
+                        if (!activeCellCreated && !this.activeInputCell) {
                             activeCellCreated = true
                             this.activeInputCell = col
                             this.highLightCell(this.activeInputCell)
                         }
                     }
                 }
-
-
                 // if (initHeight >= newScrollY && initHeight <= canvaHeight) {
                 // }
                 // if (initHeight > canvaHeight + newScrollY) break
             }
         }
         // this.ctx?.setTransform(1, 0, 0, 1, 0, 0);
-        this.header?.setTransform(1, 0, 0, 1, 0, 0);
+        // this.header?.setTransform(1, 0, 0, 1, 0, 0);
 
         // if (this.data.length && this.data[0].length) {
         //     if (!this.activeInputCell) {
@@ -367,10 +365,61 @@ class Excel {
             this.headers.push(arr1d)
         }
     }
-    extendHeader() {
 
+    extendSidebar(count: number) {
+        let prevRows = this.sidebarcells.length
+        for (let i = prevRows; i < prevRows + count; i++) {
+            const prev = this.sidebarcells[i - 1];
+            let height = this.cellheight
+            let top = prev.top + prev.height
+            let width = prev.width
+            let cell: Cell = {
+                data: String(i + 1),
+                top: top,
+                left: 0,
+                height: height,
+                width: width,
+                row: i,
+                col: 0,
+                isbold: false,
+                strokeStyle: strokeColor,
+                lineWidth: 1,
+                fontSize: 16,
+                font: "Arial",
+                align: "CENTER"
+            }
+            this.sidebarcells.push(cell)
+        }
     }
 
+    extendHeader(count: number) {
+        this.headers.forEach((row, i) => {
+            let left = row[row.length - 1].left + row[row.length - 1].width
+            let top = row[row.length - 1].top
+            let height = row[row.length - 1].height
+            let width = this.cellwidth
+            let prevColumns = row.length
+            for (let j = prevColumns; j < prevColumns + count; j++) {
+                let cell: Cell = {
+                    data: this.toLetters(j + 1),
+                    top: top,
+                    left: left,
+                    height: height,
+                    width: width,
+                    row: i,
+                    col: j,
+                    isbold: false,
+                    strokeStyle: strokeColor,
+                    lineWidth: 1,
+                    fontSize: 16,
+                    font: "Arial",
+                    align: "CENTER"
+                }
+                row.push(cell)
+                this.drawCell(cell)
+            }
+        })
+    }
     widthShifter(cell: Cell, newWidth: number, data: Cell[][]) {
         if (newWidth < 60) {
             newWidth = 60
@@ -398,7 +447,7 @@ class Excel {
     }
 
     drawSidebar() {
-        let arr = [...Array(50)].map((_, i) => i + 1)
+        let arr = [...Array(this.data.length || 50)].map((_, i) => i + 1)
         if (this.header) {
             arr.forEach((c, i) => {
                 let cell: Cell = {
@@ -414,7 +463,7 @@ class Excel {
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial",
-                    align: "LEFT"
+                    align: "CENTER"
                 }
                 this.drawCell(cell, this.sidebar, true)
                 this.sidebarcells.push(cell)
@@ -544,6 +593,7 @@ class Excel {
                     this.drawCell(cell)
                 }
             })
+            this.extendHeader(count)
         } else {
             let prevRows = this.data.length
             for (let i = prevRows; i < prevRows + count; i++) {
@@ -576,6 +626,7 @@ class Excel {
                 }
                 this.data.push(row)
             }
+            this.extendSidebar(count)
         }
     }
 
@@ -629,23 +680,40 @@ class Excel {
         context = ctx ? ctx : this.ctx
 
         if (context) {
+            switch (context) {
+                case this.sidebar:
+                    context.translate(this.scrollX, 0)
+                    break;
+                case this.header:
+                    context.translate(0, this.scrollY)
+                    break;
+                default:
+                    break;
+            }
             context.strokeStyle = cell.strokeStyle;
             context.lineWidth = cell.lineWidth;
             context.setLineDash([])
             context.font = `${cell.fontSize}px ${cell.font}`;
             if (clear)
                 context.clearRect(cell.left - this.scrollX - 2, cell.top - 2 - this.scrollY, cell.width + 4, cell.height + 4)
-            context.clearRect(cell.left - this.scrollX, cell.top - this.scrollY, cell.width, cell.height)
+            context.clearRect(cell.left - this.scrollX - 0.5, cell.top - this.scrollY - 0.5, cell.width + 1, cell.height + 1)
             context.beginPath()
             context.save()
-            context.rect(cell.left - this.scrollX, cell.top - this.scrollY, cell.width, cell.height)
+            context.rect(cell.left - this.scrollX - 0.5, cell.top - this.scrollY - 0.5, cell.width + 1, cell.height + 1)
             // context.fillStyle = "#65eaf84a"
             // context.fillRect(cell.left, cell.top, cell.width, cell.height)
             context.clip()
-            context.fillText(cell.data, cell.align === "CENTER" ? (cell.width / 2 + (cell.left - this.scrollX) - 4) : (cell.left - this.scrollX) + 5, (cell.height / 2 + (cell.top - this.scrollY)) + 5)
+            context.fillText(cell.data,
+                cell.align === "CENTER" ?
+                    (cell.width / 2 + (cell.left - this.scrollX) - 4) :
+                    cell.align !== "RIGHT" ? (cell.left - this.scrollX) + 5 :
+                        ((cell.left - this.scrollX) + cell.width / 2),
+                (cell.height / 2 + (cell.top - this.scrollY)) + 5)
             context.restore()
             context.stroke()
+            context.setTransform(1, 0, 0, 1, 0, 0);
         }
+
     }
 
     moveActiveCell(direction: "TOP" | "LEFT" | "RIGHT" | "BOTTOM") {
@@ -653,20 +721,35 @@ class Excel {
         if (!this.activeInputCell)
             return;
         this.drawCell(this.activeInputCell)
-        // this.removeHighLight(this.activeInputCell)
 
         switch (direction) {
             case "TOP":
                 this.activeInputCell = this.data[Math.max(row - 1, 0)][col]
+                if (this.activeInputCell.top - this.cellheight < this.scrollY) {
+                    this.scrollY = Math.max(0, this.scrollY - this.cellheight)
+                    this.drawExcel()
+                }
                 break
             case "LEFT":
                 this.activeInputCell = this.data[row][Math.max(col - 1, 0)]
+                if (this.activeInputCell.left - this.cellwidth < this.scrollX) {
+                    this.scrollX = Math.max(0, this.scrollX - this.cellwidth)
+                    this.drawExcel()
+                }
                 break
             case "RIGHT":
                 this.activeInputCell = this.data[row][Math.min(this.data[0].length - 1, col + 1)]
+                if (this.activeInputCell.left + this.cellwidth > this.scrollX + this.canvasElement.offsetWidth) {
+                    this.scrollX += this.cellwidth
+                    this.drawExcel()
+                }
                 break
             case "BOTTOM":
                 this.activeInputCell = this.data[Math.min(this.data.length - 1, row + 1)][col]
+                if (this.activeInputCell.top + this.cellheight > this.scrollY + this.canvasElement.offsetHeight) {
+                    this.scrollY += this.cellheight
+                    this.drawExcel()
+                }
                 break
         }
         this.highLightCell(this.activeInputCell)
@@ -684,7 +767,7 @@ class Excel {
         context.strokeStyle = primaryColor
         context.lineWidth = 2
         context.beginPath()
-        context.strokeRect(cell.left - this.scrollX, cell.top - this.scrollY, cell.width, cell.height)
+        context.strokeRect(cell.left - this.scrollX - 1, cell.top - this.scrollY - 1, cell.width + 1, cell.height + 1)
         context.stroke()
     }
 
@@ -721,12 +804,12 @@ class Excel {
             context.strokeStyle = cell.strokeStyle;
             context.lineWidth = cell.lineWidth;
             context.font = `${cell.fontSize}px ${cell.font}`;
-            context.clearRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height)
+            context.clearRect(this.scrollX + cell.left - 1, this.scrollY + cell.top - 0.5, cell.width + 1, cell.height + 1)
             context.beginPath()
             context.save()
-            context.rect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height)
+            context.rect(this.scrollX + cell.left - 1, this.scrollY + cell.top - 0.5, cell.width + 1, cell.height + 1)
             context.fillStyle = "#65eaf84a"
-            context.fillRect(this.scrollX + cell.left, this.scrollY + cell.top, cell.width, cell.height)
+            context.fillRect(this.scrollX + cell.left - 1, this.scrollY + cell.top - 0.5, cell.width + 1, cell.height + 1)
             context.clip()
             context.fillText(cell.data, cell.align === "CENTER" ? (cell.width / 2 + cell.left - 4) : cell.left + 5, (cell.height / 2 + cell.top) + 5)
             context.restore()
@@ -741,10 +824,9 @@ class Excel {
 
     // Input box
     createInputBox(cell: Cell) {
-        console.log("🚀 ~ Excel ~ createInputBox ~ cell:", cell)
         const { top, left, width, height, font, fontSize, data, row, col } = cell
-        this.inputBox.style.top = `${top - this.scrollY}px`
-        this.inputBox.style.left = `${left - this.scrollX}px`
+        this.inputBox.style.top = `${top - this.scrollY - 0.5}px`
+        this.inputBox.style.left = `${left - this.scrollX - 0.5}px`
         this.inputBox.style.width = `${width}px`
         this.inputBox.style.height = `${height}px`
         this.inputBox.style.font = `${font}`
@@ -759,22 +841,24 @@ class Excel {
         this.inputBox.onchange = (e: any) => {
             e.stopPropagation()
             this.data[row][col].data = e.target.value
-            console.log("🚀 ~ Excel ~ createInputBox ~ this.data[row][col]:", this.data[row][col])
         }
         // }
     }
 
     scroller(event: WheelEvent) {
-        let { deltaX, deltaY } = event
+        let { deltaY } = event
         if (this.horizontalScroll) {
-            console.log("🚀 ~ Excel ~ scroller ~ { deltaX, deltaY }:", { deltaX, deltaY })
-            // this.scrollY = Math.max(0, this.scrollY + (deltaX < 0 ? -30 : 30))
             this.scrollX = Math.max(0, this.scrollX + deltaY)
         } else {
-            // this.scrollX = Math.max(0, this.scrollX + deltaX)
             this.scrollY = Math.max(0, this.scrollY + (deltaY < 0 ? -30 : 30))
         }
-        this.drawOptimized()
+        this.drawExcel()
     }
 
+    toLetters(num: number): string {
+        var mod = num % 26,
+            pow = num / 26 | 0,
+            out = mod ? String.fromCharCode(64 + mod) : (--pow, 'Z');
+        return pow ? this.toLetters(pow) + out : out;
+    }
 }
