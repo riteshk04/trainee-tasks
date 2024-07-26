@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canva</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            height: 100vh;
+        }
+        .demo{
+            height: 100%;
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo"></div>
+    <script src="./build/js/canvav2.js"></script>
+    <script>
+        const csv = `id,name,country,email_id,gender,telephone_number,state,city,addr1,addr2,dob,FY2019-20,FY2020-21,FY2021-22,FY2022-23,FY2023-24
+1,Perice,Zambia,pkneeshaw0@si.edu,Male,583-125-0584,,Mungwi,Room 390,Apt 299,2/7/2002,588941,610137,745617,807292,927796
+2,Marci,Mayotte,mlorman1@about.com,Female,860-560-7873,,Chirongui,Apt 678,Room 389,11/5/2004,587098,680356,718990,886035,902030
+3,Karoly,China,kbeal2@yahoo.com,Female,855-469-8973,,Sanjie,Apt 405,Suite 5,5/19/2006,546864,680819,771538,882994,1040143
+4,Dulce,Indonesia,dricardou3@shinystat.com,Female,684-642-7087,,Sumurgung,Room 1300,Room 1228,9/19/2009,533020,659810,744962,815186,929364
+5,Barrie,Vietnam,byushmanov4@slideshare.net,Female,533-119-5194,,Cà Mau,17th Floor,11th Floor,9/11/2006,597458,627644,792878,834491,1029385
+6,Merna,Sweden,morro5@tumblr.com,Female,806-308-1096,Stockholm,Södertälje,Suite 50,Room 1361,11/9/2008,578472,611664,736827,874343,901968
+7,Maura,China,mglassborow6@163.com,Female,179-160-6151,,Ningtang,Suite 2,Apt 496,4/29/2003,520092,694729,784070,806163,956583
+8,Hollie,Guatemala,hdunbavin7@nifty.com,Female,985-937-3816,,Monjas,Suite 59,12th Floor,9/26/2006,593967,691998,765226,893432,992291
+9,Glendon,Portugal,graoult8@boston.com,Male,473-922-8183,Porto,Vila Verde,PO Box 4255,PO Box 1998,4/22/2006,563961,695090,791257,883935,925655
+10,Tiphani,Thailand,tgentzsch9@rediff.com,Female,730-331-7955,,Wat Bot,17th Floor,Suite 89,9/18/2001,518558,683932,720123,803959,928845
+11,Maddie,Guinea,mgatusa@shop-pro.jp,Female,652-142-5706,,Fria,Apt 1027,Room 1985,6/11/2009,503782,639833,765876,866706,904465
+12,Reynard,Peru,rtribellb@yahoo.com,Bigender,660-137-0041,,Colca,PO Box 73753,Apt 284,3/17/2009,558283,657308,751680,822775,925340
+13,Sue,Poland,sreddanc@delicious.com,Genderqueer,706-347-4284,,Owczarnia,Apt 554,Suite 19,10/6/2005,524032,682852,707090,832488,1005208
+14,Tallulah,Indonesia,tdumperd@oracle.com,Female,115-738-2643,,Tenggina Daya,PO Box 70399,Suite 57,7/26/2002,570857,625950,751480,848721,914650
+15,Nev,France,nmorote@dailymail.co.uk,Male,909-917-6961,Île-de-France,Rungis,Suite 20,Room 904,12/4/2000,598995,647430,791275,875438,1051409
+16,Ezmeralda,Poland,esegebrechtf@microsoft.com,Female,292-582-1239,,Hajnówka,Room 1705,Suite 80,8/27/2003,511630,604734,772126,880639,979869
+17,Arron,Poland,ashuttlewoodg@163.com,Male,645-956-0857,,Nysa,Apt 1758,PO Box 97063,8/13/2006,505122,647006,731713,897244,921770
+18,Clerissa,United States,cchooterh@pen.io,Female,801-638-6490,Utah,Ogden,PO Box 44612,PO Box 96541,7/24/2007,592889,653633,722410,805640,921331
+19,Giorgio,Macedonia,gwheatlandi@harvard.edu,Male,493-145-8744,,Bogovinje,PO Box 30276,Apt 621,5/28/2003,529158,652424,765303,820198,904329
+20,Bord,Russia,bhullsj@utexas.edu,Male,532-341-6332,,Kalinovskaya,Room 1531,12th Floor,4/23/2003,550906,652919,739094,801503,1041926
+21,Ganny,Brazil,gdwellingk@jimdo.com,Male,416-697-2091,,Rio Preto da Eva,Room 1752,Room 1031,3/11/2005,527440,670044,701991,807750,1039912
+22,Forbes,United States,ftithacottl@bloomberg.com,Male,914-240-5605,New York,Staten Island,Room 1782,11th Floor,9/22/2007,543032,604798,746419,833729,933080
+23,Euphemia,Russia,enaresm@google.ca,Female,945-438-0405,,Bobrov,Room 1288,Suite 38,12/15/2008,594708,602769,757927,854964,1087320
+24,Rabi,Nepal,rgadneyn@is.gd,Male,462-847-6082,,Ilām,Apt 1730,Apt 1672,8/21/2008,513520,622960,728590,827795,925287
+25,Bronnie,Bulgaria,bcarradiceo@ow.ly,Male,162-919-8418,,Gorna Oryakhovitsa,Apt 1109,13th Floor,10/19/2008,520225,662730,702759,815802,1019257
+26,Gratiana,Philippines,gleavryp@networksolutions.com,Female,769-359-8319,,Sigaboy,20th Floor,PO Box 64355,7/10/2005,508610,670029,764488,853620,979685
+27,Viva,China,vhaizeldenq@sina.com.cn,Female,741-192-0255,,Qiaoxi,PO Box 16351,PO Box 58467,12/15/2003,582033,651784,772148,800362,1051225
+28,Rolando,Mozambique,rloydr@webnode.com,Male,129-714-5624,,Tete,Apt 130,PO Box 16118,12/15/2005,553685,611615,705112,867214,1098353
+29,Flory,Bhutan,fnairys@fema.gov,Male,421-719-7984,,Daphu,Room 690,PO Box 23848,2/15/2008,572766,658645,785102,829506,1079309
+30,Brigg,China,bderxt@lulu.com,Male,182-275-7772,,Taiping,PO Box 25430,Room 365,10/22/2009,549697,699816,771713,892199,961520
+31,Christie,China,cseneschalu@china.com.cn,Male,244-697-4920,,Shenji,PO Box 54871,7th Floor,1/27/2005,533227,604925,753468,895951,906902
+32,Prudy,Indonesia,phelksv@newyorker.com,Female,158-163-3885,,Kudang,Suite 50,Apt 482,8/23/2008,581730,641568,765622,835520,1077710
+33,Nealy,Indonesia,nantczakw@telegraph.co.uk,Male,353-194-7220,,Dusun Desa Bunter,Room 50,Room 1529,11/28/2008,540238,632759,794784,813080,1093901
+34,Augusta,United States,aescalax@alibaba.com,Female,910-684-9074,North Carolina,Wilmington,Apt 624,PO Box 76265,6/6/2009,588701,691252,723378,848374,1014894
+35,Bern,Mexico,bmaffioney@msu.edu,Male,224-478-2442,Veracruz Llave,Emiliano Zapata,Apt 672,3rd Floor,4/11/2004,536200,673301,756554,845449,962991
+36,Dru,Poland,ddanslowz@reddit.com,Male,216-447-6114,,Czerwonak,19th Floor,PO Box 25424,10/5/2002,518558,674423,786897,880743,1046118
+37,Annamarie,Russia,abaudic10@uiuc.edu,Female,242-287-1497,,Urus-Martan,4th Floor,Room 1774,11/26/2009,538804,657842,742554,894139,1026126
+38,Myles,Kazakhstan,mtrenbay11@free.fr,Male,148-419-2345,,Oytal,Apt 1966,PO Box 56747,3/24/2001,575200,602171,799004,876799,981273
+39,Pate,China,pmcgill12@angelfire.com,Male,338-589-1709,,Duyun,Suite 29,Suite 15,5/4/2007,565990,630206,753460,842623,991847
+40,Mel,Indonesia,mfilon13@vinaora.com,Male,903-651-1922,,Penambangan,Room 99,Apt 1943,4/4/2006,519060,604109,727061,884761,1038777
+41,Jacques,Ukraine,jfairhurst14@berkeley.edu,Male,926-207-3239,,Ivanivka,Suite 21,19th Floor,3/6/2010,540904,644272,726086,856093,916410
+42,Idell,China,iwimpress15@prlog.org,Female,645-406-5392,,Chadian,Apt 1575,Room 827,6/20/2009,574575,693786,712410,833166,920139
+43,Geno,Ukraine,ggrote16@ifeng.com,Non-binary,681-339-5469,,Volnovakha,Room 1347,Apt 1283,1/20/2005,560373,695538,730924,837287,907971
+44,Jana,China,jmoss17@fda.gov,Female,573-344-0581,,Xinglongquan,6th Floor,6th Floor,6/21/2002,597070,603462,766044,820285,1078339
+45,Pincas,China,pbradfield18@webnode.com,Male,430-926-1497,,Duanjia,Room 318,Room 158,5/2/2005,591818,634554,709203,866539,952990
+46,Jillene,Philippines,jpaute19@skyrock.com,Bigender,842-743-5757,,Balagui,Suite 28,PO Box 70746,11/18/2004,572067,659747,765570,813514,958052
+47,Sisely,China,sabbis1a@walmart.com,Female,253-101-5565,,Anhua,PO Box 91555,Room 1892,3/29/2008,504031,626483,767511,866901,1056289
+48,Paco,China,piltchev1b@seattletimes.com,Non-binary,834-723-2645,,Liuhao,Apt 972,20th Floor,6/4/2002,577563,622530,729346,895731,900249
+49,Willey,Argentina,wlowles1c@epa.gov,Male,165-220-1555,,Ingenio La Esperanza,Room 1012,Suite 44,3/19/2006,575565,693976,704634,816251,919419
+50,Othello,Indonesia,oarmfield1d@umn.edu,Male,242-404-4498,,Cibunut,Suite 25,Suite 39,11/25/2002,595115,639182,729153,848788,1042480
+`
+        const wrapper = document.querySelector(".demo")
+
+        let excel = new ExcelV2(wrapper, csv)
+        excel.render()
+    </script>
+</body>
+
+</html>

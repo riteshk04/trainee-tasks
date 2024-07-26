@@ -322,9 +322,6 @@ class Excel {
                         }
                     }
                 }
-                // if (initHeight >= newScrollY && initHeight <= canvaHeight) {
-                // }
-                // if (initHeight > canvaHeight + newScrollY) break
             }
         }
         // this.ctx?.setTransform(1, 0, 0, 1, 0, 0);
@@ -336,6 +333,7 @@ class Excel {
         //     }
         //     this.highLightCell(this.activeInputCell)
         // }
+        // requestAnimationFrame(this.drawExcel.bind(this))
     }
 
     createHeader() {
@@ -675,7 +673,7 @@ class Excel {
         return { cell: this.data[0][0], x, y }
     }
 
-    drawCell(cell: Cell, ctx?: CanvasRenderingContext2D | null, clear: boolean = true) {
+    drawCell(cell: Cell, ctx?: CanvasRenderingContext2D | null, clear: boolean = true, type?: "SIDEBAR" | "HEADER") {
         let context = null
         context = ctx ? ctx : this.ctx
 
@@ -690,15 +688,19 @@ class Excel {
                 default:
                     break;
             }
+
             context.strokeStyle = cell.strokeStyle;
             context.lineWidth = cell.lineWidth;
             context.setLineDash([])
             context.font = `${cell.fontSize}px ${cell.font}`;
+
             if (clear)
                 context.clearRect(cell.left - this.scrollX - 2, cell.top - 2 - this.scrollY, cell.width + 4, cell.height + 4)
-            context.clearRect(cell.left - this.scrollX - 0.5, cell.top - this.scrollY - 0.5, cell.width + 1, cell.height + 1)
-            context.beginPath()
+            else
+                context.clearRect(cell.left - this.scrollX - 0.5, cell.top - this.scrollY - 0.5, cell.width + 1, cell.height + 1)
+
             context.save()
+            context.beginPath()
             context.rect(cell.left - this.scrollX - 0.5, cell.top - this.scrollY - 0.5, cell.width + 1, cell.height + 1)
             // context.fillStyle = "#65eaf84a"
             // context.fillRect(cell.left, cell.top, cell.width, cell.height)
@@ -706,13 +708,25 @@ class Excel {
             context.fillText(cell.data,
                 cell.align === "CENTER" ?
                     (cell.width / 2 + (cell.left - this.scrollX) - 4) :
-                    cell.align !== "RIGHT" ? (cell.left - this.scrollX) + 5 :
+                    cell.align !== "RIGHT" ?
+                        (cell.left - this.scrollX) + 5 :
                         ((cell.left - this.scrollX) + cell.width / 2),
                 (cell.height / 2 + (cell.top - this.scrollY)) + 5)
             context.restore()
             context.stroke()
+            if (type) {
+
+            }
             context.setTransform(1, 0, 0, 1, 0, 0);
+            // if (!sidecells) {
+            //     this.drawCell(this.data[cell.row+1][cell.col], ctx,false,true)
+            //     this.drawCell(this.data[cell.row][cell.col+1], ctx,false,true)
+            // }
         }
+
+    }
+
+    drawSidebarCell(cell: Cell) {
 
     }
 
@@ -766,8 +780,11 @@ class Excel {
         if (!context) return;
         context.strokeStyle = primaryColor
         context.lineWidth = 2
+        context.save()
         context.beginPath()
-        context.strokeRect(cell.left - this.scrollX - 1, cell.top - this.scrollY - 1, cell.width + 1, cell.height + 1)
+        context.rect(cell.left - this.scrollX - 1, cell.top - this.scrollY - 1, cell.width + 1, cell.height + 1)
+        context.clip()
+        context.restore()
         context.stroke()
     }
 
