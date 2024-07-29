@@ -44,6 +44,7 @@ class ExcelV2 {
     dy = 10
     scrolling = false
     smoothingFactor = 0.1
+    extracells = 30
 
     selectionMode: SelectionModeCanva = {
         active: false,
@@ -61,8 +62,9 @@ class ExcelV2 {
     }
 
     init() {
+        this.wrapper.innerHTML = "Loading..."
+        this.createData()
         this.createMarkup()
-        this.canvas.data = this.createData()
         this.extendHeader(100)
         this.extendSidebar(100)
         this.attachEvents()
@@ -70,6 +72,7 @@ class ExcelV2 {
         this.drawHeader()
         this.drawSidebar()
         this.drawData()
+        this.resizer()
     }
 
     // rendering
@@ -142,16 +145,12 @@ class ExcelV2 {
     }
     render() {
         requestAnimationFrame(this.render.bind(this))
+        // console.log(this.canvas.data)
         this.smoothUpdate()
         this.drawHeader()
         this.drawSidebar()
         this.drawData()
         this.setSelection()
-        // this.drawHeaderCell(this.header.data[0][0], true)
-        // this.drawHeaderCell(this.header.data[0][0], true)
-        // this.drawSidebarCell(this.sidebar.data[0][0], true)
-        // this.drawDataCell(this.canvas.data[0][0], true)
-        // this.clearDataCell(this.canvas.data[0][1])
     }
     resizer() {
         const resizeEventHandler = function (this: any) {
@@ -167,33 +166,35 @@ class ExcelV2 {
     }
 
     // data
-    createData() {
-        let data: Cell[][] = []
-        let rows = this.csvString.split("\n")
-        rows.forEach((row, i) => {
-            let cols = row.split(",")
-            let dataRow: Cell[] = []
-            cols.forEach((col, j) => {
-                let cell: Cell = {
-                    data: col,
-                    top: i * this.cellheight,
-                    left: j * this.cellwidth,
-                    height: this.cellheight,
-                    width: this.cellwidth,
-                    row: i,
-                    col: j,
-                    isbold: false,
-                    strokeStyle: this.strokeColor,
-                    lineWidth: 1,
-                    fontSize: 16,
-                    font: "Arial",
-                    align: "LEFT"
-                }
-                dataRow.push(cell)
+    async createData() {
+        this.canvas.data = await new Promise(res => {
+            let data: Cell[][] = []
+            let rows = this.csvString.split("\n")
+            rows.forEach((row, i) => {
+                let cols = row.split(",")
+                let dataRow: Cell[] = []
+                cols.forEach((col, j) => {
+                    let cell: Cell = {
+                        data: col,
+                        top: i * this.cellheight,
+                        left: j * this.cellwidth,
+                        height: this.cellheight,
+                        width: this.cellwidth,
+                        row: i,
+                        col: j,
+                        isbold: false,
+                        strokeStyle: this.strokeColor,
+                        lineWidth: 1,
+                        fontSize: 16,
+                        font: "Arial",
+                        align: "LEFT"
+                    }
+                    dataRow.push(cell)
+                })
+                data.push(dataRow)
             })
-            data.push(dataRow)
+            res(data)
         })
-        return data
     }
     clearData() {
         let ctx = this.canvas.ctx
@@ -249,6 +250,11 @@ class ExcelV2 {
         ctx.stroke()
     }
     drawData() {
+        if (!this.canvas.data.length) {
+            this.extendData(20, "X")
+            console.log("🚀 ~ ExcelV2 ~ drawData ~ this.canvas.data:", this.canvas.data)
+            this.extendData(20, "Y")
+        }
         let initialCol = this.binarySearch(this.canvas.data[0], this.mouse.scrollX)
         let initialRow = this.binarySearch(this.canvas.data.map(d => d[0]), this.mouse.scrollY, true)
         let finalRow = initialRow
@@ -267,23 +273,48 @@ class ExcelV2 {
                 break
         }
 
+        if (finalRow === this.canvas.data.length) {
+            this.extendData(20, "Y")
+        }
+        if (initialCol === this.canvas.data[0].length) {
+            this.extendData(20, "X")
+        }
         this.clearData()
-        for (let i = Math.max(initialRow - 3, 0); i < finalRow; i++) {
-            for (let j = Math.max(initialCol - 1, 0); j < finalCol; j++) {
+        for (let i = Math.max(initialRow - this.extracells, 0); i < Math.min(finalRow + this.extracells, this.canvas.data.length); i++) {
+            for (let j = Math.max(initialCol - this.extracells, 0); j < Math.min(finalCol + this.extracells, this.canvas.data[0].length); j++) {
                 this.drawDataCell(this.canvas.data[i][j])
             }
         };
         this.startCell = this.canvas.data[initialRow][initialCol]
     }
     extendData(count: number, axis: "X" | "Y") {
+        if (!this.canvas.data.length) {
+            this.canvas.data.push([
+                {
+                    data: "",
+                    top: 0,
+                    left: 0,
+                    height: this.cellheight,
+                    width: this.cellwidth,
+                    row: 0,
+                    col: 0,
+                    isbold: false,
+                    strokeStyle: this.strokeColor,
+                    lineWidth: 1,
+                    fontSize: 16,
+                    font: "Arial",
+                    align: "CENTER"
+                }
+            ])
+        }
         if (axis == "X") {
             this.canvas.data.forEach((row, i) => {
-                let left = row[row.length - 1].left + row[row.length - 1].width
-                let top = row[row.length - 1].top
-                let height = row[row.length - 1].height
                 let width = this.cellwidth
                 let prevColumns = row.length
                 for (let j = prevColumns; j < prevColumns + count; j++) {
+                    let left = row[row.length - 1].left + row[row.length - 1].width
+                    let top = row[row.length - 1].top
+                    let height = row[row.length - 1].height
                     let cell: Cell = {
                         data: "",
                         top: top,
@@ -335,7 +366,47 @@ class ExcelV2 {
             }
         }
     }
+    canvasMouseMoveHandler(event: MouseEvent) {
+        if (this.selectionMode.active) {
+            this.inputBox.style.display = "none"
+            const { cell } = this.getCell(event)
+            const selectedArea = this.getCellsArea(this.selectionMode.startSelectionCell!, cell)
+            this.selectionMode.selectedArea = selectedArea
+        }
+    }
+    canvasMouseDownHandler(event: MouseEvent) {
+        const { cell } = this.getCell(event)
+        this.selectionMode.startSelectionCell = cell
+        this.selectionMode.active = true
+    }
+    canvasMouseupHandler(event: MouseEvent) {
+        const startSelectionCell = this.selectionMode.startSelectionCell
+        this.selectionMode.active = false
 
+        if (!startSelectionCell) return
+        const { cell } = this.getCell(event)
+        let newSelectedArea = this.getCellsArea(startSelectionCell, cell)
+
+        if (!newSelectedArea.length) return
+
+        if (newSelectedArea.length > 1) {
+            // this.createStatus()
+        } else {
+            if (!this.selectionMode.selectedArea.length) {
+                this.selectionMode.selectedArea = newSelectedArea
+                return
+            }
+            let cell = newSelectedArea[0]
+
+            if (this.checkSameCell(this.selectionMode.selectedArea[0], cell)) {
+                this.createInputBox()
+            } else {
+                this.inputBox.style.display = "none"
+                this.setActiveCell()
+            }
+        }
+        this.selectionMode.selectedArea = newSelectedArea
+    }
 
     // events
     attachEvents() {
@@ -378,7 +449,7 @@ class ExcelV2 {
         ctx.fillRect(cell.left - this.mouse.animatex, cell.top, cell.width, cell.height)
         ctx.save()
         ctx.beginPath()
-        ctx.rect(cell.left - this.mouse.animatex - this.offset, cell.top - this.offset, cell.width + (this.offset * 2), cell.height)
+        ctx.rect(cell.left - this.mouse.animatex - this.offset, cell.top - this.offset, cell.width, cell.height)
         ctx.clip()
         ctx.fillStyle = active ? this.primaryColor : "#000000"
         switch (cell.align) {
@@ -396,7 +467,7 @@ class ExcelV2 {
         if (!active) return;
         ctx.beginPath()
         ctx.moveTo(cell.left - this.mouse.animatex - 4, cell.top + cell.height - 2)
-        ctx.lineTo(cell.left - this.mouse.animatex + cell.width + 4, cell.top + cell.height - 2)
+        ctx.lineTo(cell.left - this.mouse.animatex + cell.width + 3, cell.top + cell.height - 2)
         ctx.strokeStyle = this.primaryColor
         ctx.lineWidth = 4
         ctx.stroke()
@@ -417,7 +488,7 @@ class ExcelV2 {
 
         this.clearHeader()
         this.header.data.forEach(row => {
-            for (let i = Math.max(initialCol - 1, 0); i < finalCol; i++) {
+            for (let i = Math.max(initialCol - this.extracells, 0); i < finalCol; i++) {
                 this.drawHeaderCell(row[i])
             }
         });
@@ -442,6 +513,7 @@ class ExcelV2 {
                 }
             ])
         }
+
         this.header.data.forEach((row, i) => {
             let prevColumns = row.length
             for (let j = prevColumns; j < prevColumns + count; j++) {
@@ -467,48 +539,6 @@ class ExcelV2 {
                 row.push(cell)
             }
         })
-    }
-
-    canvasMouseMoveHandler(event: MouseEvent) {
-        if (this.selectionMode.active) {
-            const { cell } = this.getCell(event)
-            const selectedArea = this.getCellsArea(this.selectionMode.startSelectionCell!, cell)
-            this.selectionMode.selectedArea = selectedArea
-        }
-    }
-    canvasMouseDownHandler(event: MouseEvent) {
-        const { cell } = this.getCell(event)
-        this.selectionMode.startSelectionCell = cell
-        this.selectionMode.active = true
-    }
-    canvasMouseupHandler(event: MouseEvent) {
-        const startSelectionCell = this.selectionMode.startSelectionCell
-        this.selectionMode.active = false
-
-        if (!startSelectionCell) return
-        const { cell } = this.getCell(event)
-        let newSelectedArea = this.getCellsArea(startSelectionCell, cell)
-
-        if (!newSelectedArea.length) return
-
-        if (newSelectedArea.length > 1) {
-            // this.createStatus()
-        } else {
-            if (!this.selectionMode.selectedArea.length) {
-                this.selectionMode.selectedArea = newSelectedArea
-                return
-            }
-            let cell = newSelectedArea[0]
-
-            if (this.checkSameCell(this.selectionMode.selectedArea[0], cell)) {
-                console.log(this.selectionMode.selectedArea[0])
-                this.createInputBox()
-            } else {
-                this.inputBox.style.display = "none"
-                this.setActiveCell()
-            }
-        }
-        this.selectionMode.selectedArea = newSelectedArea
     }
 
     // sidebar methods
@@ -559,7 +589,7 @@ class ExcelV2 {
         if (!active) return;
         ctx.beginPath()
         ctx.moveTo(cell.left + cell.width - 2, cell.top - this.mouse.animatey - 4)
-        ctx.lineTo(cell.left + cell.width - 2, cell.top - this.mouse.animatey + cell.height + 4)
+        ctx.lineTo(cell.left + cell.width - 2, cell.top - this.mouse.animatey + cell.height + 3)
         ctx.strokeStyle = this.primaryColor
         ctx.lineWidth = 4
         ctx.stroke()
@@ -579,7 +609,7 @@ class ExcelV2 {
         }
 
         this.clearSidebar()
-        for (let i = Math.max(initialRow - 3, 0); i < finalRow; i++) {
+        for (let i = Math.max(initialRow - this.extracells, 0); i < Math.min(finalRow + this.extracells, this.sidebar.data.length); i++) {
             this.drawSidebarCell(this.sidebar.data[i][0])
         }
 
@@ -706,7 +736,7 @@ class ExcelV2 {
         this.highlightCells()
     }
     highlightCells() {
-        const context = this.canvas.ctx
+        let context = this.canvas.ctx
         const selectedArea = this.selectionMode.selectedArea
         if (!context || !selectedArea.length) return;
 
@@ -721,21 +751,48 @@ class ExcelV2 {
         context.strokeStyle = this.primaryColor
         context.lineWidth = 4
 
-        context.save()
-        context.beginPath()
         // if (ants)
         //     context.setLineDash([5, 3])
         context.translate(-this.mouse.animatex, -this.mouse.animatey)
+
+        context.save()
+        context.beginPath()
+        context.moveTo(leftX1, topX1)
+        context.lineTo(leftX2, topX1)
+        context.lineTo(leftX2, topX2)
+        context.lineTo(leftX1, topX2)
+        context.lineTo(leftX1, topX1)
+
+        if (this.selectionMode.selectedArea.length > 1) {
+            context.fillStyle = this.primaryColor + "11"
+            context.fill()
+        }
+
+        context.strokeStyle = "#fff"
+        context.lineWidth = 2
+        context.stroke()
+        context.restore()
+
+        this.drawDataCell(this.selectionMode.startSelectionCell!)
+        context.save()
+
+        context.translate(-this.mouse.animatex, -this.mouse.animatey)
+        context.beginPath()
+        context.strokeStyle = this.primaryColor
+        context.lineWidth = 4
         context.moveTo(leftX1 - 4, topX1 - 2)
         context.lineTo(leftX2 + 1, topX1 - 2)
         context.lineTo(leftX2 + 1, topX2 + 1)
         context.lineTo(leftX1 - 2, topX2 + 1)
         context.lineTo(leftX1 - 2, topX1 - 2)
-        context.fillStyle = this.primaryColor + "11"
-        context.fill()
-        context.restore()
+        context.save()
         context.stroke()
+        context.restore()
         context.setTransform(1, 0, 0, 1, 0, 0);
+        selectedArea.forEach(cell => {
+            this.drawHeaderCell(this.header.data[0][cell.col], true)
+            this.drawSidebarCell(this.sidebar.data[cell.row][0], true)
+        })
     }
 
     // extras
