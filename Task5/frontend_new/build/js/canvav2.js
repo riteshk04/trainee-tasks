@@ -15,6 +15,13 @@ class ExcelV2 {
         this.dx = 10;
         this.dy = 10;
         this.scrolling = false;
+        this.smoothingFactor = 0.1;
+        this.selectionMode = {
+            active: false,
+            selectedArea: [],
+            startSelectionCell: null,
+            decoration: false
+        };
         this.wrapper = parentElement;
         this.csvString = csv.trim();
         this.init();
@@ -90,9 +97,11 @@ class ExcelV2 {
         this.drawHeader();
         this.drawSidebar();
         this.drawData();
-        this.drawHeaderCell(this.header.data[0][0], true);
-        this.drawSidebarCell(this.sidebar.data[0][0], true);
-        this.drawDataCell(this.canvas.data[0][0], true);
+        this.setSelection();
+        // this.drawHeaderCell(this.header.data[0][0], true)
+        // this.drawHeaderCell(this.header.data[0][0], true)
+        // this.drawSidebarCell(this.sidebar.data[0][0], true)
+        // this.drawDataCell(this.canvas.data[0][0], true)
         // this.clearDataCell(this.canvas.data[0][1])
     }
     resizer() {
@@ -217,6 +226,7 @@ class ExcelV2 {
             }
         }
         ;
+        this.startCell = this.canvas.data[initialRow][initialCol];
     }
     extendData(count, axis) {
         if (axis == "X") {
@@ -281,6 +291,10 @@ class ExcelV2 {
     attachEvents() {
         this.header.element.addEventListener("wheel", (e) => this.scroller(e, "HEADER"));
         this.sidebar.element.addEventListener("wheel", (e) => this.scroller(e, "SIDEBAR"));
+        this.canvas.element.addEventListener("wheel", (e) => this.scroller(e));
+        this.canvas.element.addEventListener("mousemove", this.canvasMouseMoveHandler.bind(this));
+        this.canvas.element.addEventListener("mousedown", this.canvasMouseDownHandler.bind(this));
+        this.canvas.element.addEventListener("mouseup", this.canvasMouseupHandler.bind(this));
     }
     // canvas methods
     clearHeader() {
@@ -403,6 +417,47 @@ class ExcelV2 {
                 row.push(cell);
             }
         });
+    }
+    canvasMouseMoveHandler(event) {
+        if (this.selectionMode.active) {
+            const { cell } = this.getCell(event);
+            const selectedArea = this.getCellsArea(this.selectionMode.startSelectionCell, cell);
+            this.selectionMode.selectedArea = selectedArea;
+        }
+    }
+    canvasMouseDownHandler(event) {
+        const { cell } = this.getCell(event);
+        this.selectionMode.startSelectionCell = cell;
+        this.selectionMode.active = true;
+    }
+    canvasMouseupHandler(event) {
+        const startSelectionCell = this.selectionMode.startSelectionCell;
+        this.selectionMode.active = false;
+        if (!startSelectionCell)
+            return;
+        const { cell } = this.getCell(event);
+        let newSelectedArea = this.getCellsArea(startSelectionCell, cell);
+        if (!newSelectedArea.length)
+            return;
+        if (newSelectedArea.length > 1) {
+            // this.createStatus()
+        }
+        else {
+            if (!this.selectionMode.selectedArea.length) {
+                this.selectionMode.selectedArea = newSelectedArea;
+                return;
+            }
+            let cell = newSelectedArea[0];
+            if (this.checkSameCell(this.selectionMode.selectedArea[0], cell)) {
+                console.log(this.selectionMode.selectedArea[0]);
+                this.createInputBox();
+            }
+            else {
+                this.inputBox.style.display = "none";
+                this.setActiveCell();
+            }
+        }
+        this.selectionMode.selectedArea = newSelectedArea;
     }
     // sidebar methods
     clearSidebar() {
@@ -541,27 +596,88 @@ class ExcelV2 {
                 }
                 break;
         }
-        this.scrolling = true;
     }
     smoothUpdate() {
-        let smoothx = this.mouse.animatex;
-        let smoothy = this.mouse.animatey;
-        if (smoothx != this.mouse.scrollX) {
-            if (smoothx > this.mouse.scrollX) {
-                this.mouse.animatex = Math.max(0, smoothx - this.dx);
-            }
-            else {
-                this.mouse.animatex = Math.max(0, smoothx + this.dx);
+        this.mouse.animatex += (this.mouse.scrollX - this.mouse.animatex) * this.smoothingFactor;
+        this.mouse.animatey += (this.mouse.scrollY - this.mouse.animatey) * this.smoothingFactor;
+    }
+    // cell
+    getCoordinates(event, canvasElement) {
+        if (!canvasElement) {
+            canvasElement = this.canvas.element;
+        }
+        let rect = canvasElement.getBoundingClientRect();
+        let x = Math.max(0, event.clientX - rect.left + this.mouse.scrollX);
+        let y = Math.max(0, event.clientY - rect.top + this.mouse.scrollY);
+        return { x, y };
+    }
+    getCell(event, fullSearch = false) {
+        const { x, y } = this.getCoordinates(event);
+        for (let i = !fullSearch ? this.startCell.row : 0; i < this.canvas.data.length; i++) {
+            const row = this.canvas.data[i];
+            for (let j = !fullSearch ? this.startCell.col : 0; j < row.length; j++) {
+                const cell = row[j];
+                if (cell.left < x && x <= cell.left + cell.width && cell.top < y && y <= cell.top + cell.height) {
+                    return { cell, x, y };
+                }
             }
         }
-        if (smoothy != this.mouse.scrollY) {
-            if (smoothy > this.mouse.scrollY) {
-                this.mouse.animatey = Math.max(0, smoothy - this.dy);
-            }
-            else {
-                this.mouse.animatey = Math.max(0, smoothy + this.dy);
-            }
-        }
+        return { cell: this.canvas.data[0][0], x, y };
+    }
+    createInputBox() {
+        if (!this.selectionMode.selectedArea.length)
+            return;
+        const { top, left, width, height, font, fontSize, data, row, col } = this.selectionMode.selectedArea[0];
+        this.inputBox.style.top = `${top - this.mouse.animatey - 0.5}px`;
+        this.inputBox.style.left = `${left - this.mouse.animatex - 0.5}px`;
+        this.inputBox.style.width = `${width - 1}px`;
+        this.inputBox.style.height = `${height - 1}px`;
+        this.inputBox.style.font = `${font}`;
+        this.inputBox.style.fontSize = `${fontSize}px`;
+        this.inputBox.style.padding = `4px`;
+        this.inputBox.style.border = `1px solid white`;
+        this.inputBox.value = `${data}`;
+        // if (!this.inputActive) {
+        this.inputBox.style.display = `block`;
+        this.inputBox.focus();
+        this.inputBox.onchange = (e) => {
+            e.stopPropagation();
+            this.canvas.data[row][col].data = e.target.value;
+        };
+        // }
+    }
+    // selection
+    setSelection() {
+        this.highlightCells();
+    }
+    highlightCells() {
+        const context = this.canvas.ctx;
+        const selectedArea = this.selectionMode.selectedArea;
+        if (!context || !selectedArea.length)
+            return;
+        const startCell = selectedArea[0];
+        const endCell = selectedArea[selectedArea.length - 1];
+        const leftX1 = Math.min(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
+        const leftX2 = Math.max(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
+        const topX1 = Math.min(startCell.top, endCell.top + endCell.height, startCell.top + startCell.height, endCell.top);
+        const topX2 = Math.max(startCell.top, endCell.top + endCell.height, startCell.top + startCell.height, endCell.top);
+        context.strokeStyle = this.primaryColor;
+        context.lineWidth = 4;
+        context.save();
+        context.beginPath();
+        // if (ants)
+        //     context.setLineDash([5, 3])
+        context.translate(-this.mouse.animatex, -this.mouse.animatey);
+        context.moveTo(leftX1 - 4, topX1 - 2);
+        context.lineTo(leftX2 + 1, topX1 - 2);
+        context.lineTo(leftX2 + 1, topX2 + 1);
+        context.lineTo(leftX1 - 2, topX2 + 1);
+        context.lineTo(leftX1 - 2, topX1 - 2);
+        context.fillStyle = this.primaryColor + "11";
+        context.fill();
+        context.restore();
+        context.stroke();
+        context.setTransform(1, 0, 0, 1, 0, 0);
     }
     // extras
     binarySearch(arr, x, vertical) {
@@ -588,5 +704,27 @@ class ExcelV2 {
     toLetters(num) {
         var mod = num % 26, pow = num / 26 | 0, out = mod ? String.fromCharCode(64 + mod) : (--pow, 'Z');
         return pow ? this.toLetters(pow) + out : out;
+    }
+    checkSameCell(cell1, cell2) {
+        const { top, left } = cell1;
+        return cell2.top === top && cell2.left == left;
+    }
+    getCellsArea(startCell, endCell) {
+        let { row: starty, col: startx } = startCell;
+        let { row: endy, col: endx } = endCell;
+        let startX = Math.min(startx, endx);
+        let endX = Math.max(startx, endx);
+        let startY = Math.min(starty, endy);
+        let endY = Math.max(starty, endy);
+        let newSelection = [];
+        for (let i = startY; i <= endY; i++) {
+            for (let j = startX; j <= endX; j++) {
+                newSelection.push(this.canvas.data[i][j]);
+            }
+        }
+        return newSelection;
+    }
+    setActiveCell() {
+        this.drawDataCell(this.selectionMode.selectedArea[0]);
     }
 }
