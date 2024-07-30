@@ -121,6 +121,7 @@ class ExcelV2 {
             this.busy = null;
             this.render_internal();
         });
+        // console.log("render")
     }
     resizer() {
         const resizeEventHandler = function () {
@@ -128,9 +129,7 @@ class ExcelV2 {
             this.canvas.element.height = this.wrapper.offsetHeight - this.cellheight;
             this.header.element.width = this.wrapper.offsetWidth - this.mincellwidth;
             this.sidebar.element.height = this.wrapper.offsetHeight - this.cellheight;
-            this.drawData();
-            this.drawHeader();
-            this.drawSidebar();
+            this.render();
         };
         window.addEventListener("resize", resizeEventHandler.bind(this));
     }
@@ -202,11 +201,16 @@ class ExcelV2 {
         ctx.fillStyle = selected ? this.primaryColor + "22" : "#ffffff";
         ctx.font = `${cell.fontSize}px ${cell.font}`;
         ctx.save();
-        ctx.clearRect(cell.left - this.mouse.animatex - this.offset, cell.top - this.mouse.animatey - this.offset, cell.width + (this.offset * 2), cell.height + (this.offset * 2));
+        // ctx.clearRect(cell.left - this.mouse.animatex - this.offset, cell.top - this.mouse.animatey - this.offset, cell.width + (this.offset * 2), cell.height + (this.offset * 2))
         ctx.fillRect(cell.left - this.mouse.animatex, cell.top - this.mouse.animatey, cell.width, cell.height);
         ctx.save();
         ctx.beginPath();
-        ctx.rect(cell.left - this.mouse.animatex - this.offset, cell.top - this.mouse.animatey - this.offset, cell.width, cell.height);
+        ctx.moveTo(cell.left - this.mouse.animatex - this.offset, cell.top - this.mouse.animatey - this.offset);
+        ctx.lineTo(cell.left - this.mouse.animatex - this.offset + cell.width, cell.top - this.mouse.animatey - this.offset);
+        ctx.lineTo(cell.left - this.mouse.animatex - this.offset + cell.width, cell.top - this.mouse.animatey - this.offset + cell.height);
+        ctx.lineTo(cell.left - this.mouse.animatex - this.offset, cell.top - this.mouse.animatey - this.offset + cell.height);
+        ctx.lineTo(cell.left - this.mouse.animatex - this.offset, cell.top - this.mouse.animatey - this.offset);
+        // ctx.rect(cell.left - this.mouse.animatex - this.offset, cell.top - this.mouse.animatey - this.offset, cell.width, cell.height)
         ctx.clip();
         ctx.fillStyle = "#000000";
         switch (cell.align) {
@@ -360,6 +364,7 @@ class ExcelV2 {
         const { cell } = this.getCell(event);
         this.selectionMode.startSelectionCell = cell;
         this.selectionMode.active = true;
+        this.render();
     }
     canvasMouseupHandler(event) {
         const startSelectionCell = this.selectionMode.startSelectionCell;
@@ -376,6 +381,7 @@ class ExcelV2 {
         else {
             if (!this.selectionMode.selectedArea.length) {
                 this.selectionMode.selectedArea = newSelectedArea;
+                this.render();
                 return;
             }
             let cell = newSelectedArea[0];
@@ -388,6 +394,7 @@ class ExcelV2 {
             }
         }
         this.selectionMode.selectedArea = newSelectedArea;
+        this.render();
     }
     // events
     attachEvents() {
@@ -550,6 +557,7 @@ class ExcelV2 {
             this.widthShifter(this.edgeCell, newWidth, this.header.data);
             this.widthShifter(this.edgeCell, newWidth, this.canvas.data);
         }
+        this.render();
     }
     headerMouseUpObserver(event) {
         if (this.header.isDragging) {
@@ -702,10 +710,13 @@ class ExcelV2 {
                 }
                 break;
         }
+        this.render();
     }
     smoothUpdate() {
         this.mouse.animatex += (this.mouse.scrollX - this.mouse.animatex) * this.smoothingFactor;
         this.mouse.animatey += (this.mouse.scrollY - this.mouse.animatey) * this.smoothingFactor;
+        if ((Math.round(this.mouse.animatex) !== this.mouse.scrollX) || (Math.round(this.mouse.animatey) !== this.mouse.scrollY))
+            this.render();
     }
     // cell
     getCoordinates(event, canvasElement) {
@@ -788,7 +799,7 @@ class ExcelV2 {
         }
         context.strokeStyle = "#fff";
         context.lineWidth = 2;
-        context.stroke();
+        // context.stroke()
         context.restore();
         this.drawDataCell(this.selectionMode.startSelectionCell);
         context.save();
