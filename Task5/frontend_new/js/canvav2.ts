@@ -22,21 +22,43 @@ type SelectionModeCanva = {
 type Canvas = {
     element: HTMLCanvasElement | null
     ctx: CanvasRenderingContext2D | null
-    data: Cell[][]
+    data: Cell[][],
+    startCell: Cell | null,
+    endCell: Cell | null
+}
+
+type HeaderCanva = Canvas & {
+    isDragging: boolean
+    edgeDetected: boolean
+    startx: number
+}
+
+type ExcelInputBox = {
+    element: HTMLInputElement | null,
+    top: number,
+    left: number
 }
 
 class ExcelV2 {
     primaryColor = "#03723c"
     secondaryColor = "#959595"
     strokeColor = "#dadada"
+    csvString: string;
     offset = 0.5
     wrapper: HTMLElement;
-    inputBox!: HTMLInputElement
-    csvString: string;
-    canvas: Canvas = { ctx: null, data: [], element: null };
-    header: Canvas = { ctx: null, data: [], element: null };
-    sidebar: Canvas = { ctx: null, data: [], element: null };
+    inputBox: ExcelInputBox = { element: null, left: 0, top: 0 }
+    canvas: Canvas = { ctx: null, data: [], element: null, startCell: null, endCell: null };
+    header: HeaderCanva = { ctx: null, data: [], element: null, isDragging: false, edgeDetected: false, endCell: null, startCell: null, startx: 0 };
+    sidebar: Canvas = { ctx: null, data: [], element: null, endCell: null, startCell: null };
     mouse: Pointer = { x: 0, y: 0, startx: 0, starty: 0, up: false, horizontal: false, scrollX: 0, scrollY: 0, animatex: 0, animatey: 0, pscrollX: 100, pscrollY: 100 }
+    
+    selectionMode: SelectionModeCanva = {
+        active: false,
+        selectedArea: [],
+        startSelectionCell: null,
+        decoration: false
+    }
+
     cellheight: number = 30
     cellwidth: number = 100
     mincellwidth: number = 60
@@ -45,24 +67,17 @@ class ExcelV2 {
     scrolling = false
     smoothingFactor = 0.1
     extracells = 30
-
-    selectionMode: SelectionModeCanva = {
-        active: false,
-        selectedArea: [],
-        startSelectionCell: null,
-        decoration: false
-    }
-    startCell!: Cell
+    edgeCell!: Cell
+    prevWidth: number = 0
 
 
     constructor(parentElement: HTMLElement, csv: string) {
         this.wrapper = parentElement
-        this.csvString = csv.trim()
+        this.csvString = (csv || "").trim()
         this.init()
     }
 
     init() {
-        this.wrapper.innerHTML = "Loading..."
         this.createData()
         this.createMarkup()
         this.extendHeader(100)
@@ -136,7 +151,7 @@ class ExcelV2 {
         this.canvas.element = canvasElement
         this.sidebar.element = sidebarElement
         this.header.element = headerElement
-        this.inputBox = inputBox
+        this.inputBox.element = inputBox
 
         this.canvas.element.width = this.wrapper.offsetWidth - this.mincellwidth
         this.canvas.element.height = this.wrapper.offsetHeight - this.cellheight
@@ -145,7 +160,6 @@ class ExcelV2 {
     }
     render() {
         requestAnimationFrame(this.render.bind(this))
-        // console.log(this.canvas.data)
         this.smoothUpdate()
         this.drawHeader()
         this.drawSidebar()
@@ -156,7 +170,7 @@ class ExcelV2 {
         const resizeEventHandler = function (this: any) {
             this.canvas.element.width = this.wrapper.offsetWidth - this.mincellwidth
             this.canvas.element.height = this.wrapper.offsetHeight - this.cellheight
-            this.header.element.width = this.wrapper.offsetWidth - this.cellwidth
+            this.header.element.width = this.wrapper.offsetWidth - this.mincellwidth
             this.sidebar.element.height = this.wrapper.offsetHeight - this.cellheight
             this.drawData()
             this.drawHeader()
@@ -170,6 +184,7 @@ class ExcelV2 {
         this.canvas.data = await new Promise(res => {
             let data: Cell[][] = []
             let rows = this.csvString.split("\n")
+
             rows.forEach((row, i) => {
                 let cols = row.split(",")
                 let dataRow: Cell[] = []
@@ -195,6 +210,12 @@ class ExcelV2 {
             })
             res(data)
         })
+        if (this.canvas.data.length < 100) {
+            this.extendData(100 - this.canvas.data.length, "Y")
+        }
+        if (this.canvas.data[0].length < 100) {
+            this.extendData(100 - this.canvas.data[0].length, "X")
+        }
     }
     clearData() {
         let ctx = this.canvas.ctx
@@ -204,8 +225,6 @@ class ExcelV2 {
     clearDataCell(cell: Cell) {
         let ctx = this.canvas.ctx
         if (!ctx) return
-        let prev = this.canvas.data[0][Math.max(0, cell.col - 1)]
-        let next = this.canvas.data[0][Math.min(this.canvas.data[0].length, cell.col + 1)]
         ctx.restore()
         for (let i = Math.max(0, cell.row - 1); i <= Math.min(this.canvas.data.length, cell.row + 1); i++) {
             for (let j = Math.max(0, cell.col - 1); j <= Math.min(this.canvas.data[0].length, cell.col + 1); j++) {
@@ -251,9 +270,7 @@ class ExcelV2 {
     }
     drawData() {
         if (!this.canvas.data.length) {
-            this.extendData(20, "X")
-            console.log("🚀 ~ ExcelV2 ~ drawData ~ this.canvas.data:", this.canvas.data)
-            this.extendData(20, "Y")
+            return
         }
         let initialCol = this.binarySearch(this.canvas.data[0], this.mouse.scrollX)
         let initialRow = this.binarySearch(this.canvas.data.map(d => d[0]), this.mouse.scrollY, true)
@@ -273,10 +290,10 @@ class ExcelV2 {
                 break
         }
 
-        if (finalRow === this.canvas.data.length) {
+        if (Math.abs(finalRow - this.canvas.data.length) < 10) {
             this.extendData(20, "Y")
         }
-        if (initialCol === this.canvas.data[0].length) {
+        if (Math.abs(initialCol - this.canvas.data[0].length) < 10) {
             this.extendData(20, "X")
         }
         this.clearData()
@@ -285,7 +302,13 @@ class ExcelV2 {
                 this.drawDataCell(this.canvas.data[i][j])
             }
         };
-        this.startCell = this.canvas.data[initialRow][initialCol]
+        this.header.startCell = this.header.data[0][initialCol]
+        this.header.endCell = this.header.data[0][finalCol]
+        this.canvas.startCell = this.canvas.data[initialRow][initialCol]
+        this.canvas.endCell = this.canvas.data[finalRow][finalCol]
+
+        this.inputBox.element!.style.top = `${this.inputBox.top - this.mouse.animatey - 0.5}px`
+        this.inputBox.element!.style.left = `${this.inputBox.left - this.mouse.animatex - 0.5}px`
     }
     extendData(count: number, axis: "X" | "Y") {
         if (!this.canvas.data.length) {
@@ -368,7 +391,7 @@ class ExcelV2 {
     }
     canvasMouseMoveHandler(event: MouseEvent) {
         if (this.selectionMode.active) {
-            this.inputBox.style.display = "none"
+            this.inputBox.element!.style.display = "none"
             const { cell } = this.getCell(event)
             const selectedArea = this.getCellsArea(this.selectionMode.startSelectionCell!, cell)
             this.selectionMode.selectedArea = selectedArea
@@ -401,7 +424,7 @@ class ExcelV2 {
             if (this.checkSameCell(this.selectionMode.selectedArea[0], cell)) {
                 this.createInputBox()
             } else {
-                this.inputBox.style.display = "none"
+                this.inputBox.element!.style.display = "none"
                 this.setActiveCell()
             }
         }
@@ -415,11 +438,16 @@ class ExcelV2 {
         this.canvas.element!.addEventListener("wheel", (e) => this.scroller(e))
 
         this.canvas.element!.addEventListener("mousemove", this.canvasMouseMoveHandler.bind(this))
+        this.header.element!.addEventListener("mousemove", this.headerMouseMoveObserver.bind(this))
+
         this.canvas.element!.addEventListener("mousedown", this.canvasMouseDownHandler.bind(this))
+        this.header.element!.addEventListener("mousedown", this.headerMouseDownObserver.bind(this))
+
         this.canvas.element!.addEventListener("mouseup", this.canvasMouseupHandler.bind(this))
+        this.header.element!.addEventListener("mouseup", this.headerMouseUpObserver.bind(this))
     }
 
-    // canvas methods
+    // header methods
     clearHeader() {
         let ctx = this.header.ctx
         if (!ctx || !this.header.element) return;
@@ -488,7 +516,7 @@ class ExcelV2 {
 
         this.clearHeader()
         this.header.data.forEach(row => {
-            for (let i = Math.max(initialCol - this.extracells, 0); i < finalCol; i++) {
+            for (let i = Math.max(initialCol - this.extracells, 0); i < Math.min(finalCol + this.extracells, this.header.data[0].length); i++) {
                 this.drawHeaderCell(row[i])
             }
         });
@@ -539,6 +567,51 @@ class ExcelV2 {
                 row.push(cell)
             }
         })
+    }
+    headerMouseMoveObserver(event: MouseEvent) {
+        const gap = 2
+        const headerElement = this.header.element!
+        const headerStartCell = this.header.startCell!
+        const headerEndCell = this.header.endCell!
+        const { x } = this.getCoordinates(event, headerElement)
+
+        for (let i = Math.max(1, headerStartCell.col - 1); i <= Math.min(this.header.data[0].length, headerEndCell!.col); i++) {
+            const edge = this.header.data[0][i].left;
+
+            if (Math.max(edge - gap, 0) < x && x < edge + gap) {
+                this.header.edgeDetected = true
+                headerElement.style.cursor = "col-resize"
+                if (!this.header.isDragging) {
+                    this.edgeCell = this.header.data[0][i - 1]
+                    this.prevWidth = this.edgeCell.width
+                }
+                break
+            }
+            if (!this.header.isDragging)
+                headerElement.style.cursor = "default"
+            this.header.edgeDetected = false
+        }
+
+        if (this.header.isDragging) {
+            let diff = x - this.header.startx
+            let newWidth = this.prevWidth + diff
+            this.widthShifter(this.edgeCell, newWidth, this.header.data)
+            this.widthShifter(this.edgeCell, newWidth, this.canvas.data)
+        }
+    }
+    headerMouseUpObserver(event: MouseEvent) {
+        if (this.header.isDragging) {
+            this.header.isDragging = false
+        }
+    }
+    headerMouseDownObserver(event: MouseEvent) {
+        if (this.header.edgeDetected) {
+            this.inputBox.element!.style.display = "none"
+            this.header.isDragging = true
+            const { x } = this.getCoordinates(event)
+            this.header.startx = x
+            this.prevWidth = this.edgeCell.width
+        }
     }
 
     // sidebar methods
@@ -697,9 +770,9 @@ class ExcelV2 {
     getCell(event: MouseEvent, fullSearch: boolean = false): { cell: Cell, x: number, y: number } {
         const { x, y } = this.getCoordinates(event)
 
-        for (let i = !fullSearch ? this.startCell.row : 0; i < this.canvas.data.length; i++) {
+        for (let i = !fullSearch ? this.canvas.startCell!.row : 0; i < this.canvas.data.length; i++) {
             const row = this.canvas.data[i];
-            for (let j = !fullSearch ? this.startCell.col : 0; j < row.length; j++) {
+            for (let j = !fullSearch ? this.canvas.startCell!.col : 0; j < row.length; j++) {
                 const cell = row[j];
                 if (cell.left < x && x <= cell.left + cell.width && cell.top < y && y <= cell.top + cell.height) {
                     return { cell, x, y }
@@ -710,21 +783,26 @@ class ExcelV2 {
     }
     createInputBox() {
         if (!this.selectionMode.selectedArea.length) return;
+        let inputBox = this.inputBox.element!
 
         const { top, left, width, height, font, fontSize, data, row, col } = this.selectionMode.selectedArea[0]
-        this.inputBox.style.top = `${top - this.mouse.animatey - 0.5}px`
-        this.inputBox.style.left = `${left - this.mouse.animatex - 0.5}px`
-        this.inputBox.style.width = `${width - 1}px`
-        this.inputBox.style.height = `${height - 1}px`
-        this.inputBox.style.font = `${font}`
-        this.inputBox.style.fontSize = `${fontSize}px`
-        this.inputBox.style.padding = `4px`
-        this.inputBox.style.border = `1px solid white`
-        this.inputBox.value = `${data}`
-        // if (!this.inputActive) {
-        this.inputBox.style.display = `block`
-        this.inputBox.focus()
-        this.inputBox.onchange = (e: any) => {
+
+        this.inputBox.top = top - this.mouse.animatey
+        this.inputBox.left = left - this.mouse.animatex
+
+        inputBox.style.top = `${this.inputBox.top}px`
+        inputBox.style.left = `${this.inputBox.left}px`
+        inputBox.style.width = `${width - 1}px`
+        inputBox.style.height = `${height - 1}px`
+        inputBox.style.font = `${font}`
+        inputBox.style.fontSize = `${fontSize}px`
+        inputBox.style.padding = `4px`
+        inputBox.style.border = `1px solid white`
+        inputBox.value = `${data}`
+        // if (!inputActive) {
+        inputBox.style.display = `block`
+        inputBox.focus()
+        inputBox.onchange = (e: any) => {
             e.stopPropagation()
             this.canvas.data[row][col].data = e.target.value
         }
@@ -850,5 +928,25 @@ class ExcelV2 {
     }
     setActiveCell() {
         this.drawDataCell(this.selectionMode.selectedArea[0]!)
+    }
+    widthShifter(cell: Cell, newWidth: number, data: Cell[][]) {
+        if (newWidth < 60) {
+            newWidth = 60
+        }
+
+        data.forEach(row => {
+            let widthChanged = false
+            for (let i = this.canvas.startCell!.col; i < row.length; i++) {
+                const c = row[i];
+                if (!widthChanged) {
+                    if (c.left === cell.left) {
+                        c.width = newWidth
+                        widthChanged = true
+                    }
+                } else {
+                    c.left = row[i - 1].left + row[i - 1].width
+                }
+            }
+        })
     }
 }
