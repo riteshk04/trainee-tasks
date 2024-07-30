@@ -165,6 +165,7 @@ class Excel {
         this.horizontalScroll = event.shiftKey && event.altKey
 
     }
+    
     windowKeypressHandler(event: KeyboardEvent) {
         if (event.target === this.inputBox) return;
         this.inputBox.style.display = "none"

@@ -46,19 +46,6 @@ class ExcelV2 {
     csvString: string;
     offset = 0.5
     wrapper: HTMLElement;
-    inputBox: ExcelInputBox = { element: null, left: 0, top: 0 }
-    canvas: Canvas = { ctx: null, data: [], element: null, startCell: null, endCell: null };
-    header: HeaderCanva = { ctx: null, data: [], element: null, isDragging: false, edgeDetected: false, endCell: null, startCell: null, startx: 0 };
-    sidebar: Canvas = { ctx: null, data: [], element: null, endCell: null, startCell: null };
-    mouse: Pointer = { x: 0, y: 0, startx: 0, starty: 0, up: false, horizontal: false, scrollX: 0, scrollY: 0, animatex: 0, animatey: 0, pscrollX: 100, pscrollY: 100 }
-
-    selectionMode: SelectionModeCanva = {
-        active: false,
-        selectedArea: [],
-        startSelectionCell: null,
-        decoration: false
-    }
-
     cellheight: number = 30
     cellwidth: number = 100
     mincellwidth: number = 60
@@ -71,6 +58,56 @@ class ExcelV2 {
     prevWidth: number = 0
     busy: any
 
+    inputBox: ExcelInputBox = {
+        element: null,
+        left: 0,
+        top: 0
+    }
+    canvas: Canvas = {
+        ctx: null,
+        data: [],
+        element: null,
+        startCell: null,
+        endCell: null
+    };
+    header: HeaderCanva = {
+        ctx: null,
+        data: [],
+        element: null,
+        isDragging: false,
+        edgeDetected: false,
+        endCell: null,
+        startCell: null,
+        startx: 0
+    };
+    sidebar: Canvas = {
+        ctx: null,
+        data: [],
+        element: null,
+        endCell: null,
+        startCell: null
+    };
+    mouse: Pointer = {
+        x: 0,
+        y: 0,
+        startx: 0,
+        starty: 0,
+        up: false,
+        horizontal: false,
+        scrollX: 0,
+        scrollY: 0,
+        animatex: 0,
+        animatey: 0,
+        pscrollX: 100,
+        pscrollY: 100
+    };
+
+    selectionMode: SelectionModeCanva = {
+        active: false,
+        selectedArea: [],
+        startSelectionCell: null,
+        decoration: false
+    }
 
     constructor(parentElement: HTMLElement, csv: string) {
         this.wrapper = parentElement
@@ -227,6 +264,8 @@ class ExcelV2 {
         if (this.canvas.data[0].length < 100) {
             this.extendData(100 - this.canvas.data[0].length, "X")
         }
+        this.selectionMode.selectedArea = [this.canvas.data[0][0]]
+        this.selectionMode.startSelectionCell = this.selectionMode.selectedArea[0]
         this.render();
     }
     clearData() {
@@ -466,6 +505,10 @@ class ExcelV2 {
 
         this.canvas.element!.addEventListener("mouseup", this.canvasMouseupHandler.bind(this))
         this.header.element!.addEventListener("mouseup", this.headerMouseUpObserver.bind(this))
+
+        window.addEventListener("keydown", this.windowKeypressHandler.bind(this))
+        window.addEventListener("keyup", this.windowKeyupHandler.bind(this))
+
     }
 
     // header methods
@@ -755,6 +798,60 @@ class ExcelV2 {
 
     }
 
+    // window
+    windowKeypressHandler(event: KeyboardEvent) {
+        if (event.target === this.inputBox.element) return;
+        this.inputBox.element!.style.display = "none"
+        this.mouse.horizontal = event.shiftKey && event.altKey
+
+        let ctrlClick = false
+
+        switch (event.key) {
+            case "Control":
+                ctrlClick = true
+                break
+            case "ArrowDown":
+                this.moveActiveCell("BOTTOM")
+                break;
+            case "ArrowUp":
+                this.moveActiveCell("TOP")
+                break;
+            case "ArrowLeft":
+                this.moveActiveCell("LEFT")
+                break;
+            case "ArrowRight":
+                this.moveActiveCell("RIGHT")
+                break;
+            case "Tab":
+                this.moveActiveCell("RIGHT")
+                break;
+            case "Enter":
+                this.moveActiveCell("BOTTOM")
+                break;
+            case "Escape":
+                break;
+            case "Delete":
+            case "Backspace":
+                this.selectionMode.selectedArea.forEach(c => c.data = "")
+                break
+            default:
+                if (event.key.match(/^\w$/)) {
+                    this.createInputBox()
+                }
+                return;
+        }
+        if (!ctrlClick && this.selectionMode.selectedArea.length > 1) {
+            this.selectionMode.selectedArea.forEach(c => this.drawDataCell(c))
+        }
+        this.render()
+    }
+    windowKeyupHandler(event: KeyboardEvent) {
+        if (event.target === this.inputBox.element) return;
+        this.inputBox.element!.style.display = "none"
+        this.mouse.horizontal = event.shiftKey && event.altKey
+    }
+
+
     // scroll
     scroller(event: WheelEvent, element?: "HEADER" | "SIDEBAR") {
         let { deltaY } = event
@@ -832,6 +929,43 @@ class ExcelV2 {
             this.canvas.data[row][col].data = e.target.value
         }
         // }
+    }
+    moveActiveCell(direction: "TOP" | "LEFT" | "RIGHT" | "BOTTOM") {
+        console.log("🚀 ~ ExcelV2 ~ moveActiveCell ~ direction:", direction)
+        let activeCell = this.selectionMode.startSelectionCell!
+
+        let { row, col } = activeCell
+        if (!activeCell)
+            return;
+
+        switch (direction) {
+            case "TOP":
+                this.selectionMode.selectedArea = [this.canvas.data[Math.max(row - 1, 0)][col]]
+                if (activeCell.top - this.cellheight * 2 < this.mouse.scrollY) {
+                    this.mouse.scrollY = Math.max(0, this.mouse.scrollY - this.cellheight)
+                }
+                break
+            case "LEFT":
+                this.selectionMode.selectedArea = [this.canvas.data[row][Math.max(col - 1, 0)]]
+                if (activeCell.left - this.cellwidth * 2 < this.mouse.scrollX) {
+                    this.mouse.scrollX = Math.max(0, this.mouse.scrollX - this.cellwidth)
+                }
+                break
+            case "RIGHT":
+                this.selectionMode.selectedArea = [this.canvas.data[row][Math.min(this.canvas.data[0].length - 1, col + 1)]]
+                if (activeCell.left + this.cellwidth * 2 > this.mouse.scrollX + this.canvas.element!.offsetWidth) {
+                    this.mouse.scrollX += this.cellwidth
+                }
+                break
+            case "BOTTOM":
+                this.selectionMode.selectedArea = [this.canvas.data[Math.min(this.canvas.data.length - 1, row + 1)][col]]
+                if (activeCell.top + this.cellheight * 2 > this.mouse.scrollY + this.canvas.element!.offsetHeight) {
+                    this.mouse.scrollY += this.cellheight
+                }
+                break
+        }
+        this.selectionMode.startSelectionCell = this.selectionMode.selectedArea[0]
+        this.render()
     }
 
     // selection
