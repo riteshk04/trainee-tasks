@@ -51,7 +51,7 @@ class ExcelV2 {
     header: HeaderCanva = { ctx: null, data: [], element: null, isDragging: false, edgeDetected: false, endCell: null, startCell: null, startx: 0 };
     sidebar: Canvas = { ctx: null, data: [], element: null, endCell: null, startCell: null };
     mouse: Pointer = { x: 0, y: 0, startx: 0, starty: 0, up: false, horizontal: false, scrollX: 0, scrollY: 0, animatex: 0, animatey: 0, pscrollX: 100, pscrollY: 100 }
-    
+
     selectionMode: SelectionModeCanva = {
         active: false,
         selectedArea: [],
@@ -69,11 +69,13 @@ class ExcelV2 {
     extracells = 30
     edgeCell!: Cell
     prevWidth: number = 0
+    busy: any
 
 
     constructor(parentElement: HTMLElement, csv: string) {
         this.wrapper = parentElement
         this.csvString = (csv || "").trim()
+        this.busy = null;
         this.init()
     }
 
@@ -158,13 +160,24 @@ class ExcelV2 {
         this.header.element.width = this.wrapper.offsetWidth - this.mincellwidth
         this.sidebar.element.height = this.wrapper.offsetHeight - this.cellheight
     }
-    render() {
-        requestAnimationFrame(this.render.bind(this))
+    render_internal() {
         this.smoothUpdate()
         this.drawHeader()
         this.drawSidebar()
         this.drawData()
         this.setSelection()
+    }
+    render() {
+        // this.render_internal();
+        // return;
+        if (this.busy)
+            return;
+
+        this.busy = requestAnimationFrame(()=>{
+            this.busy = null;
+            this.render_internal()
+        })
+
     }
     resizer() {
         const resizeEventHandler = function (this: any) {
@@ -216,6 +229,7 @@ class ExcelV2 {
         if (this.canvas.data[0].length < 100) {
             this.extendData(100 - this.canvas.data[0].length, "X")
         }
+        this.render();
     }
     clearData() {
         let ctx = this.canvas.ctx
@@ -395,6 +409,7 @@ class ExcelV2 {
             const { cell } = this.getCell(event)
             const selectedArea = this.getCellsArea(this.selectionMode.startSelectionCell!, cell)
             this.selectionMode.selectedArea = selectedArea
+            this.render()
         }
     }
     canvasMouseDownHandler(event: MouseEvent) {

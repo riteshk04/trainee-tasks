@@ -36,6 +36,7 @@ class ExcelV2 {
         this.prevWidth = 0;
         this.wrapper = parentElement;
         this.csvString = (csv || "").trim();
+        this.busy = null;
         this.init();
     }
     init() {
@@ -104,13 +105,22 @@ class ExcelV2 {
         this.header.element.width = this.wrapper.offsetWidth - this.mincellwidth;
         this.sidebar.element.height = this.wrapper.offsetHeight - this.cellheight;
     }
-    render() {
-        requestAnimationFrame(this.render.bind(this));
+    render_internal() {
         this.smoothUpdate();
         this.drawHeader();
         this.drawSidebar();
         this.drawData();
         this.setSelection();
+    }
+    render() {
+        // this.render_internal();
+        // return;
+        if (this.busy)
+            return;
+        this.busy = requestAnimationFrame(() => {
+            this.busy = null;
+            this.render_internal();
+        });
     }
     resizer() {
         const resizeEventHandler = function () {
@@ -161,6 +171,7 @@ class ExcelV2 {
             if (this.canvas.data[0].length < 100) {
                 this.extendData(100 - this.canvas.data[0].length, "X");
             }
+            this.render();
         });
     }
     clearData() {
@@ -342,6 +353,7 @@ class ExcelV2 {
             const { cell } = this.getCell(event);
             const selectedArea = this.getCellsArea(this.selectionMode.startSelectionCell, cell);
             this.selectionMode.selectedArea = selectedArea;
+            this.render();
         }
     }
     canvasMouseDownHandler(event) {
