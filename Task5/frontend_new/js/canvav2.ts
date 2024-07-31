@@ -829,7 +829,6 @@ class ExcelV2 {
         this.mouse.horizontal = event.shiftKey && event.altKey
 
         if (event.key === "c" && event.ctrlKey) {
-            console.log("🚀 ~ ExcelV2 ~ windowKeypressHandler ~ ctrlKey:", 'ctrlKey')
             this.copyCells()
             return
         }
@@ -849,6 +848,7 @@ class ExcelV2 {
                 break;
             case "Tab":
                 this.moveActiveCell("RIGHT")
+                event.preventDefault()
                 break;
             case "Enter":
                 this.moveActiveCell("BOTTOM")
