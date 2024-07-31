@@ -17,7 +17,8 @@ type SelectionModeCanva = {
     active: boolean
     selectedArea: Cell[],
     startSelectionCell: Cell | null,
-    decoration: boolean
+    decoration: boolean,
+    lineDashOffset: number
 }
 type Canvas = {
     element: HTMLCanvasElement | null
@@ -39,6 +40,15 @@ type ExcelInputBox = {
     left: number
 }
 
+type KeysPressed = {
+    shift: boolean
+    ctrl: boolean
+    alt: boolean
+}
+type ActiveFunctions = {
+    copy: boolean
+}
+
 class ExcelV2 {
     primaryColor = "#03723c"
     secondaryColor = "#959595"
@@ -58,6 +68,12 @@ class ExcelV2 {
     prevWidth: number = 0
     busy: any
 
+    keys: KeysPressed = {
+        alt: false,
+        ctrl: false,
+        shift: false
+    }
+    activeFunctions: ActiveFunctions = { copy: false }
     inputBox: ExcelInputBox = {
         element: null,
         left: 0,
@@ -106,7 +122,8 @@ class ExcelV2 {
         active: false,
         selectedArea: [],
         startSelectionCell: null,
-        decoration: false
+        decoration: false,
+        lineDashOffset: 0
     }
 
     constructor(parentElement: HTMLElement, csv: string) {
@@ -203,10 +220,11 @@ class ExcelV2 {
         this.drawSidebar()
         this.drawData()
         this.setSelection()
+        if (this.activeFunctions.copy) {
+            this.marchingAnts()
+        }
     }
     render() {
-        // this.render_internal();
-        // return;
         if (this.busy)
             return;
 
@@ -214,7 +232,6 @@ class ExcelV2 {
             this.busy = null;
             this.render_internal()
         })
-        // console.log("render")
     }
     resizer() {
         const resizeEventHandler = function (this: any) {
@@ -455,6 +472,9 @@ class ExcelV2 {
         }
     }
     canvasMouseDownHandler(event: MouseEvent) {
+        if (this.activeFunctions.copy) {
+            this.activeFunctions.copy = false
+        }
         const { cell } = this.getCell(event)
         this.selectionMode.startSelectionCell = cell
         this.selectionMode.active = true
@@ -802,14 +822,19 @@ class ExcelV2 {
     windowKeypressHandler(event: KeyboardEvent) {
         if (event.target === this.inputBox.element) return;
         this.inputBox.element!.style.display = "none"
+
+        this.keys.ctrl = event.ctrlKey
+        this.keys.alt = event.altKey
+        this.keys.shift = event.shiftKey
         this.mouse.horizontal = event.shiftKey && event.altKey
 
-        let ctrlClick = false
+        if (event.key === "c" && event.ctrlKey) {
+            console.log("🚀 ~ ExcelV2 ~ windowKeypressHandler ~ ctrlKey:", 'ctrlKey')
+            this.copyCells()
+            return
+        }
 
         switch (event.key) {
-            case "Control":
-                ctrlClick = true
-                break
             case "ArrowDown":
                 this.moveActiveCell("BOTTOM")
                 break;
@@ -835,8 +860,10 @@ class ExcelV2 {
                 this.selectionMode.selectedArea.forEach(c => c.data = "")
                 break
             case "Backspace":
-                if (this.selectionMode.selectedArea.length)
+                if (this.selectionMode.selectedArea.length) {
                     this.selectionMode.selectedArea[0].data = ""
+                    this.createInputBox()
+                }
                 break
             default:
                 if (event.key.match(/^\w$/)) {
@@ -844,17 +871,27 @@ class ExcelV2 {
                 }
                 return;
         }
-        if (!ctrlClick && this.selectionMode.selectedArea.length > 1) {
+        if (!this.keys.ctrl && this.selectionMode.selectedArea.length > 1) {
             this.selectionMode.selectedArea.forEach(c => this.drawDataCell(c))
         }
         this.render()
     }
+
     windowKeyupHandler(event: KeyboardEvent) {
         if (event.target === this.inputBox.element) return;
         this.inputBox.element!.style.display = "none"
         this.mouse.horizontal = event.shiftKey && event.altKey
     }
 
+    // functions
+    copyCells() {
+        this.activeFunctions.copy = true
+        this.render()
+    }
+    marchingAnts() {
+        this.selectionMode.lineDashOffset -= 1
+        this.render()
+    }
 
     // scroll
     scroller(event: WheelEvent, element?: "HEADER" | "SIDEBAR") {
@@ -925,14 +962,12 @@ class ExcelV2 {
         inputBox.style.padding = `4px`
         inputBox.style.border = `1px solid white`
         inputBox.value = `${data}`
-        // if (!inputActive) {
         inputBox.style.display = `block`
         inputBox.focus()
         inputBox.onchange = (e: any) => {
             e.stopPropagation()
             this.canvas.data[row][col].data = e.target.value
         }
-        // }
     }
     moveActiveCell(direction: "TOP" | "LEFT" | "RIGHT" | "BOTTOM") {
         let activeCell = this.selectionMode.startSelectionCell!
@@ -991,8 +1026,7 @@ class ExcelV2 {
         context.strokeStyle = this.primaryColor
         context.lineWidth = 4
 
-        // if (ants)
-        //     context.setLineDash([5, 3])
+
         context.translate(-this.mouse.animatex, -this.mouse.animatey)
 
         context.save()
@@ -1020,12 +1054,17 @@ class ExcelV2 {
         context.beginPath()
         context.strokeStyle = this.primaryColor
         context.lineWidth = 4
+        if (this.activeFunctions.copy) {
+            context.setLineDash([6, 2])
+            context.lineDashOffset = this.selectionMode.lineDashOffset
+        }
         context.moveTo(leftX1 - 4, topX1 - 2)
         context.lineTo(leftX2 + 1, topX1 - 2)
         context.lineTo(leftX2 + 1, topX2 + 1)
         context.lineTo(leftX1 - 2, topX2 + 1)
         context.lineTo(leftX1 - 2, topX1 - 2)
         context.save()
+
         context.stroke()
         context.restore()
         context.setTransform(1, 0, 0, 1, 0, 0);

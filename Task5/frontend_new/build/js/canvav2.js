@@ -23,6 +23,12 @@ class ExcelV2 {
         this.smoothingFactor = 0.1;
         this.extracells = 30;
         this.prevWidth = 0;
+        this.keys = {
+            alt: false,
+            ctrl: false,
+            shift: false
+        };
+        this.activeFunctions = { copy: false };
         this.inputBox = {
             element: null,
             left: 0,
@@ -70,7 +76,8 @@ class ExcelV2 {
             active: false,
             selectedArea: [],
             startSelectionCell: null,
-            decoration: false
+            decoration: false,
+            lineDashOffset: 0
         };
         this.wrapper = parentElement;
         this.csvString = (csv || "").trim();
@@ -149,17 +156,17 @@ class ExcelV2 {
         this.drawSidebar();
         this.drawData();
         this.setSelection();
+        if (this.activeFunctions.copy) {
+            this.marchingAnts();
+        }
     }
     render() {
-        // this.render_internal();
-        // return;
         if (this.busy)
             return;
         this.busy = requestAnimationFrame(() => {
             this.busy = null;
             this.render_internal();
         });
-        // console.log("render")
     }
     resizer() {
         const resizeEventHandler = function () {
@@ -401,6 +408,9 @@ class ExcelV2 {
         }
     }
     canvasMouseDownHandler(event) {
+        if (this.activeFunctions.copy) {
+            this.activeFunctions.copy = false;
+        }
         const { cell } = this.getCell(event);
         this.selectionMode.startSelectionCell = cell;
         this.selectionMode.active = true;
@@ -738,12 +748,16 @@ class ExcelV2 {
         if (event.target === this.inputBox.element)
             return;
         this.inputBox.element.style.display = "none";
+        this.keys.ctrl = event.ctrlKey;
+        this.keys.alt = event.altKey;
+        this.keys.shift = event.shiftKey;
         this.mouse.horizontal = event.shiftKey && event.altKey;
-        let ctrlClick = false;
+        if (event.key === "c" && event.ctrlKey) {
+            console.log("🚀 ~ ExcelV2 ~ windowKeypressHandler ~ ctrlKey:", 'ctrlKey');
+            this.copyCells();
+            return;
+        }
         switch (event.key) {
-            case "Control":
-                ctrlClick = true;
-                break;
             case "ArrowDown":
                 this.moveActiveCell("BOTTOM");
                 break;
@@ -769,8 +783,10 @@ class ExcelV2 {
                 this.selectionMode.selectedArea.forEach(c => c.data = "");
                 break;
             case "Backspace":
-                if (this.selectionMode.selectedArea.length)
+                if (this.selectionMode.selectedArea.length) {
                     this.selectionMode.selectedArea[0].data = "";
+                    this.createInputBox();
+                }
                 break;
             default:
                 if (event.key.match(/^\w$/)) {
@@ -778,7 +794,7 @@ class ExcelV2 {
                 }
                 return;
         }
-        if (!ctrlClick && this.selectionMode.selectedArea.length > 1) {
+        if (!this.keys.ctrl && this.selectionMode.selectedArea.length > 1) {
             this.selectionMode.selectedArea.forEach(c => this.drawDataCell(c));
         }
         this.render();
@@ -788,6 +804,15 @@ class ExcelV2 {
             return;
         this.inputBox.element.style.display = "none";
         this.mouse.horizontal = event.shiftKey && event.altKey;
+    }
+    // functions
+    copyCells() {
+        this.activeFunctions.copy = true;
+        this.render();
+    }
+    marchingAnts() {
+        this.selectionMode.lineDashOffset -= 1;
+        this.render();
     }
     // scroll
     scroller(event, element) {
@@ -855,14 +880,12 @@ class ExcelV2 {
         inputBox.style.padding = `4px`;
         inputBox.style.border = `1px solid white`;
         inputBox.value = `${data}`;
-        // if (!inputActive) {
         inputBox.style.display = `block`;
         inputBox.focus();
         inputBox.onchange = (e) => {
             e.stopPropagation();
             this.canvas.data[row][col].data = e.target.value;
         };
-        // }
     }
     moveActiveCell(direction) {
         let activeCell = this.selectionMode.startSelectionCell;
@@ -915,8 +938,6 @@ class ExcelV2 {
         const topX2 = Math.max(startCell.top, endCell.top + endCell.height, startCell.top + startCell.height, endCell.top);
         context.strokeStyle = this.primaryColor;
         context.lineWidth = 4;
-        // if (ants)
-        //     context.setLineDash([5, 3])
         context.translate(-this.mouse.animatex, -this.mouse.animatey);
         context.save();
         context.beginPath();
@@ -939,6 +960,10 @@ class ExcelV2 {
         context.beginPath();
         context.strokeStyle = this.primaryColor;
         context.lineWidth = 4;
+        if (this.activeFunctions.copy) {
+            context.setLineDash([6, 2]);
+            context.lineDashOffset = this.selectionMode.lineDashOffset;
+        }
         context.moveTo(leftX1 - 4, topX1 - 2);
         context.lineTo(leftX2 + 1, topX1 - 2);
         context.lineTo(leftX2 + 1, topX2 + 1);
