@@ -829,10 +829,14 @@ class ExcelV2 {
                 this.moveActiveCell("BOTTOM")
                 break;
             case "Escape":
+                this.selectionMode.selectedArea = [this.selectionMode.startSelectionCell!]
                 break;
             case "Delete":
-            case "Backspace":
                 this.selectionMode.selectedArea.forEach(c => c.data = "")
+                break
+            case "Backspace":
+                if (this.selectionMode.selectedArea.length)
+                    this.selectionMode.selectedArea[0].data = ""
                 break
             default:
                 if (event.key.match(/^\w$/)) {
@@ -931,7 +935,6 @@ class ExcelV2 {
         // }
     }
     moveActiveCell(direction: "TOP" | "LEFT" | "RIGHT" | "BOTTOM") {
-        console.log("🚀 ~ ExcelV2 ~ moveActiveCell ~ direction:", direction)
         let activeCell = this.selectionMode.startSelectionCell!
 
         let { row, col } = activeCell
