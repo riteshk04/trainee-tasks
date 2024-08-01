@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-class ExcelV2 {
+class Excel {
     constructor(parentElement, csv) {
         this.primaryColor = "#03723c";
         this.secondaryColor = "#959595";
@@ -226,6 +226,7 @@ class ExcelV2 {
             event.stopImmediatePropagation();
             this.mouse.scale = Math.max(this.mouse.scale + (deltaY < 0 ? 0.1 : -0.1), 0.5);
             this.mouse.scale = Math.min(this.mouse.scale, 2);
+            console.log("🚀 ~ Excel ~ scale ~ this.mouse.scale:", this.mouse.scale);
             this.resizeEventHandler();
         }
     }
@@ -908,8 +909,8 @@ class ExcelV2 {
             canvasElement = this.canvas.element;
         }
         let rect = canvasElement.getBoundingClientRect();
-        let x = Math.max(0, event.clientX - rect.left + this.mouse.scrollX);
-        let y = Math.max(0, event.clientY - rect.top + this.mouse.scrollY);
+        let x = Math.max(0, event.clientX - rect.left + this.mouse.scrollX) * this.mouse.scale;
+        let y = Math.max(0, event.clientY - rect.top + this.mouse.scrollY) * this.mouse.scale;
         return { x, y };
     }
     getCell(event, fullSearch = false) {

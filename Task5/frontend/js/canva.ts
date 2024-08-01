@@ -1,53 +1,4 @@
-type Pointer = {
-    x: number
-    y: number
-    startx: number
-    starty: number
-    up: boolean
-    horizontal: boolean
-    scrollX: number
-    scrollY: number
-
-    pscrollX: number
-    pscrollY: number
-    animatex: number
-    animatey: number
-    scale: number
-}
-type SelectionModeCanva = {
-    active: boolean
-    selectedArea: Cell[],
-    startSelectionCell: Cell | null,
-    decoration: boolean,
-    lineDashOffset: number
-}
-type Canvas = {
-    element: HTMLCanvasElement | null
-    ctx: CanvasRenderingContext2D | null
-    data: Cell[][],
-    startCell: Cell | null,
-    endCell: Cell | null
-}
-type HeaderCanva = Canvas & {
-    isDragging: boolean
-    edgeDetected: boolean
-    startx: number
-}
-type ExcelInputBox = {
-    element: HTMLInputElement | null,
-    top: number,
-    left: number
-}
-type KeysPressed = {
-    shift: boolean
-    ctrl: boolean
-    alt: boolean
-}
-type ActiveFunctions = {
-    copy: boolean
-}
-
-class ExcelV2 {
+class Excel {
     primaryColor = "#03723c"
     secondaryColor = "#959595"
     strokeColor = "#dadada"
@@ -301,6 +252,7 @@ class ExcelV2 {
             event.stopImmediatePropagation()
             this.mouse.scale = Math.max(this.mouse.scale + (deltaY < 0 ? 0.1 : -0.1), 0.5)
             this.mouse.scale = Math.min(this.mouse.scale, 2)
+            console.log("🚀 ~ Excel ~ scale ~ this.mouse.scale:", this.mouse.scale)
             this.resizeEventHandler()
         }
     }
@@ -996,8 +948,8 @@ class ExcelV2 {
             canvasElement = this.canvas.element!
         }
         let rect = canvasElement.getBoundingClientRect()
-        let x = Math.max(0, event.clientX - rect.left + this.mouse.scrollX)
-        let y = Math.max(0, event.clientY - rect.top + this.mouse.scrollY)
+        let x = Math.max(0, event.clientX - rect.left + this.mouse.scrollX)*this.mouse.scale
+        let y = Math.max(0, event.clientY - rect.top + this.mouse.scrollY)*this.mouse.scale
         return { x, y }
     }
     getCell(event: MouseEvent, fullSearch: boolean = false): { cell: Cell, x: number, y: number } {

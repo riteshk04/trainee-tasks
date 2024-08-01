@@ -33,7 +33,7 @@
 
 <body>
     <div class="demo"></div>
-    <script src="./build/js/canvav2.js"></script>
+    <script src="./build/js/canva.js"></script>
     <script>
         const csv = `id,name,country,email_id,gender,telephone_number,state,city,addr1,addr2,dob,FY2019-20,FY2020-21,FY2021-22,FY2022-23,FY2023-24
 1,Perice,Zambia,pkneeshaw0@si.edu,Male,583-125-0584,,Mungwi,Room 390,Apt 299,2/7/2002,588941,610137,745617,807292,927796
@@ -88,15 +88,8 @@
 50,Othello,Indonesia,oarmfield1d@umn.edu,Male,242-404-4498,,Cibunut,Suite 25,Suite 39,11/25/2002,595115,639182,729153,848788,1042480
 `
         const wrapper = document.querySelector(".demo")
-        // const wrapper2 = document.querySelector(".demo2")
-
-        let excel = new ExcelV2(wrapper, csv)
-        // let excel2 = new ExcelV2(wrapper2, csv)
-        // let excel2 = new ExcelV2(wrapper2, csv)
-        // excel.render()
-        // excel.hide()
-        // excel.render()
-        // excel2.hide()
+        const canva = new Excel(wrapper, csv)
+        canva.render()
     </script>
 </body>
 
