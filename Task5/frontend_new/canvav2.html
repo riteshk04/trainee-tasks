@@ -22,12 +22,17 @@
             margin: 0;
             overflow: hidden;
         }
+
+        .flex {
+            display: grid;
+            grid-template-columns: auto auto;
+            height: 100vh;
+        }
     </style>
 </head>
 
 <body>
     <div class="demo"></div>
-    <div class="demo2"></div>
     <script src="./build/js/canvav2.js"></script>
     <script>
         const csv = `id,name,country,email_id,gender,telephone_number,state,city,addr1,addr2,dob,FY2019-20,FY2020-21,FY2021-22,FY2022-23,FY2023-24
@@ -83,12 +88,14 @@
 50,Othello,Indonesia,oarmfield1d@umn.edu,Male,242-404-4498,,Cibunut,Suite 25,Suite 39,11/25/2002,595115,639182,729153,848788,1042480
 `
         const wrapper = document.querySelector(".demo")
+        // const wrapper2 = document.querySelector(".demo2")
 
         let excel = new ExcelV2(wrapper, csv)
-        let excel2 = new ExcelV2(wrapper, csv)
-        // excel2.render()
+        // let excel2 = new ExcelV2(wrapper2, csv)
+        // let excel2 = new ExcelV2(wrapper2, csv)
+        // excel.render()
         // excel.hide()
-        excel.render()
+        // excel.render()
         // excel2.hide()
     </script>
 </body>

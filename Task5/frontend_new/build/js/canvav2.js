@@ -72,7 +72,8 @@ class ExcelV2 {
             animatex: 0,
             animatey: 0,
             pscrollX: 100,
-            pscrollY: 100
+            pscrollY: 100,
+            scale: 1
         };
         this.selectionMode = {
             active: false,
@@ -103,45 +104,32 @@ class ExcelV2 {
         this.wrapper.style.boxSizing = "border-box";
         this.wrapper.style.position = "relative";
         this.wrapper.style.fontSize = "0";
+        let headWrapper = document.createElement("div");
+        headWrapper.style.display = "flex";
         let inputBox = document.createElement("input");
         inputBox.style.display = "none";
         inputBox.style.position = "absolute";
         inputBox.style.boxSizing = "border-box";
         inputBox.style.outline = "none";
-        // inputBox.onkeydown = e => e.stopPropagation()
         let emptyBox = document.createElement("div");
         emptyBox.style.width = `${this.mincellwidth}px`;
         emptyBox.style.height = `${this.cellheight}px`;
         emptyBox.style.boxSizing = "border-box";
+        emptyBox.style.flexShrink = "0";
         emptyBox.style.display = "inline-block";
         emptyBox.style.background = this.secondaryColor + "33";
         emptyBox.style.borderRight = `0.5px solid ${this.secondaryColor + "aa"}`;
         emptyBox.style.borderBottom = `0.5px solid ${this.secondaryColor + "aa"}`;
+        this.emptyBox = emptyBox;
         let headerElement = document.createElement("canvas");
         headerElement.height = this.cellheight;
         headerElement.style.boxSizing = "border-box";
-        this.wrapper.appendChild(emptyBox);
-        this.wrapper.appendChild(headerElement);
+        headWrapper.appendChild(emptyBox);
+        headWrapper.appendChild(headerElement);
+        this.wrapper.appendChild(headWrapper);
+        // this.wrapper.appendChild(headerElement)
         let sidebarElement = document.createElement("canvas");
         sidebarElement.width = this.mincellwidth;
-        this.scrollXWrapper = document.createElement("div");
-        this.scrollXWrapper.style.overflowX = "scroll";
-        this.infiniteXDiv = document.createElement("div");
-        this.infiniteXDiv.style.height = "10px";
-        this.scrollXWrapper.appendChild(this.infiniteXDiv);
-        this.scrollXWrapper.style.position = "fixed";
-        this.scrollXWrapper.style.bottom = "0";
-        this.scrollXWrapper.style.right = "0";
-        this.scrollYWrapper = document.createElement("div");
-        this.scrollYWrapper.style.overflowY = "scroll";
-        this.infiniteYDiv = document.createElement("div");
-        this.infiniteYDiv.style.width = "30px";
-        this.scrollYWrapper.appendChild(this.infiniteYDiv);
-        this.scrollYWrapper.style.position = "fixed";
-        this.scrollYWrapper.style.bottom = "0";
-        this.scrollYWrapper.style.right = "0";
-        this.scrollXWrapper.style.width = `${this.wrapper.offsetWidth - this.mincellwidth}px`;
-        this.scrollYWrapper.style.height = `${this.wrapper.offsetHeight - this.cellheight}px`;
         let inputBoxWrapper = document.createElement("div");
         inputBoxWrapper.style.position = "relative";
         inputBoxWrapper.style.display = "inline-block";
@@ -149,10 +137,11 @@ class ExcelV2 {
         canvasElement.style.cursor = "cell";
         inputBoxWrapper.appendChild(canvasElement);
         inputBoxWrapper.appendChild(inputBox);
-        this.wrapper.appendChild(sidebarElement);
-        this.wrapper.appendChild(inputBoxWrapper);
-        this.wrapper.appendChild(this.scrollXWrapper);
-        this.wrapper.appendChild(this.scrollYWrapper);
+        let canvaWraper = document.createElement("div");
+        canvaWraper.style.display = "flex";
+        canvaWraper.appendChild(sidebarElement);
+        canvaWraper.appendChild(inputBoxWrapper);
+        this.wrapper.appendChild(canvaWraper);
         this.canvas.ctx = canvasElement.getContext("2d");
         this.header.ctx = headerElement.getContext("2d");
         this.sidebar.ctx = sidebarElement.getContext("2d");
@@ -160,6 +149,27 @@ class ExcelV2 {
         this.sidebar.element = sidebarElement;
         this.header.element = headerElement;
         this.inputBox.element = inputBox;
+        // scrollbar
+        this.scrollXWrapper = document.createElement("div");
+        this.scrollXWrapper.style.overflowX = "scroll";
+        this.infiniteXDiv = document.createElement("div");
+        this.infiniteXDiv.style.height = "10px";
+        this.scrollXWrapper.appendChild(this.infiniteXDiv);
+        this.scrollXWrapper.style.position = "absolute";
+        this.scrollXWrapper.style.bottom = "0";
+        this.scrollXWrapper.style.right = "0";
+        this.scrollYWrapper = document.createElement("div");
+        this.scrollYWrapper.style.overflowY = "scroll";
+        this.infiniteYDiv = document.createElement("div");
+        this.infiniteYDiv.style.width = "30px";
+        this.scrollYWrapper.appendChild(this.infiniteYDiv);
+        this.scrollYWrapper.style.position = "absolute";
+        this.scrollYWrapper.style.bottom = "0";
+        this.scrollYWrapper.style.right = "0";
+        this.scrollXWrapper.style.width = `${this.wrapper.offsetWidth - this.mincellwidth}px`;
+        this.scrollYWrapper.style.height = `${this.wrapper.offsetHeight - this.cellheight}px`;
+        this.wrapper.appendChild(this.scrollXWrapper);
+        this.wrapper.appendChild(this.scrollYWrapper);
         this.resizeEventHandler();
     }
     render_internal() {
@@ -190,6 +200,13 @@ class ExcelV2 {
         this.sidebar.element.height = this.wrapper.offsetHeight - this.cellheight;
         this.scrollXWrapper.style.width = `${this.wrapper.offsetWidth - this.mincellwidth}px`;
         this.scrollYWrapper.style.height = `${this.wrapper.offsetHeight - this.cellheight}px`;
+        // scaling
+        this.header.element.height = this.cellheight * this.mouse.scale;
+        this.sidebar.element.width = this.mincellwidth * this.mouse.scale;
+        this.emptyBox.style.height = `${this.cellheight * this.mouse.scale}px`;
+        this.emptyBox.style.width = `${this.mincellwidth * this.mouse.scale}px`;
+        this.inputBox.element.style.scale = String(this.mouse.scale);
+        // this.inputBox.element!.style.top = `${this.inputBox.top * this.mouse.scale}px`
         this.render();
     }
     resizer() {
@@ -201,6 +218,16 @@ class ExcelV2 {
         if (direction === "Y")
             this.mouse.scrollY = event.target.scrollTop;
         this.render();
+    }
+    scale(event) {
+        if (event.ctrlKey) {
+            const { deltaY } = event;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this.mouse.scale = Math.max(this.mouse.scale + (deltaY < 0 ? 0.1 : -0.1), 0.5);
+            this.mouse.scale = Math.min(this.mouse.scale, 2);
+            this.resizeEventHandler();
+        }
     }
     // data
     createData() {
@@ -268,6 +295,7 @@ class ExcelV2 {
         let ctx = this.canvas.ctx;
         if (!ctx)
             return;
+        ctx.scale(this.mouse.scale, this.mouse.scale);
         ctx.restore();
         ctx.fillStyle = selected ? this.primaryColor + "22" : "#ffffff";
         ctx.font = `${cell.fontSize}px ${cell.font}`;
@@ -487,6 +515,7 @@ class ExcelV2 {
         this.scrollYWrapper.addEventListener("scroll", (e) => this.scrollHandler(e, "Y"));
         window.addEventListener("keydown", this.windowKeypressHandler.bind(this));
         window.addEventListener("keyup", this.windowKeyupHandler.bind(this));
+        window.addEventListener("wheel", (e) => this.scale(e), { passive: false });
     }
     // header methods
     clearHeader() {
@@ -513,6 +542,7 @@ class ExcelV2 {
         let ctx = this.header.ctx;
         if (!ctx)
             return;
+        ctx.scale(this.mouse.scale, this.mouse.scale);
         ctx.restore();
         ctx.fillStyle = active ? this.primaryColor + "22" : this.secondaryColor + "33";
         ctx.font = `${cell.fontSize}px ${cell.font}`;
@@ -615,7 +645,7 @@ class ExcelV2 {
         const headerElement = this.header.element;
         const headerStartCell = this.header.startCell;
         const headerEndCell = this.header.endCell;
-        const { x } = this.getCoordinates(event, headerElement);
+        let { x } = this.getCoordinates(event, headerElement);
         for (let i = Math.max(1, headerStartCell.col - 1); i <= Math.min(this.header.data[0].length, headerEndCell.col); i++) {
             const edge = this.header.data[0][i].left;
             if (Math.max(edge - gap, 0) < x && x < edge + gap) {
@@ -678,6 +708,7 @@ class ExcelV2 {
         let ctx = this.sidebar.ctx;
         if (!ctx)
             return;
+        ctx.scale(this.mouse.scale, this.mouse.scale);
         ctx.restore();
         ctx.fillStyle = active ? this.primaryColor + "22" : this.secondaryColor + "33";
         ctx.font = `${cell.fontSize}px ${cell.font}`;
@@ -844,6 +875,8 @@ class ExcelV2 {
     }
     // scroll
     scroller(event, element) {
+        if (event.ctrlKey)
+            return;
         let { deltaY } = event;
         switch (element) {
             case "HEADER":
