@@ -27,6 +27,7 @@
 
 <body>
     <div class="demo"></div>
+    <div class="demo2"></div>
     <script src="./build/js/canvav2.js"></script>
     <script>
         const csv = `id,name,country,email_id,gender,telephone_number,state,city,addr1,addr2,dob,FY2019-20,FY2020-21,FY2021-22,FY2022-23,FY2023-24
@@ -84,7 +85,11 @@
         const wrapper = document.querySelector(".demo")
 
         let excel = new ExcelV2(wrapper, csv)
+        let excel2 = new ExcelV2(wrapper, csv)
+        // excel2.render()
+        // excel.hide()
         excel.render()
+        // excel2.hide()
     </script>
 </body>
 

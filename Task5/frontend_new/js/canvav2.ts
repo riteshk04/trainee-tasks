@@ -27,19 +27,16 @@ type Canvas = {
     startCell: Cell | null,
     endCell: Cell | null
 }
-
 type HeaderCanva = Canvas & {
     isDragging: boolean
     edgeDetected: boolean
     startx: number
 }
-
 type ExcelInputBox = {
     element: HTMLInputElement | null,
     top: number,
     left: number
 }
-
 type KeysPressed = {
     shift: boolean
     ctrl: boolean
@@ -56,6 +53,10 @@ class ExcelV2 {
     csvString: string;
     offset = 0.5
     wrapper: HTMLElement;
+    infiniteXDiv!: HTMLDivElement;
+    scrollXWrapper!: HTMLDivElement;
+    infiniteYDiv!: HTMLDivElement;
+    scrollYWrapper!: HTMLDivElement;
     cellheight: number = 30
     cellwidth: number = 100
     mincellwidth: number = 60
@@ -73,7 +74,9 @@ class ExcelV2 {
         ctrl: false,
         shift: false
     }
-    activeFunctions: ActiveFunctions = { copy: false }
+    activeFunctions: ActiveFunctions = {
+        copy: false
+    }
     inputBox: ExcelInputBox = {
         element: null,
         left: 0,
@@ -117,7 +120,6 @@ class ExcelV2 {
         pscrollX: 100,
         pscrollY: 100
     };
-
     selectionMode: SelectionModeCanva = {
         active: false,
         selectedArea: [],
@@ -170,7 +172,6 @@ class ExcelV2 {
 
 
         let headerElement = document.createElement("canvas")
-        headerElement.width = this.wrapper.offsetWidth - this.mincellwidth
         headerElement.height = this.cellheight
         headerElement.style.boxSizing = "border-box"
 
@@ -179,15 +180,35 @@ class ExcelV2 {
 
         let sidebarElement = document.createElement("canvas")
         sidebarElement.width = this.mincellwidth
-        sidebarElement.height = this.wrapper.offsetHeight - this.cellheight
+
+        this.scrollXWrapper = document.createElement("div")
+        this.scrollXWrapper.style.overflowX = "scroll"
+        this.infiniteXDiv = document.createElement("div")
+        this.infiniteXDiv.style.height = "10px"
+
+        this.scrollXWrapper.appendChild(this.infiniteXDiv)
+        this.scrollXWrapper.style.position = "fixed"
+        this.scrollXWrapper.style.bottom = "0"
+        this.scrollXWrapper.style.right = "0"
+
+        this.scrollYWrapper = document.createElement("div")
+        this.scrollYWrapper.style.overflowY = "scroll"
+        this.infiniteYDiv = document.createElement("div")
+        this.infiniteYDiv.style.width = "30px"
+
+        this.scrollYWrapper.appendChild(this.infiniteYDiv)
+        this.scrollYWrapper.style.position = "fixed"
+        this.scrollYWrapper.style.bottom = "0"
+        this.scrollYWrapper.style.right = "0"
+
+        this.scrollXWrapper.style.width = `${this.wrapper.offsetWidth - this.mincellwidth}px`
+        this.scrollYWrapper.style.height = `${this.wrapper.offsetHeight - this.cellheight}px`
 
         let inputBoxWrapper = document.createElement("div")
         inputBoxWrapper.style.position = "relative"
         inputBoxWrapper.style.display = "inline-block"
 
         let canvasElement = document.createElement("canvas")
-        canvasElement.width = this.wrapper.offsetWidth - this.mincellwidth
-        canvasElement.height = this.wrapper.offsetHeight - this.cellheight
         canvasElement.style.cursor = "cell"
 
         inputBoxWrapper.appendChild(canvasElement)
@@ -195,24 +216,18 @@ class ExcelV2 {
 
         this.wrapper.appendChild(sidebarElement)
         this.wrapper.appendChild(inputBoxWrapper)
+        this.wrapper.appendChild(this.scrollXWrapper)
+        this.wrapper.appendChild(this.scrollYWrapper)
 
         this.canvas.ctx = canvasElement.getContext("2d")!
         this.header.ctx = headerElement.getContext("2d")!
         this.sidebar.ctx = sidebarElement.getContext("2d")!
 
-        // canvas.addEventListener("wheel", (e) => this.scroller(e, canvas))
-        // sidebar.addEventListener("wheel", (e) => this.scroller(e, sidebar))
-        // header.addEventListener("wheel", (e) => this.scroller(e, header))
-
         this.canvas.element = canvasElement
         this.sidebar.element = sidebarElement
         this.header.element = headerElement
         this.inputBox.element = inputBox
-
-        this.canvas.element.width = this.wrapper.offsetWidth - this.mincellwidth
-        this.canvas.element.height = this.wrapper.offsetHeight - this.cellheight
-        this.header.element.width = this.wrapper.offsetWidth - this.mincellwidth
-        this.sidebar.element.height = this.wrapper.offsetHeight - this.cellheight
+        this.resizeEventHandler()
     }
     render_internal() {
         this.smoothUpdate()
@@ -233,15 +248,27 @@ class ExcelV2 {
             this.render_internal()
         })
     }
+    hide() {
+        this.wrapper.innerHTML = ""
+    }
+    resizeEventHandler() {
+        this.canvas.element!.width = this.wrapper.offsetWidth - this.mincellwidth
+        this.canvas.element!.height = this.wrapper.offsetHeight - this.cellheight
+        this.header.element!.width = this.wrapper.offsetWidth - this.mincellwidth
+        this.sidebar.element!.height = this.wrapper.offsetHeight - this.cellheight
+        this.scrollXWrapper.style.width = `${this.wrapper.offsetWidth - this.mincellwidth}px`
+        this.scrollYWrapper.style.height = `${this.wrapper.offsetHeight - this.cellheight}px`
+        this.render()
+    }
     resizer() {
-        const resizeEventHandler = function (this: any) {
-            this.canvas.element.width = this.wrapper.offsetWidth - this.mincellwidth
-            this.canvas.element.height = this.wrapper.offsetHeight - this.cellheight
-            this.header.element.width = this.wrapper.offsetWidth - this.mincellwidth
-            this.sidebar.element.height = this.wrapper.offsetHeight - this.cellheight
-            this.render()
-        }
-        window.addEventListener("resize", resizeEventHandler.bind(this))
+        window.addEventListener("resize", () => this.resizeEventHandler())
+    }
+    scrollHandler(event: any, direction: "X" | "Y") {
+        if (direction === "X")
+            this.mouse.scrollX = event.target.scrollLeft
+        if (direction === "Y")
+            this.mouse.scrollY = event.target.scrollTop
+        this.render()
     }
 
     // data
@@ -363,11 +390,11 @@ class ExcelV2 {
                 break
         }
 
-        if (Math.abs(finalRow - this.canvas.data.length) < 10) {
-            this.extendData(20, "Y")
+        if (Math.abs(finalRow - this.canvas.data.length) < 50) {
+            this.extendData(100, "Y")
         }
-        if (Math.abs(initialCol - this.canvas.data[0].length) < 10) {
-            this.extendData(20, "X")
+        if (Math.abs(initialCol - this.canvas.data[0].length) < 50) {
+            this.extendData(100, "X")
         }
         this.clearData()
         for (let i = Math.max(initialRow - this.extracells, 0); i < Math.min(finalRow + this.extracells, this.canvas.data.length); i++) {
@@ -382,6 +409,8 @@ class ExcelV2 {
 
         this.inputBox.element!.style.top = `${this.inputBox.top - this.mouse.animatey - 0.5}px`
         this.inputBox.element!.style.left = `${this.inputBox.left - this.mouse.animatex - 0.5}px`
+        this.infiniteXDiv.style.width = `${window.outerWidth + this.canvas.data.length * this.cellheight}px`
+        this.infiniteYDiv.style.height = `${window.outerHeight + this.canvas.data[0].length * this.cellwidth}px`
     }
     extendData(count: number, axis: "X" | "Y") {
         if (!this.canvas.data.length) {
@@ -525,6 +554,9 @@ class ExcelV2 {
 
         this.canvas.element!.addEventListener("mouseup", this.canvasMouseupHandler.bind(this))
         this.header.element!.addEventListener("mouseup", this.headerMouseUpObserver.bind(this))
+
+        this.scrollXWrapper.addEventListener("scroll", (e) => this.scrollHandler(e, "X"))
+        this.scrollYWrapper.addEventListener("scroll", (e) => this.scrollHandler(e, "Y"))
 
         window.addEventListener("keydown", this.windowKeypressHandler.bind(this))
         window.addEventListener("keyup", this.windowKeyupHandler.bind(this))
@@ -876,7 +908,6 @@ class ExcelV2 {
         }
         this.render()
     }
-
     windowKeyupHandler(event: KeyboardEvent) {
         if (event.target === this.inputBox.element) return;
         this.inputBox.element!.style.display = "none"
@@ -1130,7 +1161,7 @@ class ExcelV2 {
     setActiveCell() {
         this.drawDataCell(this.selectionMode.selectedArea[0]!)
     }
-    widthShifter(cell: Cell, newWidth: number, data: Cell[][]) {
+    async widthShifter(cell: Cell, newWidth: number, data: Cell[][]) {
         if (newWidth < 60) {
             newWidth = 60
         }
