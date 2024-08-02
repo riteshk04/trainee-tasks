@@ -226,7 +226,6 @@ class Excel {
             event.stopImmediatePropagation();
             this.mouse.scale = Math.max(this.mouse.scale + (deltaY < 0 ? 0.1 : -0.1), 0.5);
             this.mouse.scale = Math.min(this.mouse.scale, 2);
-            console.log("🚀 ~ Excel ~ scale ~ this.mouse.scale:", this.mouse.scale);
             this.resizeEventHandler();
         }
     }
@@ -372,8 +371,8 @@ class Excel {
         this.canvas.endCell = this.canvas.data[finalRow][finalCol];
         this.inputBox.element.style.top = `${this.inputBox.top - this.mouse.animatey - 0.5}px`;
         this.inputBox.element.style.left = `${this.inputBox.left - this.mouse.animatex - 0.5}px`;
-        this.infiniteXDiv.style.width = `${window.outerWidth + this.canvas.data.length * this.cellheight}px`;
-        this.infiniteYDiv.style.height = `${window.outerHeight + this.canvas.data[0].length * this.cellwidth}px`;
+        this.infiniteYDiv.style.height = `${window.outerHeight + this.canvas.data.length * this.cellheight}px`;
+        this.infiniteXDiv.style.width = `${window.outerWidth + this.canvas.data[0].length * this.cellwidth}px`;
     }
     extendData(count, axis) {
         if (!this.canvas.data.length) {
@@ -508,6 +507,7 @@ class Excel {
         this.canvas.element.addEventListener("wheel", (e) => this.scroller(e));
         this.canvas.element.addEventListener("mousemove", this.canvasMouseMoveHandler.bind(this));
         this.header.element.addEventListener("mousemove", this.headerMouseMoveObserver.bind(this));
+        this.header.element.addEventListener("mouseout", () => { this.header.isDragging = false; });
         this.canvas.element.addEventListener("mousedown", this.canvasMouseDownHandler.bind(this));
         this.header.element.addEventListener("mousedown", this.headerMouseDownObserver.bind(this));
         this.canvas.element.addEventListener("mouseup", this.canvasMouseupHandler.bind(this));
@@ -651,7 +651,7 @@ class Excel {
             const edge = this.header.data[0][i].left;
             if (Math.max(edge - gap, 0) < x && x < edge + gap) {
                 this.header.edgeDetected = true;
-                headerElement.style.cursor = "col-resize";
+                headerElement.style.cursor = "e-resize";
                 if (!this.header.isDragging) {
                     this.edgeCell = this.header.data[0][i - 1];
                     this.prevWidth = this.edgeCell.width;
@@ -1035,9 +1035,15 @@ class Excel {
         context.stroke();
         context.restore();
         context.setTransform(1, 0, 0, 1, 0, 0);
+        if (this.inputBox.element.style.display === "none") {
+            context.clearRect(leftX2 - 6, topX2 - 6, 12, 12);
+            context.fillStyle = this.primaryColor;
+            context.fillRect(leftX2 - 4, topX2 - 4, 8, 8);
+        }
         selectedArea.forEach(cell => {
             this.drawHeaderCell(this.header.data[0][cell.col], true);
-            this.drawSidebarCell(this.sidebar.data[cell.row][0], true);
+            if (this.sidebar.data.length)
+                this.drawSidebarCell(this.sidebar.data[cell.row][0], true);
         });
     }
     // extras
