@@ -13,6 +13,8 @@
 
         body {
             height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .demo {
@@ -28,10 +30,62 @@
             grid-template-columns: auto auto;
             height: 100vh;
         }
+
+        .formula-bar {
+            display: flex;
+            gap: 2px;
+            background-color: #95959533;
+            height: 30px;
+        }
+
+        .ribbon {
+            background-color: #95959533;
+            padding: 10px;
+            height: 140px;
+        }
+
+        .ribbon-container {
+            background-color: white;
+            border-radius: 5px;
+            height: 100%;
+        }
+
+        .menus {
+            height: 40px;
+            background-color: #95959533;
+            display: flex;
+            padding: 0 10px;
+        }
+
+        .menus a {
+            display: inline-block;
+            padding: 8px 10px;
+            text-decoration: none;
+            color: #474747;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .menus a.active {
+            font-weight: bold;
+            border-bottom: 2px solid #03723c;
+        }
     </style>
 </head>
 
 <body>
+    <div class="menus">
+        <a href="" class="active">File</a>
+        <a href="">Home</a>
+        <a href="">Insert</a>
+    </div>
+    <div class="ribbon">
+        <div class="ribbon-container">
+
+        </div>
+    </div>
+    <div class="formula-bar">
+
+    </div>
     <div class="demo"></div>
     <script src="./build/js/canva.js"></script>
     <script>
@@ -93,4 +147,4 @@
     </script>
 </body>
 
-</html> 
+</html>
