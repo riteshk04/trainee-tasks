@@ -302,19 +302,6 @@ class Excel {
         if (!ctx || !this.canvas.element) return;
         ctx.clearRect(0, 0, this.canvas.element.offsetWidth, this.canvas.element.offsetHeight)
     }
-    clearDataCell(cell: Cell) {
-        let ctx = this.canvas.ctx
-        if (!ctx) return
-        ctx.restore()
-        for (let i = Math.max(0, cell.row - 1); i <= Math.min(this.canvas.data.length, cell.row + 1); i++) {
-            for (let j = Math.max(0, cell.col - 1); j <= Math.min(this.canvas.data[0].length, cell.col + 1); j++) {
-                const cell = this.canvas.data[i][j];
-                ctx.clearRect(cell.left, cell.top, cell.width, cell.height)
-                this.drawDataCell(cell)
-                ctx.save()
-            }
-        }
-    }
     drawDataCell(cell: Cell, active?: boolean, selected?: boolean) {
         let ctx = this.canvas.ctx
         if (!ctx) return
@@ -323,7 +310,6 @@ class Excel {
         ctx.fillStyle = selected ? this.primaryColor + "22" : "#ffffff"
         ctx.font = `${cell.fontSize}px ${cell.font}`
         ctx.save()
-        // ctx.clearRect(cell.left - this.mouse.animatex - this.offset, cell.top - this.mouse.animatey - this.offset, cell.width + (this.offset * 2), cell.height + (this.offset * 2))
         ctx.fillRect(cell.left - this.mouse.animatex, cell.top - this.mouse.animatey, cell.width, cell.height)
         ctx.save()
         ctx.beginPath()
@@ -557,19 +543,6 @@ class Excel {
         if (!ctx || !this.header.element) return;
         ctx.clearRect(0, 0, this.header.element.offsetWidth, this.header.element.offsetHeight)
     }
-    clearHeaderCell(cell: Cell) {
-        let ctx = this.header.ctx
-        if (!ctx) return
-        let prev = this.header.data[0][Math.max(0, cell.col - 1)]
-        let next = this.header.data[0][Math.min(this.header.data[0].length, cell.col + 1)]
-        ctx.restore()
-        ctx.clearRect(prev.left, prev.top, prev.width, prev.height)
-        ctx.clearRect(next.left, next.top, next.width, next.height)
-        ctx.clearRect(cell.left, cell.top, cell.width, cell.height)
-        ctx.save()
-        this.drawHeaderCell(prev)
-        this.drawHeaderCell(next)
-    }
     drawHeaderCell(cell: Cell, active?: boolean) {
         let ctx = this.header.ctx
         if (!ctx) return
@@ -725,19 +698,6 @@ class Excel {
         let ctx = this.sidebar.ctx
         if (!ctx || !this.sidebar.element) return;
         ctx.clearRect(0, 0, this.sidebar.element.offsetWidth, this.sidebar.element.offsetHeight)
-    }
-    clearSidebarCell(cell: Cell) {
-        let ctx = this.sidebar.ctx
-        if (!ctx) return
-        let prev = this.sidebar.data[0][Math.max(0, cell.col - 1)]
-        let next = this.sidebar.data[0][Math.min(this.sidebar.data[0].length, cell.col + 1)]
-        ctx.restore()
-        ctx.clearRect(prev.left, prev.top, prev.width, prev.height)
-        ctx.clearRect(next.left, next.top, next.width, next.height)
-        ctx.clearRect(cell.left, cell.top, cell.width, cell.height)
-        ctx.save()
-        this.drawHeaderCell(prev)
-        this.drawHeaderCell(next)
     }
     drawSidebarCell(cell: Cell, active?: boolean) {
         let ctx = this.sidebar.ctx
@@ -1092,9 +1052,13 @@ class Excel {
         context.setTransform(1, 0, 0, 1, 0, 0);
 
         if (this.inputBox.element!.style.display === "none") {
-            context.clearRect(leftX2 - 6, topX2 - 6, 12, 12)
+            context.beginPath()
             context.fillStyle = this.primaryColor
-            context.fillRect(leftX2 - 4, topX2 - 4, 8, 8)
+            context.rect(leftX2 - 4, topX2 - 4, 8, 8)
+            context.fill()
+            context.strokeStyle = "#ffffff"
+            context.lineWidth = 2
+            context.stroke()
         }
 
         selectedArea.forEach(cell => {
