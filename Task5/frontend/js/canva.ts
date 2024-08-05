@@ -1,7 +1,10 @@
+enum Colors {
+  PRIMARY = "#03723c",
+  SECONDARY = "#959595",
+  STROKE = "#dadada",
+}
+
 class Excel {
-  primaryColor = "#03723c";
-  secondaryColor = "#959595";
-  strokeColor = "#dadada";
   csvString: string;
   offset = 0.5;
   wrapper: HTMLElement;
@@ -84,11 +87,11 @@ class Excel {
 
   /**
    * Creates and initializes the App object
-   * @param parentElement Specified element to draw the app layout
+   * @param container Specify container to draw the app layout
    * @param csv CSV file as a string
    */
-  constructor(parentElement: HTMLElement, csv: string) {
-    this.wrapper = parentElement;
+  constructor(container: HTMLElement, csv: string) {
+    this.wrapper = container;
     this.csvString = (csv || "").trim();
     this.busy = null;
     this.init();
@@ -133,9 +136,9 @@ class Excel {
     emptyBox.style.boxSizing = "border-box";
     emptyBox.style.flexShrink = "0";
     emptyBox.style.display = "inline-block";
-    emptyBox.style.background = this.secondaryColor + "33";
-    emptyBox.style.borderRight = `0.5px solid ${this.secondaryColor + "aa"}`;
-    emptyBox.style.borderBottom = `0.5px solid ${this.secondaryColor + "aa"}`;
+    emptyBox.style.background = Colors.SECONDARY + "33";
+    emptyBox.style.borderRight = `0.5px solid ${Colors.SECONDARY + "aa"}`;
+    emptyBox.style.borderBottom = `0.5px solid ${Colors.SECONDARY + "aa"}`;
     this.emptyBox = emptyBox;
 
     let headerElement = document.createElement("canvas");
@@ -323,7 +326,7 @@ class Excel {
             row: i,
             col: j,
             isbold: false,
-            strokeStyle: this.strokeColor,
+            strokeStyle: Colors.STROKE,
             lineWidth: 1,
             fontSize: 16,
             font: "Arial",
@@ -369,7 +372,7 @@ class Excel {
     if (!ctx) return;
     ctx.scale(this.mouse.scale, this.mouse.scale);
     ctx.restore();
-    ctx.fillStyle = selected ? this.primaryColor + "22" : "#ffffff";
+    ctx.fillStyle = selected ? Colors.PRIMARY + "22" : "#ffffff";
     ctx.font = `${cell.fontSize}px ${cell.font}`;
     ctx.save();
     ctx.fillRect(
@@ -420,13 +423,13 @@ class Excel {
         break;
     }
     ctx.restore();
-    ctx.strokeStyle = active ? this.primaryColor + "AA" : "#959595aa";
+    ctx.strokeStyle = active ? Colors.PRIMARY + "AA" : "#959595aa";
     ctx.stroke();
 
     if (!active) return;
     ctx.beginPath();
     ctx.rect(cell.left - 2, cell.top - 2, cell.width + 4, cell.height + 4);
-    ctx.strokeStyle = this.primaryColor;
+    ctx.strokeStyle = Colors.PRIMARY;
     ctx.lineWidth = 4;
     ctx.stroke();
   }
@@ -520,7 +523,7 @@ class Excel {
           row: 0,
           col: 0,
           isbold: false,
-          strokeStyle: this.strokeColor,
+          strokeStyle: Colors.STROKE,
           lineWidth: 1,
           fontSize: 16,
           font: "Arial",
@@ -545,7 +548,7 @@ class Excel {
             row: i,
             col: j,
             isbold: false,
-            strokeStyle: this.strokeColor,
+            strokeStyle: Colors.STROKE,
             lineWidth: 1,
             fontSize: 16,
             font: "Arial",
@@ -574,7 +577,7 @@ class Excel {
             row: i,
             col: j,
             isbold: false,
-            strokeStyle: this.strokeColor,
+            strokeStyle: Colors.STROKE,
             lineWidth: 1,
             fontSize: 16,
             font: "Arial",
@@ -735,9 +738,7 @@ class Excel {
     if (!ctx) return;
     ctx.scale(this.mouse.scale, this.mouse.scale);
     ctx.restore();
-    ctx.fillStyle = active
-      ? this.primaryColor + "22"
-      : this.secondaryColor + "33";
+    ctx.fillStyle = active ? Colors.PRIMARY + "22" : Colors.SECONDARY + "33";
     ctx.font = `${cell.fontSize}px ${cell.font}`;
     ctx.save();
     ctx.clearRect(
@@ -761,7 +762,7 @@ class Excel {
       cell.height
     );
     ctx.clip();
-    ctx.fillStyle = active ? this.primaryColor : "#000000";
+    ctx.fillStyle = active ? Colors.PRIMARY : "#000000";
     switch (cell.align) {
       case "CENTER":
         ctx.fillText(
@@ -779,7 +780,7 @@ class Excel {
         break;
     }
     ctx.restore();
-    ctx.strokeStyle = active ? this.primaryColor + "AA" : "#959595aa";
+    ctx.strokeStyle = active ? Colors.PRIMARY + "AA" : "#959595aa";
     ctx.stroke();
 
     if (!active) return;
@@ -789,7 +790,7 @@ class Excel {
       cell.left - this.mouse.animatex + cell.width + 3,
       cell.top + cell.height - 2
     );
-    ctx.strokeStyle = this.primaryColor;
+    ctx.strokeStyle = Colors.PRIMARY;
     ctx.lineWidth = 4;
     ctx.stroke();
   }
@@ -840,7 +841,7 @@ class Excel {
           row: 0,
           col: 0,
           isbold: false,
-          strokeStyle: this.strokeColor,
+          strokeStyle: Colors.STROKE,
           lineWidth: 1,
           fontSize: 16,
           font: "Arial",
@@ -865,7 +866,7 @@ class Excel {
           row: i,
           col: j,
           isbold: false,
-          strokeStyle: this.strokeColor,
+          strokeStyle: Colors.STROKE,
           lineWidth: 1,
           fontSize: 16,
           font: "Arial",
@@ -960,9 +961,7 @@ class Excel {
     if (!ctx) return;
     ctx.scale(this.mouse.scale, this.mouse.scale);
     ctx.restore();
-    ctx.fillStyle = active
-      ? this.primaryColor + "22"
-      : this.secondaryColor + "33";
+    ctx.fillStyle = active ? Colors.PRIMARY + "22" : Colors.SECONDARY + "33";
     ctx.font = `${cell.fontSize}px ${cell.font}`;
     ctx.save();
     ctx.clearRect(
@@ -986,7 +985,7 @@ class Excel {
       cell.height
     );
     ctx.clip();
-    ctx.fillStyle = active ? this.primaryColor : "#000000";
+    ctx.fillStyle = active ? Colors.PRIMARY : "#000000";
     switch (cell.align) {
       case "CENTER":
         ctx.fillText(
@@ -1004,7 +1003,7 @@ class Excel {
         break;
     }
     ctx.restore();
-    ctx.strokeStyle = active ? this.primaryColor + "AA" : "#959595aa";
+    ctx.strokeStyle = active ? Colors.PRIMARY + "AA" : "#959595aa";
     ctx.stroke();
 
     if (!active) return;
@@ -1014,7 +1013,7 @@ class Excel {
       cell.left + cell.width - 2,
       cell.top - this.mouse.animatey + cell.height + 3
     );
-    ctx.strokeStyle = this.primaryColor;
+    ctx.strokeStyle = Colors.PRIMARY;
     ctx.lineWidth = 4;
     ctx.stroke();
   }
@@ -1067,7 +1066,7 @@ class Excel {
           row: 0,
           col: 0,
           isbold: false,
-          strokeStyle: this.strokeColor,
+          strokeStyle: Colors.STROKE,
           lineWidth: 1,
           fontSize: 16,
           font: "Arial",
@@ -1091,7 +1090,7 @@ class Excel {
         row: j,
         col: 0,
         isbold: false,
-        strokeStyle: this.strokeColor,
+        strokeStyle: Colors.STROKE,
         lineWidth: 1,
         fontSize: 16,
         font: "Arial",
@@ -1433,7 +1432,7 @@ class Excel {
       endCell.top
     );
 
-    context.strokeStyle = this.primaryColor;
+    context.strokeStyle = Colors.PRIMARY;
     context.lineWidth = 4;
 
     context.translate(-this.mouse.animatex, -this.mouse.animatey);
@@ -1447,7 +1446,7 @@ class Excel {
     context.lineTo(leftX1, topX1);
 
     if (this.selectionMode.selectedArea.length > 1) {
-      context.fillStyle = this.primaryColor + "11";
+      context.fillStyle = Colors.PRIMARY + "11";
       context.fill();
     }
 
@@ -1461,7 +1460,7 @@ class Excel {
 
     context.translate(-this.mouse.animatex, -this.mouse.animatey);
     context.beginPath();
-    context.strokeStyle = this.primaryColor;
+    context.strokeStyle = Colors.PRIMARY;
     context.lineWidth = 4;
     if (this.activeFunctions.copy) {
       context.setLineDash([6, 2]);
@@ -1480,7 +1479,7 @@ class Excel {
 
     if (this.inputBox.element!.style.display === "none") {
       context.beginPath();
-      context.fillStyle = this.primaryColor;
+      context.fillStyle = Colors.PRIMARY;
       context.rect(
         leftX2 - this.mouse.animatex - 4,
         topX2 - this.mouse.animatey - 4,
