@@ -1,0 +1,81 @@
+* {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.excel-wrapper {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.flex {
+  display: grid;
+  grid-template-columns: auto auto;
+  height: 100vh;
+}
+
+.formula-bar {
+  display: flex;
+  gap: 2px;
+  background-color: #95959533;
+  height: 30px;
+}
+
+.ribbon {
+  background-color: #95959533;
+  padding: 10px;
+  height: 140px;
+
+  .ribbon-container {
+    background-color: white;
+    border-radius: 5px;
+    height: 100%;
+
+    .functions-container {
+      border-right: 1px solid #959595;
+    }
+  }
+}
+
+.menus {
+  height: 40px;
+  background-color: #95959533;
+  display: flex;
+  padding: 0 10px;
+}
+
+.menus a {
+  display: inline-block;
+  padding: 8px 10px;
+  text-decoration: none;
+  color: #474747;
+  font-family: Arial, Helvetica, sans-serif;
+
+  &.active {
+    font-weight: bold;
+    border-bottom: 2px solid #03723c;
+  }
+}
+
+.statistics {
+  color: #474747;
+  padding: 6px 10px;
+  display: flex;
+  justify-content: space-between;
+
+  .stats-target{
+    display: flex;
+    gap: 10px;
+    text-transform: capitalize;
+  }
+}

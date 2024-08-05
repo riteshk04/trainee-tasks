@@ -26,22 +26,22 @@ class Excel {
         this.keys = {
             alt: false,
             ctrl: false,
-            shift: false
+            shift: false,
         };
         this.activeFunctions = {
-            copy: false
+            copy: false,
         };
         this.inputBox = {
             element: null,
             left: 0,
-            top: 0
+            top: 0,
         };
         this.canvas = {
             ctx: null,
             data: [],
             element: null,
             startCell: null,
-            endCell: null
+            endCell: null,
         };
         this.header = {
             ctx: null,
@@ -51,14 +51,14 @@ class Excel {
             edgeDetected: false,
             endCell: null,
             startCell: null,
-            startx: 0
+            startx: 0,
         };
         this.sidebar = {
             ctx: null,
             data: [],
             element: null,
             endCell: null,
-            startCell: null
+            startCell: null,
         };
         this.mouse = {
             x: 0,
@@ -73,14 +73,14 @@ class Excel {
             animatey: 0,
             pscrollX: 100,
             pscrollY: 100,
-            scale: 1
+            scale: 1,
         };
         this.selectionMode = {
             active: false,
             selectedArea: [],
             startSelectionCell: null,
             decoration: false,
-            lineDashOffset: 0
+            lineDashOffset: 0,
         };
         this.wrapper = parentElement;
         this.csvString = (csv || "").trim();
@@ -124,6 +124,8 @@ class Excel {
         let headerElement = document.createElement("canvas");
         headerElement.height = this.cellheight;
         headerElement.style.boxSizing = "border-box";
+        headerElement.style.zIndex = "1";
+        headerElement.style.background = "white";
         headWrapper.appendChild(emptyBox);
         headWrapper.appendChild(headerElement);
         this.wrapper.appendChild(headWrapper);
@@ -232,7 +234,7 @@ class Excel {
     // data
     createData() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.canvas.data = yield new Promise(res => {
+            this.canvas.data = yield new Promise((res) => {
                 let data = [];
                 let rows = this.csvString.split("\n");
                 rows.forEach((row, i) => {
@@ -252,7 +254,7 @@ class Excel {
                             lineWidth: 1,
                             fontSize: 16,
                             font: "Arial",
-                            align: "LEFT"
+                            align: "LEFT",
                         };
                         dataRow.push(cell);
                     });
@@ -299,10 +301,10 @@ class Excel {
         ctx.fillStyle = "#000000";
         switch (cell.align) {
             case "CENTER":
-                ctx.fillText(cell.data, (cell.width / 2 + (cell.left - this.mouse.animatex) - 4), (cell.height / 2 + (cell.top - this.mouse.animatey)) + 5);
+                ctx.fillText(cell.data, cell.width / 2 + (cell.left - this.mouse.animatex) - 4, cell.height / 2 + (cell.top - this.mouse.animatey) + 5);
                 break;
             case "LEFT":
-                ctx.fillText(cell.data, (cell.left - this.mouse.animatex) + 5, (cell.height / 2 + (cell.top - this.mouse.animatey)) + 5);
+                ctx.fillText(cell.data, cell.left - this.mouse.animatex + 5, cell.height / 2 + (cell.top - this.mouse.animatey) + 5);
                 break;
         }
         ctx.restore();
@@ -321,7 +323,7 @@ class Excel {
             return;
         }
         let initialCol = this.binarySearch(this.canvas.data[0], this.mouse.scrollX);
-        let initialRow = this.binarySearch(this.canvas.data.map(d => d[0]), this.mouse.scrollY, true);
+        let initialRow = this.binarySearch(this.canvas.data.map((d) => d[0]), this.mouse.scrollY, true);
         let finalRow = initialRow;
         let finalCol = 0;
         if (!this.canvas.element)
@@ -331,10 +333,12 @@ class Excel {
             finalRow++;
             for (let j = initialCol; j < this.canvas.data[0].length; j++) {
                 finalCol++;
-                if (this.canvas.data[0][j].left > this.canvas.element.offsetWidth + this.mouse.scrollX)
+                if (this.canvas.data[0][j].left >
+                    this.canvas.element.offsetWidth + this.mouse.scrollX)
                     break;
             }
-            if (this.canvas.data[j][0].top > this.canvas.element.offsetHeight + this.mouse.scrollY)
+            if (this.canvas.data[j][0].top >
+                this.canvas.element.offsetHeight + this.mouse.scrollY)
                 break;
         }
         if (Math.abs(finalRow - this.canvas.data.length) < 50) {
@@ -349,7 +353,6 @@ class Excel {
                 this.drawDataCell(this.canvas.data[i][j]);
             }
         }
-        ;
         this.header.startCell = this.header.data[0][initialCol];
         this.header.endCell = this.header.data[0][finalCol];
         this.canvas.startCell = this.canvas.data[initialRow][initialCol];
@@ -375,8 +378,8 @@ class Excel {
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial",
-                    align: "CENTER"
-                }
+                    align: "CENTER",
+                },
             ]);
         }
         if (axis == "X") {
@@ -400,7 +403,7 @@ class Excel {
                         lineWidth: 1,
                         fontSize: 16,
                         font: "Arial",
-                        align: "LEFT"
+                        align: "LEFT",
                     };
                     row.push(cell);
                 }
@@ -429,7 +432,7 @@ class Excel {
                         lineWidth: 1,
                         fontSize: 16,
                         font: "Arial",
-                        align: "LEFT"
+                        align: "LEFT",
                     };
                     row.push(cell);
                 }
@@ -479,7 +482,7 @@ class Excel {
             }
             else {
                 this.inputBox.element.style.display = "none";
-                this.setActiveCell();
+                // this.setActiveCell();
             }
         }
         this.selectionMode.selectedArea = newSelectedArea;
@@ -492,13 +495,18 @@ class Excel {
         this.canvas.element.addEventListener("wheel", (e) => this.scroller(e));
         this.canvas.element.addEventListener("mousemove", this.canvasMouseMoveHandler.bind(this));
         this.header.element.addEventListener("mousemove", this.headerMouseMoveObserver.bind(this));
-        this.header.element.addEventListener("mouseout", () => { this.header.isDragging = false; });
         this.canvas.element.addEventListener("mousedown", this.canvasMouseDownHandler.bind(this));
         this.header.element.addEventListener("mousedown", this.headerMouseDownObserver.bind(this));
         this.canvas.element.addEventListener("mouseup", this.canvasMouseupHandler.bind(this));
         this.header.element.addEventListener("mouseup", this.headerMouseUpObserver.bind(this));
         this.scrollXWrapper.addEventListener("scroll", (e) => this.scrollHandler(e, "X"));
         this.scrollYWrapper.addEventListener("scroll", (e) => this.scrollHandler(e, "Y"));
+        this.header.element.addEventListener("mouseout", () => {
+            this.header.isDragging = false;
+        });
+        this.canvas.element.addEventListener("mouseout", () => {
+            this.selectionMode.active = false;
+        });
         window.addEventListener("keydown", this.windowKeypressHandler.bind(this));
         window.addEventListener("keyup", this.windowKeyupHandler.bind(this));
         window.addEventListener("wheel", (e) => this.scale(e), { passive: false });
@@ -516,10 +524,12 @@ class Excel {
             return;
         ctx.scale(this.mouse.scale, this.mouse.scale);
         ctx.restore();
-        ctx.fillStyle = active ? this.primaryColor + "22" : this.secondaryColor + "33";
+        ctx.fillStyle = active
+            ? this.primaryColor + "22"
+            : this.secondaryColor + "33";
         ctx.font = `${cell.fontSize}px ${cell.font}`;
         ctx.save();
-        ctx.clearRect(cell.left - this.mouse.animatex - this.offset, cell.top - this.offset, cell.width + (this.offset * 2), cell.height + (this.offset * 2));
+        ctx.clearRect(cell.left - this.mouse.animatex - this.offset, cell.top - this.offset, cell.width + this.offset * 2, cell.height + this.offset * 2);
         ctx.fillRect(cell.left - this.mouse.animatex, cell.top, cell.width, cell.height);
         ctx.save();
         ctx.beginPath();
@@ -528,10 +538,10 @@ class Excel {
         ctx.fillStyle = active ? this.primaryColor : "#000000";
         switch (cell.align) {
             case "CENTER":
-                ctx.fillText(cell.data, (cell.width / 2 + (cell.left - this.mouse.animatex) - 4), (cell.height / 2 + (cell.top)) + 5);
+                ctx.fillText(cell.data, cell.width / 2 + (cell.left - this.mouse.animatex) - 4, cell.height / 2 + cell.top + 5);
                 break;
             case "LEFT":
-                ctx.fillText(cell.data, (cell.left - this.mouse.animatex) + 5, (cell.height / 2 + (cell.top)) + 5);
+                ctx.fillText(cell.data, cell.left - this.mouse.animatex + 5, cell.height / 2 + cell.top + 5);
                 break;
         }
         ctx.restore();
@@ -553,14 +563,15 @@ class Excel {
             return;
         for (let j = initialCol; j < this.header.data[0].length; j++) {
             finalCol++;
-            if (this.header.data[0][j].left > this.header.element.offsetWidth + this.mouse.scrollX)
+            if (this.header.data[0][j].left >
+                this.header.element.offsetWidth + this.mouse.scrollX)
                 break;
         }
         if (finalCol > this.header.data[0].length - 1) {
             this.extendHeader(10);
         }
         this.clearHeader();
-        this.header.data.forEach(row => {
+        this.header.data.forEach((row) => {
             for (let i = Math.max(initialCol - this.extracells, 0); i < Math.min(finalCol + this.extracells, this.header.data[0].length); i++) {
                 this.drawHeaderCell(row[i]);
             }
@@ -582,8 +593,8 @@ class Excel {
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial",
-                    align: "CENTER"
-                }
+                    align: "CENTER",
+                },
             ]);
         }
         this.header.data.forEach((row, i) => {
@@ -606,7 +617,7 @@ class Excel {
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial",
-                    align: "CENTER"
+                    align: "CENTER",
                 };
                 row.push(cell);
             }
@@ -641,7 +652,7 @@ class Excel {
         }
         this.render();
     }
-    headerMouseUpObserver(event) {
+    headerMouseUpObserver() {
         if (this.header.isDragging) {
             this.header.isDragging = false;
         }
@@ -668,10 +679,12 @@ class Excel {
             return;
         ctx.scale(this.mouse.scale, this.mouse.scale);
         ctx.restore();
-        ctx.fillStyle = active ? this.primaryColor + "22" : this.secondaryColor + "33";
+        ctx.fillStyle = active
+            ? this.primaryColor + "22"
+            : this.secondaryColor + "33";
         ctx.font = `${cell.fontSize}px ${cell.font}`;
         ctx.save();
-        ctx.clearRect(cell.left - this.offset, cell.top - this.mouse.animatey - this.offset, cell.width + (this.offset * 2), cell.height + (this.offset * 2));
+        ctx.clearRect(cell.left - this.offset, cell.top - this.mouse.animatey - this.offset, cell.width + this.offset * 2, cell.height + this.offset * 2);
         ctx.fillRect(cell.left, cell.top - this.mouse.animatey, cell.width, cell.height);
         ctx.save();
         ctx.beginPath();
@@ -680,10 +693,10 @@ class Excel {
         ctx.fillStyle = active ? this.primaryColor : "#000000";
         switch (cell.align) {
             case "CENTER":
-                ctx.fillText(cell.data, (cell.width / 2 + (cell.left) - 4), (cell.height / 2 + (cell.top - this.mouse.animatey)) + 5);
+                ctx.fillText(cell.data, cell.width / 2 + cell.left - 4, cell.height / 2 + (cell.top - this.mouse.animatey) + 5);
                 break;
             case "LEFT":
-                ctx.fillText(cell.data, (cell.left) + 5, (cell.height / 2 + (cell.top - this.mouse.animatey)) + 5);
+                ctx.fillText(cell.data, cell.left + 5, cell.height / 2 + (cell.top - this.mouse.animatey) + 5);
                 break;
         }
         ctx.restore();
@@ -699,13 +712,14 @@ class Excel {
         ctx.stroke();
     }
     drawSidebar() {
-        let initialRow = this.binarySearch(this.sidebar.data.map(c => c[0]), this.mouse.scrollY, true);
+        let initialRow = this.binarySearch(this.sidebar.data.map((c) => c[0]), this.mouse.scrollY, true);
         let finalRow = initialRow;
         if (!this.sidebar.element)
             return;
         for (let j = initialRow; j < this.sidebar.data.length; j++) {
             finalRow++;
-            if (this.sidebar.data[j][0].top > this.sidebar.element.offsetHeight + this.mouse.scrollY)
+            if (this.sidebar.data[j][0].top >
+                this.sidebar.element.offsetHeight + this.mouse.scrollY)
                 break;
         }
         if (finalRow > this.sidebar.data.length - 1) {
@@ -732,8 +746,8 @@ class Excel {
                     lineWidth: 1,
                     fontSize: 16,
                     font: "Arial",
-                    align: "CENTER"
-                }
+                    align: "CENTER",
+                },
             ]);
         }
         let prevRows = this.sidebar.data.length;
@@ -755,7 +769,7 @@ class Excel {
                 lineWidth: 1,
                 fontSize: 16,
                 font: "Arial",
-                align: "CENTER"
+                align: "CENTER",
             };
             this.sidebar.data.push([cell]);
         }
@@ -794,10 +808,12 @@ class Excel {
                 this.moveActiveCell("BOTTOM");
                 break;
             case "Escape":
-                this.selectionMode.selectedArea = [this.selectionMode.startSelectionCell];
+                this.selectionMode.selectedArea = [
+                    this.selectionMode.startSelectionCell,
+                ];
                 break;
             case "Delete":
-                this.selectionMode.selectedArea.forEach(c => c.data = "");
+                this.selectionMode.selectedArea.forEach((c) => (c.data = ""));
                 break;
             case "Backspace":
                 if (this.selectionMode.selectedArea.length) {
@@ -812,7 +828,7 @@ class Excel {
                 return;
         }
         if (!this.keys.ctrl && this.selectionMode.selectedArea.length > 1) {
-            this.selectionMode.selectedArea.forEach(c => this.drawDataCell(c));
+            this.selectionMode.selectedArea.forEach((c) => this.drawDataCell(c));
         }
         this.render();
     }
@@ -855,9 +871,12 @@ class Excel {
         this.render();
     }
     smoothUpdate() {
-        this.mouse.animatex += (this.mouse.scrollX - this.mouse.animatex) * this.smoothingFactor;
-        this.mouse.animatey += (this.mouse.scrollY - this.mouse.animatey) * this.smoothingFactor;
-        if ((Math.round(this.mouse.animatex) !== this.mouse.scrollX) || (Math.round(this.mouse.animatey) !== this.mouse.scrollY))
+        this.mouse.animatex +=
+            (this.mouse.scrollX - this.mouse.animatex) * this.smoothingFactor;
+        this.mouse.animatey +=
+            (this.mouse.scrollY - this.mouse.animatey) * this.smoothingFactor;
+        if (Math.round(this.mouse.animatex) !== this.mouse.scrollX ||
+            Math.round(this.mouse.animatey) !== this.mouse.scrollY)
             this.render();
     }
     // cell
@@ -866,8 +885,10 @@ class Excel {
             canvasElement = this.canvas.element;
         }
         let rect = canvasElement.getBoundingClientRect();
-        let x = Math.max(0, event.clientX - rect.left + this.mouse.scrollX) * this.mouse.scale;
-        let y = Math.max(0, event.clientY - rect.top + this.mouse.scrollY) * this.mouse.scale;
+        let x = Math.max(0, event.clientX - rect.left + this.mouse.scrollX) *
+            this.mouse.scale;
+        let y = Math.max(0, event.clientY - rect.top + this.mouse.scrollY) *
+            this.mouse.scale;
         return { x, y };
     }
     getCell(event, fullSearch = false) {
@@ -876,7 +897,10 @@ class Excel {
             const row = this.canvas.data[i];
             for (let j = !fullSearch ? this.canvas.startCell.col : 0; j < row.length; j++) {
                 const cell = row[j];
-                if (cell.left < x && x <= cell.left + cell.width && cell.top < y && y <= cell.top + cell.height) {
+                if (cell.left < x &&
+                    x <= cell.left + cell.width &&
+                    cell.top < y &&
+                    y <= cell.top + cell.height) {
                     return { cell, x, y };
                 }
             }
@@ -913,26 +937,36 @@ class Excel {
             return;
         switch (direction) {
             case "TOP":
-                this.selectionMode.selectedArea = [this.canvas.data[Math.max(row - 1, 0)][col]];
+                this.selectionMode.selectedArea = [
+                    this.canvas.data[Math.max(row - 1, 0)][col],
+                ];
                 if (activeCell.top - this.cellheight * 2 < this.mouse.scrollY) {
                     this.mouse.scrollY = Math.max(0, this.mouse.scrollY - this.cellheight);
                 }
                 break;
             case "LEFT":
-                this.selectionMode.selectedArea = [this.canvas.data[row][Math.max(col - 1, 0)]];
+                this.selectionMode.selectedArea = [
+                    this.canvas.data[row][Math.max(col - 1, 0)],
+                ];
                 if (activeCell.left - this.cellwidth * 2 < this.mouse.scrollX) {
                     this.mouse.scrollX = Math.max(0, this.mouse.scrollX - this.cellwidth);
                 }
                 break;
             case "RIGHT":
-                this.selectionMode.selectedArea = [this.canvas.data[row][Math.min(this.canvas.data[0].length - 1, col + 1)]];
-                if (activeCell.left + this.cellwidth * 2 > this.mouse.scrollX + this.canvas.element.offsetWidth) {
+                this.selectionMode.selectedArea = [
+                    this.canvas.data[row][Math.min(this.canvas.data[0].length - 1, col + 1)],
+                ];
+                if (activeCell.left + this.cellwidth * 2 >
+                    this.mouse.scrollX + this.canvas.element.offsetWidth) {
                     this.mouse.scrollX += this.cellwidth;
                 }
                 break;
             case "BOTTOM":
-                this.selectionMode.selectedArea = [this.canvas.data[Math.min(this.canvas.data.length - 1, row + 1)][col]];
-                if (activeCell.top + this.cellheight * 2 > this.mouse.scrollY + this.canvas.element.offsetHeight) {
+                this.selectionMode.selectedArea = [
+                    this.canvas.data[Math.min(this.canvas.data.length - 1, row + 1)][col],
+                ];
+                if (activeCell.top + this.cellheight * 2 >
+                    this.mouse.scrollY + this.canvas.element.offsetHeight) {
                     this.mouse.scrollY += this.cellheight;
                 }
                 break;
@@ -940,10 +974,16 @@ class Excel {
         this.selectionMode.startSelectionCell = this.selectionMode.selectedArea[0];
         this.render();
     }
-    // selection
+    /**
+     * wrapper method for
+     */
     setSelection() {
         this.highlightCells();
     }
+    /**
+     * Highlights the selection
+     * @returns void
+     */
     highlightCells() {
         let context = this.canvas.ctx;
         const selectedArea = this.selectionMode.selectedArea;
@@ -995,51 +1035,68 @@ class Excel {
         if (this.inputBox.element.style.display === "none") {
             context.beginPath();
             context.fillStyle = this.primaryColor;
-            context.rect(leftX2 - 4, topX2 - 4, 8, 8);
+            context.rect(leftX2 - this.mouse.animatex - 4, topX2 - this.mouse.animatey - 4, 8, 8);
             context.fill();
             context.strokeStyle = "#ffffff";
             context.lineWidth = 2;
             context.stroke();
         }
-        selectedArea.forEach(cell => {
+        selectedArea.forEach((cell) => {
             this.drawHeaderCell(this.header.data[0][cell.col], true);
             if (this.sidebar.data.length)
                 this.drawSidebarCell(this.sidebar.data[cell.row][0], true);
         });
     }
-    // extras
+    /**
+     * Searches the nearest left position of the cell specified mouse position
+     * @param arr Array of cells
+     * @param x Specified position
+     * @param vertical for searching the row
+     * @returns Nearest cell's left (top if vertical search)
+     */
     binarySearch(arr, x, vertical) {
         let low = 0;
         let high = arr.length - 1;
         let mid = 0;
         while (high >= low) {
             mid = low + Math.floor((high - low) / 2);
-            // If the element is present at the middle
-            // itself
             if ((vertical ? arr[mid].top : arr[mid].left) == x)
                 return mid;
-            // If element is smaller than mid, then
-            // it can only be present in left subarray
             if ((vertical ? arr[mid].top : arr[mid].left) > x)
                 high = mid - 1;
-            // Else the element can only be present
-            // in right subarray
             else
                 low = mid + 1;
         }
         return mid;
     }
+    /**
+     * Converts specified integer to characters
+     * @param num A number to convert to characters
+     * @returns Characters like: A,B,C..., AA, AB...
+     */
     toLetters(num) {
-        var mod = num % 26, pow = num / 26 | 0, out = mod ? String.fromCharCode(64 + mod) : (--pow, 'Z');
+        var mod = num % 26, pow = (num / 26) | 0, out = mod ? String.fromCharCode(64 + mod) : (--pow, "Z");
         return pow ? this.toLetters(pow) + out : out;
     }
-    checkSameCell(cell1, cell2) {
-        const { top, left } = cell1;
-        return cell2.top === top && cell2.left == left;
+    /**
+     * To check if a cell is same as another cell
+     * @param cell
+     * @param targetcell
+     * @returns boolean
+     */
+    checkSameCell(cell, targetcell) {
+        const { top, left } = cell;
+        return targetcell.top === top && targetcell.left == left;
     }
-    getCellsArea(startCell, endCell) {
-        let { row: starty, col: startx } = startCell;
-        let { row: endy, col: endx } = endCell;
+    /**
+     * To get all cells within the start and end cell of the selection
+     * @param start Start cell of the selection
+     * @param end End cell of the selection
+     * @returns Array of cells
+     */
+    getCellsArea(start, end) {
+        let { row: starty, col: startx } = start;
+        let { row: endy, col: endx } = end;
         let startX = Math.min(startx, endx);
         let endX = Math.max(startx, endx);
         let startY = Math.min(starty, endy);
@@ -1052,21 +1109,31 @@ class Excel {
         }
         return newSelection;
     }
+    /**
+     * Repaints the first cell of the selection for white background color
+     */
     setActiveCell() {
         this.drawDataCell(this.selectionMode.selectedArea[0]);
     }
-    widthShifter(cell, newWidth, data) {
+    /**
+     * Changes the width of the given cell and corresponding columns
+     * Shifts the left of the following cells
+     * @param cell Cell
+     * @param width New width of the given cell
+     * @param data 2D cell array
+     */
+    widthShifter(cell, width, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (newWidth < 60) {
-                newWidth = 60;
+            if (width < 60) {
+                width = 60;
             }
-            data.forEach(row => {
+            data.forEach((row) => {
                 let widthChanged = false;
                 for (let i = this.canvas.startCell.col; i < row.length; i++) {
                     const c = row[i];
                     if (!widthChanged) {
                         if (c.left === cell.left) {
-                            c.width = newWidth;
+                            c.width = width;
                             widthChanged = true;
                         }
                     }
@@ -1076,5 +1143,29 @@ class Excel {
                 }
             });
         });
+    }
+    /**
+     * Calculates statistics of the current selection
+     * Returns Infinity as value if multiple data types
+     * @returns Count, Max, Min, Sum, Average
+     */
+    getStats() {
+        let min = Infinity, max = -Infinity, avg = -Infinity, sum = 0, count = 0, ncount = 0;
+        this.selectionMode.selectedArea.forEach((cell) => {
+            count++;
+            if (cell.data.trim().match(/^\-?\d+$/)) {
+                let n = parseFloat(cell.data);
+                if (!Number.isNaN(n)) {
+                    min = n < min ? n : min;
+                    max = n > max ? n : max;
+                    sum += n;
+                    ncount++;
+                }
+            }
+        });
+        avg = sum / ncount;
+        if (!ncount)
+            sum = Infinity;
+        return { count, max, min, sum, avg };
     }
 }
