@@ -31,7 +31,7 @@ type Pointer = {
 };
 type SelectionModeCanva = {
   active: boolean;
-  selectedArea: Cell[];
+  selectedArea: Cell[][];
   startSelectionCell: Cell | null;
   decoration: boolean;
   lineDashOffset: number;

@@ -344,8 +344,9 @@ class Excel {
     if (this.canvas.data[0].length < 100) {
       this.extendData(100 - this.canvas.data[0].length, "X");
     }
-    this.selectionMode.selectedArea = [this.canvas.data[0][0]];
-    this.selectionMode.startSelectionCell = this.selectionMode.selectedArea[0];
+    this.selectionMode.selectedArea = [[this.canvas.data[0][0]]];
+    this.selectionMode.startSelectionCell =
+      this.selectionMode.selectedArea[0][0];
     this.render();
   }
   /**
@@ -644,9 +645,9 @@ class Excel {
         this.render();
         return;
       }
-      let cell = newSelectedArea[0];
+      let cell = newSelectedArea[0][0];
 
-      if (this.checkSameCell(this.selectionMode.selectedArea[0], cell)) {
+      if (this.checkSameCell(this.selectionMode.selectedArea[0][0], cell)) {
         this.createInputBox();
       } else {
         this.inputBox.element!.style.display = "none";
@@ -654,6 +655,7 @@ class Excel {
       }
     }
     this.selectionMode.selectedArea = newSelectedArea;
+    console.log(this.selectionMode.selectedArea);
     this.render();
   }
 
@@ -1143,15 +1145,17 @@ class Excel {
         break;
       case "Escape":
         this.selectionMode.selectedArea = [
-          this.selectionMode.startSelectionCell!,
+          [this.selectionMode.startSelectionCell!],
         ];
         break;
       case "Delete":
-        this.selectionMode.selectedArea.forEach((c) => (c.data = ""));
+        this.selectionMode.selectedArea.forEach((row) =>
+          row.forEach((c) => (c.data = ""))
+        );
         break;
       case "Backspace":
         if (this.selectionMode.selectedArea.length) {
-          this.selectionMode.selectedArea[0].data = "";
+          this.selectionMode.selectedArea[0][0].data = "";
           this.createInputBox();
         }
         break;
@@ -1162,7 +1166,9 @@ class Excel {
         return;
     }
     if (!this.keys.ctrl && this.selectionMode.selectedArea.length > 1) {
-      this.selectionMode.selectedArea.forEach((c) => this.drawDataCell(c));
+      this.selectionMode.selectedArea.forEach((row) =>
+        row.forEach((c) => this.drawDataCell(c))
+      );
     }
     this.render();
   }
@@ -1308,7 +1314,7 @@ class Excel {
     let inputBox = this.inputBox.element!;
 
     const { top, left, width, height, font, fontSize, data, row, col } =
-      this.selectionMode.selectedArea[0];
+      this.selectionMode.selectedArea[0][0];
 
     this.inputBox.top = top - this.mouse.animatey;
     this.inputBox.left = left - this.mouse.animatex;
@@ -1343,7 +1349,7 @@ class Excel {
     switch (direction) {
       case "TOP":
         this.selectionMode.selectedArea = [
-          this.canvas.data[Math.max(row - 1, 0)][col],
+          [this.canvas.data[Math.max(row - 1, 0)][col]],
         ];
         if (activeCell.top - this.cellheight * 2 < this.mouse.scrollY) {
           this.mouse.scrollY = Math.max(
@@ -1354,7 +1360,7 @@ class Excel {
         break;
       case "LEFT":
         this.selectionMode.selectedArea = [
-          this.canvas.data[row][Math.max(col - 1, 0)],
+          [this.canvas.data[row][Math.max(col - 1, 0)]],
         ];
         if (activeCell.left - this.cellwidth * 2 < this.mouse.scrollX) {
           this.mouse.scrollX = Math.max(0, this.mouse.scrollX - this.cellwidth);
@@ -1362,8 +1368,10 @@ class Excel {
         break;
       case "RIGHT":
         this.selectionMode.selectedArea = [
-          this.canvas.data[row][
-            Math.min(this.canvas.data[0].length - 1, col + 1)
+          [
+            this.canvas.data[row][
+              Math.min(this.canvas.data[0].length - 1, col + 1)
+            ],
           ],
         ];
         if (
@@ -1375,7 +1383,11 @@ class Excel {
         break;
       case "BOTTOM":
         this.selectionMode.selectedArea = [
-          this.canvas.data[Math.min(this.canvas.data.length - 1, row + 1)][col],
+          [
+            this.canvas.data[Math.min(this.canvas.data.length - 1, row + 1)][
+              col
+            ],
+          ],
         ];
         if (
           activeCell.top + this.cellheight * 2 >
@@ -1385,7 +1397,8 @@ class Excel {
         }
         break;
     }
-    this.selectionMode.startSelectionCell = this.selectionMode.selectedArea[0];
+    this.selectionMode.startSelectionCell =
+      this.selectionMode.selectedArea[0][0];
     this.render();
   }
 
@@ -1404,8 +1417,11 @@ class Excel {
     const selectedArea = this.selectionMode.selectedArea;
     if (!context || !selectedArea.length) return;
 
-    const startCell = selectedArea[0];
-    const endCell = selectedArea[selectedArea.length - 1];
+    const startCell = selectedArea[0][0];
+    const endCell =
+      selectedArea[selectedArea.length - 1][
+        selectedArea[selectedArea.length - 1].length - 1
+      ];
 
     const leftX1 = Math.min(
       startCell.left,
@@ -1492,10 +1508,12 @@ class Excel {
       context.stroke();
     }
 
-    selectedArea.forEach((cell) => {
-      this.drawHeaderCell(this.header.data[0][cell.col], true);
-      if (this.sidebar.data.length)
-        this.drawSidebarCell(this.sidebar.data[cell.row][0], true);
+    selectedArea.forEach((row) => {
+      row.forEach((cell) => {
+        this.drawHeaderCell(this.header.data[0][cell.col], true);
+        if (this.sidebar.data.length)
+          this.drawSidebarCell(this.sidebar.data[cell.row][0], true);
+      });
     });
   }
 
@@ -1545,7 +1563,7 @@ class Excel {
    * @param end End cell of the selection
    * @returns Array of cells
    */
-  getCellsArea(start: Cell, end: Cell): Cell[] {
+  getCellsArea(start: Cell, end: Cell): Cell[][] {
     let { row: starty, col: startx } = start;
     let { row: endy, col: endx } = end;
 
@@ -1556,9 +1574,11 @@ class Excel {
 
     let newSelection = [];
     for (let i = startY; i <= endY; i++) {
+      let rows = [];
       for (let j = startX; j <= endX; j++) {
-        newSelection.push(this.canvas.data[i][j]);
+        rows.push(this.canvas.data[i][j]);
       }
+      newSelection.push(rows);
     }
     return newSelection;
   }
@@ -1567,7 +1587,7 @@ class Excel {
    * Repaints the first cell of the selection for white background color
    */
   setActiveCell(): void {
-    this.drawDataCell(this.selectionMode.selectedArea[0]!);
+    this.drawDataCell(this.selectionMode.selectedArea[0][0]!);
   }
 
   /**
@@ -1612,17 +1632,19 @@ class Excel {
       sum = 0,
       count = 0,
       ncount = 0;
-    this.selectionMode.selectedArea.forEach((cell) => {
-      count++;
-      if (cell.data.trim().match(/^\-?\d+$/)) {
-        let n = parseFloat(cell.data);
-        if (!Number.isNaN(n)) {
-          min = n < min ? n : min;
-          max = n > max ? n : max;
-          sum += n;
-          ncount++;
+    this.selectionMode.selectedArea.forEach((row) => {
+      row.forEach((cell) => {
+        count++;
+        if (cell.data.trim().match(/^\-?\d+$/)) {
+          let n = parseFloat(cell.data);
+          if (!Number.isNaN(n)) {
+            min = n < min ? n : min;
+            max = n > max ? n : max;
+            sum += n;
+            ncount++;
+          }
         }
-      }
+      });
     });
     avg = sum / ncount;
     if (!ncount) sum = Infinity;
