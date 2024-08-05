@@ -42,6 +42,13 @@ class Excel {
     startCell: null,
     endCell: null,
   };
+  sidebar: Canvas = {
+    ctx: null,
+    data: [],
+    element: null,
+    endCell: null,
+    startCell: null,
+  };
   header: HeaderCanva = {
     ctx: null,
     data: [],
@@ -51,13 +58,6 @@ class Excel {
     endCell: null,
     startCell: null,
     startx: 0,
-  };
-  sidebar: Canvas = {
-    ctx: null,
-    data: [],
-    element: null,
-    endCell: null,
-    startCell: null,
   };
   mouse: Pointer = {
     x: 0,
@@ -82,6 +82,11 @@ class Excel {
     lineDashOffset: 0,
   };
 
+  /**
+   * Creates and initializes the App object
+   * @param parentElement Specified element to draw the app layout
+   * @param csv CSV file as a string
+   */
   constructor(parentElement: HTMLElement, csv: string) {
     this.wrapper = parentElement;
     this.csvString = (csv || "").trim();
@@ -89,6 +94,9 @@ class Excel {
     this.init();
   }
 
+  /**
+   * Initializes the app
+   */
   init() {
     this.createData();
     this.createMarkup();
@@ -102,7 +110,9 @@ class Excel {
     this.resizer();
   }
 
-  // rendering
+  /**
+   * Creates the markup and appends it to the given container/wrapper
+   */
   createMarkup() {
     this.wrapper.style.boxSizing = "border-box";
     this.wrapper.style.position = "relative";
@@ -201,6 +211,9 @@ class Excel {
 
     this.resizeEventHandler();
   }
+  /**
+   * Executes functions for successful rendering
+   */
   render_internal() {
     this.smoothUpdate();
     this.drawHeader();
@@ -211,6 +224,9 @@ class Excel {
       this.marchingAnts();
     }
   }
+  /**
+   * Renders the whole app layout based on the new state
+   */
   render() {
     if (this.busy) return;
 
@@ -219,9 +235,15 @@ class Excel {
       this.render_internal();
     });
   }
+  /**
+   * To remove the contents of the excel object from the DOM
+   */
   hide() {
     this.wrapper.innerHTML = "";
   }
+  /**
+   * Adjusts the size of every canvas based on the wrappers dimentions
+   */
   resizeEventHandler() {
     this.canvas.element!.width = this.wrapper.offsetWidth - this.mincellwidth;
     this.canvas.element!.height = this.wrapper.offsetHeight - this.cellheight;
@@ -240,17 +262,28 @@ class Excel {
     this.emptyBox.style.height = `${this.cellheight * this.mouse.scale}px`;
     this.emptyBox.style.width = `${this.mincellwidth * this.mouse.scale}px`;
     this.inputBox.element!.style.scale = String(this.mouse.scale);
-    // this.inputBox.element!.style.top = `${this.inputBox.top * this.mouse.scale}px`
     this.render();
   }
+  /**
+   * Attaches the resize event on the window
+   */
   resizer() {
     window.addEventListener("resize", () => this.resizeEventHandler());
   }
+  /**
+   * Changes the scroll value when scrollbars dragged
+   * @param event ScrollEvent
+   * @param direction Scroll direction
+   */
   scrollHandler(event: any, direction: "X" | "Y") {
     if (direction === "X") this.mouse.scrollX = event.target.scrollLeft;
     if (direction === "Y") this.mouse.scrollY = event.target.scrollTop;
     this.render();
   }
+  /**
+   * Changes the scale when mouse wheel moved (ctrl+wheel)
+   * @param event Mouse wheel event
+   */
   scale(event: WheelEvent) {
     if (event.ctrlKey) {
       const { deltaY } = event;
@@ -265,7 +298,13 @@ class Excel {
     }
   }
 
-  // data
+  /**
+   * Converts CSV to JSON in async mode.
+   *
+   * Extends the header and sidebar accordingly.
+   *
+   * Sets the active cell
+   */
   async createData() {
     this.canvas.data = await new Promise((res) => {
       let data: Cell[][] = [];
@@ -306,6 +345,9 @@ class Excel {
     this.selectionMode.startSelectionCell = this.selectionMode.selectedArea[0];
     this.render();
   }
+  /**
+   * Clears the main canvas
+   */
   clearData() {
     let ctx = this.canvas.ctx;
     if (!ctx || !this.canvas.element) return;
@@ -316,6 +358,12 @@ class Excel {
       this.canvas.element.offsetHeight
     );
   }
+  /**
+   * Paints the cell in the main canvas
+   * @param cell Given cell
+   * @param active Specify true if active
+   * @param selected Specify true if selection cell
+   */
   drawDataCell(cell: Cell, active?: boolean, selected?: boolean) {
     let ctx = this.canvas.ctx;
     if (!ctx) return;
@@ -382,6 +430,9 @@ class Excel {
     ctx.lineWidth = 4;
     ctx.stroke();
   }
+  /**
+   * Repaints the canvas based on screen size with the new state
+   */
   drawData() {
     if (!this.canvas.data.length) {
       return;
@@ -452,6 +503,11 @@ class Excel {
       window.outerWidth + this.canvas.data[0].length * this.cellwidth
     }px`;
   }
+  /**
+   * Extends the data based on the specified direction
+   * @param count Column or Row count
+   * @param axis Specify X for columns or Y for rows
+   */
   extendData(count: number, axis: "X" | "Y") {
     if (!this.canvas.data.length) {
       this.canvas.data.push([
@@ -530,6 +586,10 @@ class Excel {
       }
     }
   }
+  /**
+   * Checks if user is in selection mode and repaints the canvas with the selection
+   * @param event Mousemove event
+   */
   canvasMouseMoveHandler(event: MouseEvent) {
     if (this.selectionMode.active) {
       this.inputBox.element!.style.display = "none";
@@ -542,6 +602,10 @@ class Excel {
       this.render();
     }
   }
+  /**
+   * Sets the first cell of the selection mode
+   * @param event Mousedown event
+   */
   canvasMouseDownHandler(event: MouseEvent) {
     if (this.activeFunctions.copy) {
       this.activeFunctions.copy = false;
@@ -551,6 +615,14 @@ class Excel {
     this.selectionMode.active = true;
     this.render();
   }
+  /**
+   * Handles the click event
+   *
+   * Checks if double clicked to create the input box
+   *
+   * Ends the cell selection
+   * @param event Mouseup event
+   */
   canvasMouseupHandler(event: MouseEvent) {
     const startSelectionCell = this.selectionMode.startSelectionCell;
     this.selectionMode.active = false;
@@ -582,7 +654,9 @@ class Excel {
     this.render();
   }
 
-  // events
+  /**
+   * Attaches events on Header, Sidebar, Main canvas and WIndow
+   */
   attachEvents() {
     this.header.element!.addEventListener("wheel", (e) =>
       this.scroller(e, "HEADER")
@@ -638,7 +712,9 @@ class Excel {
     window.addEventListener("wheel", (e) => this.scale(e), { passive: false });
   }
 
-  // header methods
+  /**
+   * To clear the header canvas
+   */
   clearHeader() {
     let ctx = this.header.ctx;
     if (!ctx || !this.header.element) return;
@@ -649,6 +725,11 @@ class Excel {
       this.header.element.offsetHeight
     );
   }
+  /**
+   * Paints the given cell in header
+   * @param cell Specified cell to draw
+   * @param active Specify true if active
+   */
   drawHeaderCell(cell: Cell, active?: boolean) {
     let ctx = this.header.ctx;
     if (!ctx) return;
@@ -712,6 +793,9 @@ class Excel {
     ctx.lineWidth = 4;
     ctx.stroke();
   }
+  /**
+   * Paints the header based on the screen size
+   */
   drawHeader() {
     let initialCol = this.binarySearch(this.header.data[0], this.mouse.scrollX);
     let finalCol = initialCol;
@@ -740,6 +824,10 @@ class Excel {
       }
     });
   }
+  /**
+   * Extends the header by specified count
+   * @param count
+   */
   extendHeader(count: number) {
     if (!this.header.data.length) {
       this.header.data.push([
@@ -787,6 +875,10 @@ class Excel {
       }
     });
   }
+  /**
+   * Changes the width of the dragged cell on mousemove
+   * @param event Mousemove event
+   */
   headerMouseMoveObserver(event: MouseEvent) {
     const gap = 2;
     const headerElement = this.header.element!;
@@ -822,11 +914,18 @@ class Excel {
     }
     this.render();
   }
+  /**
+   * Sets dragging to false
+   */
   headerMouseUpObserver() {
     if (this.header.isDragging) {
       this.header.isDragging = false;
     }
   }
+  /**
+   * Sets the previews details of the dragged cell
+   * @param event Mousedown event
+   */
   headerMouseDownObserver(event: MouseEvent) {
     if (this.header.edgeDetected) {
       this.inputBox.element!.style.display = "none";
@@ -1004,6 +1103,7 @@ class Excel {
 
   /**
    * Triggers when user presses the keys
+   *
    * For moving the active cell and executing other key based functions
    * @param event Keyboard event
    * @returns
@@ -1127,6 +1227,7 @@ class Excel {
   }
   /**
    * To update the layout smoothly
+   *
    * For smooth scrolling effect
    */
   smoothUpdate(): void {
@@ -1471,7 +1572,8 @@ class Excel {
   }
 
   /**
-   * Changes the width of the given cell and corresponding columns
+   * Changes the width of the given cell and corresponding columns.
+   *
    * Shifts the left of the following cells
    * @param cell Cell
    * @param width New width of the given cell
@@ -1499,7 +1601,8 @@ class Excel {
   }
 
   /**
-   * Calculates statistics of the current selection
+   * Calculates statistics of the current selection.
+   *
    * Returns Infinity as value if multiple data types
    * @returns Count, Max, Min, Sum, Average
    */
