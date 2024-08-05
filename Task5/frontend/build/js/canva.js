@@ -666,13 +666,21 @@ class Excel {
             this.prevWidth = this.edgeCell.width;
         }
     }
-    // sidebar methods
+    /**
+     * To clear the sidebar
+     */
     clearSidebar() {
         let ctx = this.sidebar.ctx;
         if (!ctx || !this.sidebar.element)
             return;
         ctx.clearRect(0, 0, this.sidebar.element.offsetWidth, this.sidebar.element.offsetHeight);
     }
+    /**
+     * Paints the specified cell on the canvas
+     * @param cell Specified cell
+     * @param active If active cell
+     * @returns
+     */
     drawSidebarCell(cell, active) {
         let ctx = this.sidebar.ctx;
         if (!ctx)
@@ -711,6 +719,9 @@ class Excel {
         ctx.lineWidth = 4;
         ctx.stroke();
     }
+    /**
+     * Paints the sidebar according to screen size
+     */
     drawSidebar() {
         let initialRow = this.binarySearch(this.sidebar.data.map((c) => c[0]), this.mouse.scrollY, true);
         let finalRow = initialRow;
@@ -730,6 +741,10 @@ class Excel {
             this.drawSidebarCell(this.sidebar.data[i][0]);
         }
     }
+    /**
+     * Extends the sidebar by specified count
+     * @param count Extension count
+     */
     extendSidebar(count) {
         if (!this.sidebar.data.length) {
             this.sidebar.data.push([
@@ -774,7 +789,12 @@ class Excel {
             this.sidebar.data.push([cell]);
         }
     }
-    // window
+    /**
+     * Triggers when user presses the keys
+     * For moving the active cell and executing other key based functions
+     * @param event Keyboard event
+     * @returns
+     */
     windowKeypressHandler(event) {
         if (event.target === this.inputBox.element)
             return;
@@ -832,22 +852,37 @@ class Excel {
         }
         this.render();
     }
+    /**
+     * Triggers when user releases the keys
+     * @param event Keyboard event
+     * @returns
+     */
     windowKeyupHandler(event) {
         if (event.target === this.inputBox.element)
             return;
         this.inputBox.element.style.display = "none";
         this.mouse.horizontal = event.shiftKey && event.altKey;
     }
-    // functions
+    /**
+     * Triggers the marching ants animation
+     */
     copyCells() {
         this.activeFunctions.copy = true;
         this.render();
     }
+    /**
+     * Updates the dash offset (Recursive call)
+     */
     marchingAnts() {
         this.selectionMode.lineDashOffset -= 1;
         this.render();
     }
-    // scroll
+    /**
+     * Updates the scroll values when user moves the wheel
+     * @param event Mouse wheel event
+     * @param element Header or Sidebar
+     * @returns void
+     */
     scroller(event, element) {
         if (event.ctrlKey)
             return;
@@ -870,6 +905,10 @@ class Excel {
         }
         this.render();
     }
+    /**
+     * To update the layout smoothly
+     * For smooth scrolling effect
+     */
     smoothUpdate() {
         this.mouse.animatex +=
             (this.mouse.scrollX - this.mouse.animatex) * this.smoothingFactor;
@@ -879,7 +918,12 @@ class Excel {
             Math.round(this.mouse.animatey) !== this.mouse.scrollY)
             this.render();
     }
-    // cell
+    /**
+     * Gets the co-ordinates of the mouse
+     * @param event Mouse event
+     * @param canvasElement Canvas to get the co-ordinates of
+     * @returns Co-ordinates
+     */
     getCoordinates(event, canvasElement) {
         if (!canvasElement) {
             canvasElement = this.canvas.element;
@@ -891,11 +935,17 @@ class Excel {
             this.mouse.scale;
         return { x, y };
     }
-    getCell(event, fullSearch = false) {
+    /**
+     * Gets the cell which is at the specified co-ordinates
+     * @param event Event with co-ordinates
+     * @param global Specify true if global search
+     * @returns Cell, Row & Column
+     */
+    getCell(event, global = false) {
         const { x, y } = this.getCoordinates(event);
-        for (let i = !fullSearch ? this.canvas.startCell.row : 0; i < this.canvas.data.length; i++) {
+        for (let i = !global ? this.canvas.startCell.row : 0; i < this.canvas.data.length; i++) {
             const row = this.canvas.data[i];
-            for (let j = !fullSearch ? this.canvas.startCell.col : 0; j < row.length; j++) {
+            for (let j = !global ? this.canvas.startCell.col : 0; j < row.length; j++) {
                 const cell = row[j];
                 if (cell.left < x &&
                     x <= cell.left + cell.width &&
@@ -907,6 +957,10 @@ class Excel {
         }
         return { cell: this.canvas.data[0][0], x, y };
     }
+    /**
+     * Creates the input box at active cell's position
+     * @returns void
+     */
     createInputBox() {
         if (!this.selectionMode.selectedArea.length)
             return;
@@ -930,6 +984,11 @@ class Excel {
             this.canvas.data[row][col].data = e.target.value;
         };
     }
+    /**
+     * Moves active cell to specified direction
+     * @param direction
+     * @returns void
+     */
     moveActiveCell(direction) {
         let activeCell = this.selectionMode.startSelectionCell;
         let { row, col } = activeCell;
@@ -975,7 +1034,7 @@ class Excel {
         this.render();
     }
     /**
-     * wrapper method for
+     * wrapper method for highlight selection
      */
     setSelection() {
         this.highlightCells();
