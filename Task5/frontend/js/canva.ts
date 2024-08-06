@@ -24,6 +24,7 @@ class Excel {
   edgeCell!: Cell;
   prevWidth: number = 0;
   busy: any;
+  autoScrollbars: any = false;
 
   keys: KeysPressed = {
     alt: false,
@@ -61,6 +62,7 @@ class Excel {
     endCell: null,
     startCell: null,
     startx: 0,
+    cell_extend: false,
   };
   mouse: Pointer = {
     x: 0,
@@ -879,7 +881,7 @@ class Excel {
     });
   }
   /**
-   * Changes the width of the dragged cell on mousemove
+   * Changes the width of the dragged cell
    * @param event Mousemove event
    */
   headerMouseMoveObserver(event: MouseEvent) {
@@ -936,6 +938,8 @@ class Excel {
       const { x } = this.getCoordinates(event);
       this.header.startx = x;
       this.prevWidth = this.edgeCell.width;
+    } else {
+      
     }
   }
 
@@ -1243,12 +1247,17 @@ class Excel {
     if (
       Math.round(this.mouse.animatex) !== this.mouse.scrollX ||
       Math.round(this.mouse.animatey) !== this.mouse.scrollY
-    )
+    ) {
+      if (this.autoScrollbars) clearTimeout(this.autoScrollbars);
+      this.autoScrollbars = setTimeout(() => {
+        this.scrollXWrapper.scroll(this.mouse.scrollX, 0);
+      }, 10);
       this.render();
+    }
   }
 
   /**
-   * Gets the co-ordinates of the mouse
+   * Gets the co-ordinates of the mouse relative to the canvas
    * @param event Mouse event
    * @param canvasElement Canvas to get the co-ordinates of
    * @returns Co-ordinates

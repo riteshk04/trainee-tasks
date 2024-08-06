@@ -47,6 +47,7 @@ type HeaderCanva = Canvas & {
   isDragging: boolean;
   edgeDetected: boolean;
   startx: number;
+  cell_extend: boolean
 };
 type ExcelInputBox = {
   element: HTMLInputElement | null;
