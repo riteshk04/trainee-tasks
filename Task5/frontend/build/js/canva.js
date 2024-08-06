@@ -60,6 +60,7 @@ class Excel {
             startCell: null,
             startx: 0,
             cell_extend: false,
+            selected_cells: -1,
         };
         this.mouse = {
             x: 0,
@@ -488,6 +489,11 @@ class Excel {
                     row.push(cell);
                 }
                 this.canvas.data.push(row);
+                if (this.header.selected_cells !== -1) {
+                    this.selectionMode.selectedArea.push([
+                        row[this.header.selected_cells],
+                    ]);
+                }
             }
         }
     }
@@ -515,6 +521,7 @@ class Excel {
         const { cell } = this.getCell(event);
         this.selectionMode.startSelectionCell = cell;
         this.selectionMode.active = true;
+        this.header.selected_cells = -1;
         this.render();
     }
     /**
@@ -741,9 +748,24 @@ class Excel {
     /**
      * Sets dragging to false
      */
-    headerMouseUpObserver() {
+    headerMouseUpObserver(event) {
         if (this.header.isDragging) {
             this.header.isDragging = false;
+        }
+        if (this.header.cell_extend) {
+            const cell = this.getHeaderCell(event);
+            if (cell) {
+                let selectedArr = [];
+                for (let i = 0; i < this.canvas.data.length; i++) {
+                    const row = this.canvas.data[i];
+                    selectedArr.push(row[cell.col]);
+                }
+                this.selectionMode.selectedArea = [selectedArr];
+                this.header.selected_cells = cell.col;
+                this.selectionMode.startSelectionCell = selectedArr[0];
+                this.render();
+            }
+            this.header.cell_extend = false;
         }
     }
     /**
@@ -759,7 +781,23 @@ class Excel {
             this.prevWidth = this.edgeCell.width;
         }
         else {
+            this.header.cell_extend = true;
         }
+    }
+    /**
+     * Gets the cell using co-ordinates
+     * @param event mouse event
+     * @returns cell or false
+     */
+    getHeaderCell(event) {
+        const { x } = this.getCoordinates(event, this.header.element);
+        for (let i = this.header.startCell.col; i < this.header.data[0].length; i++) {
+            let cell = this.header.data[0][i];
+            if (cell.left < x && x < cell.left + cell.width) {
+                return cell;
+            }
+        }
+        return false;
     }
     /**
      * To clear the sidebar
@@ -1013,9 +1051,14 @@ class Excel {
             Math.round(this.mouse.animatey) !== this.mouse.scrollY) {
             if (this.autoScrollbars)
                 clearTimeout(this.autoScrollbars);
-            this.autoScrollbars = setTimeout(() => {
-                this.scrollXWrapper.scroll(this.mouse.scrollX, 0);
-            }, 10);
+            if (Math.round(this.mouse.animatex) !== this.mouse.scrollX)
+                this.autoScrollbars = setTimeout(() => {
+                    this.scrollXWrapper.scroll(this.mouse.scrollX, 0);
+                }, 10);
+            else
+                this.autoScrollbars = setTimeout(() => {
+                    this.scrollYWrapper.scroll(0, this.mouse.scrollY);
+                }, 10);
             this.render();
         }
     }
@@ -1170,10 +1213,8 @@ class Excel {
         context.lineTo(leftX2, topX2);
         context.lineTo(leftX1, topX2);
         context.lineTo(leftX1, topX1);
-        if (this.selectionMode.selectedArea.length > 1) {
-            context.fillStyle = Colors.PRIMARY + "11";
-            context.fill();
-        }
+        context.fillStyle = Colors.PRIMARY + "11";
+        context.fill();
         context.strokeStyle = "#fff";
         context.lineWidth = 2;
         // context.stroke()
@@ -1206,13 +1247,10 @@ class Excel {
             context.lineWidth = 2;
             context.stroke();
         }
-        selectedArea.forEach((row) => {
-            row.forEach((cell) => {
-                this.drawHeaderCell(this.header.data[0][cell.col], true);
-                if (this.sidebar.data.length)
-                    this.drawSidebarCell(this.sidebar.data[cell.row][0], true);
-            });
-        });
+        if (selectedArea.length) {
+            selectedArea.forEach((row) => this.drawSidebarCell(this.sidebar.data[row[0].row][0], true));
+            selectedArea[0].forEach((cell) => this.drawHeaderCell(this.header.data[0][cell.col], true));
+        }
     }
     /**
      * Searches the nearest left position of the cell specified mouse position
