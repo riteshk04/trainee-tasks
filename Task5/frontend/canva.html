@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Canva</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <link rel="stylesheet" href="./css/style.css" />
   </head>
 
@@ -15,7 +16,9 @@
     </div>
     <div class="ribbon">
       <div class="ribbon-container">
-        <div class="functions-container"></div>
+        <div class="functions-container">
+          <button class="create-chart-btn">Chart</button>
+        </div>
       </div>
     </div>
     <div class="formula-bar"></div>
@@ -82,6 +85,8 @@
       document.addEventListener("DOMContentLoaded", function () {
         const wrapper = document.querySelector(".excel-wrapper");
         const statistics = document.querySelector(".stats-target");
+        const createChartBtn = document.querySelector(".create-chart-btn");
+        const type = "LINE";
         const canva = new Excel(wrapper, data);
         canva.render();
 
@@ -100,6 +105,10 @@
           statistics.innerHTML = output;
         }
         setStats();
+
+        createChartBtn.addEventListener("click", function () {
+          canva.createChart(type);
+        });
       });
     </script>
   </body>

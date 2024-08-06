@@ -70,3 +70,24 @@ type WorkbookStats = {
   sum: number;
   avg: number;
 };
+
+type ChartData = {
+  labels: string[] | number[];
+  datasets: ChartDataset[];
+};
+type ChartDataset = {
+  data: number[];
+  label: string | number;
+  backgroundColor: string[];
+};
+type ChartConfig = {
+  position: {
+    x: number;
+    y: number;
+  };
+  height: number;
+  width: number;
+  scale?: number;
+};
+
+type ChartType = "LINE" | "BAR";

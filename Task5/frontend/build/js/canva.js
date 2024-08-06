@@ -142,6 +142,7 @@ class Excel {
         let inputBoxWrapper = document.createElement("div");
         inputBoxWrapper.style.position = "relative";
         inputBoxWrapper.style.display = "inline-block";
+        this.inputBoxWrapper = inputBoxWrapper;
         let canvasElement = document.createElement("canvas");
         canvasElement.style.cursor = "cell";
         inputBoxWrapper.appendChild(canvasElement);
@@ -1253,6 +1254,18 @@ class Excel {
         }
     }
     /**
+     * Creates the given chart
+     */
+    createChart(type) {
+        const chartConfig = {
+            height: 600,
+            width: 600,
+            position: { x: 10, y: 10 },
+        };
+        const chart = new AppChart(this.selectionMode.selectedArea, this.inputBoxWrapper, chartConfig, type);
+        chart.render();
+    }
+    /**
      * Searches the nearest left position of the cell specified mouse position
      * @param arr Array of cells
      * @param x Specified position
@@ -1376,5 +1389,78 @@ class Excel {
         if (!ncount)
             sum = Infinity;
         return { count, max, min, sum, avg };
+    }
+}
+class AppChart {
+    constructor(data, wrapper, config, type) {
+        this.data = this.parseData(data);
+        this.type = type;
+        this.config = config;
+        this.wrapper = wrapper;
+    }
+    render() {
+        this.createMarkup();
+        this.initChart();
+    }
+    createMarkup() {
+        const chartWrapper = document.createElement("div");
+        const chartcanva = document.createElement("canvas");
+        const ctx = chartcanva.getContext("2d");
+        chartWrapper.appendChild(chartcanva);
+        chartWrapper.style.position = "absolute";
+        chartWrapper.style.backgroundColor = "white";
+        chartWrapper.style.top = `${this.config.position.x}px`;
+        chartWrapper.style.left = `${this.config.position.x}px`;
+        chartWrapper.style.width = `${this.config.width}px`;
+        chartWrapper.style.height = `${this.config.height}px`;
+        this.ctx = ctx;
+        this.wrapper.appendChild(chartWrapper);
+    }
+    initChart() {
+        if (!this.ctx)
+            return;
+        const chartConfig = {
+            type: this.type.toLowerCase(),
+            data: this.data,
+            responsive: true,
+        };
+        console.log(chartConfig);
+        // @ts-ignore
+        new Chart(this.ctx, chartConfig);
+    }
+    /**
+     *
+     * @param data
+     * @returns
+     */
+    parseData(data) {
+        if (!data.length)
+            return { labels: [], datasets: [] };
+        const labels = data.map((_, i) => i + 1);
+        const datasets = [];
+        for (let i = 0; i < data[0].length; i++) {
+            const dataset = {
+                label: labels[i],
+                data: [],
+                borderWidth: 1,
+                backgroundColor: [
+                    "rgba(255, 99, 132, 0.2)",
+                    "rgba(255, 159, 64, 0.2)",
+                    "rgba(255, 205, 86, 0.2)",
+                    "rgba(75, 192, 192, 0.2)",
+                    "rgba(54, 162, 235, 0.2)",
+                    "rgba(153, 102, 255, 0.2)",
+                    "rgba(201, 203, 207, 0.2)",
+                ],
+            };
+            for (let j = 0; j < data.length; j++) {
+                if (j === 0)
+                    continue;
+                const cell = data[j][i];
+                dataset.data.push(parseInt(cell.data));
+            }
+            datasets.push(dataset);
+        }
+        return { labels, datasets };
     }
 }
