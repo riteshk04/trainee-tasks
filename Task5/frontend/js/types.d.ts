@@ -91,3 +91,8 @@ type ChartConfig = {
 };
 
 type ChartType = "LINE" | "BAR";
+
+type AppClipboard = {
+  mode: "CUT" | "COPY" | null;
+  data: Cell[][];
+};

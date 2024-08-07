@@ -28,9 +28,6 @@ class Excel {
             ctrl: false,
             shift: false,
         };
-        this.activeFunctions = {
-            copy: false,
-        };
         this.inputBox = {
             element: null,
             left: 0,
@@ -83,6 +80,10 @@ class Excel {
             startSelectionCell: null,
             decoration: false,
             lineDashOffset: 0,
+        };
+        this.clipboard = {
+            mode: null,
+            data: [],
         };
         this.wrapper = container;
         this.csvString = (csv || "").trim();
@@ -191,7 +192,7 @@ class Excel {
         this.drawSidebar();
         this.drawData();
         this.setSelection();
-        if (this.activeFunctions.copy) {
+        if (this.clipboard.mode) {
             this.marchingAnts();
         }
     }
@@ -382,8 +383,9 @@ class Excel {
             for (let j = initialCol; j < this.canvas.data[0].length; j++) {
                 finalCol++;
                 if (this.canvas.data[0][j].left >
-                    this.canvas.element.offsetWidth + this.mouse.scrollX)
+                    this.canvas.element.offsetWidth + this.mouse.scrollX) {
                     break;
+                }
             }
             if (this.canvas.data[j][0].top >
                 this.canvas.element.offsetHeight + this.mouse.scrollY)
@@ -516,9 +518,9 @@ class Excel {
      * @param event Mousedown event
      */
     canvasMouseDownHandler(event) {
-        if (this.activeFunctions.copy) {
-            this.activeFunctions.copy = false;
-        }
+        // if (this.activeFunctions.copy) {
+        //   this.activeFunctions.copy = false;
+        // }
         const { cell } = this.getCell(event);
         this.selectionMode.startSelectionCell = cell;
         this.selectionMode.active = true;
@@ -937,7 +939,15 @@ class Excel {
         this.keys.shift = event.shiftKey;
         this.mouse.horizontal = event.shiftKey && event.altKey;
         if (event.key === "c" && event.ctrlKey) {
-            this.copyCells();
+            this.copy();
+            return;
+        }
+        if (event.key === "x" && event.ctrlKey) {
+            this.cut();
+            return;
+        }
+        if (event.key === "v" && event.ctrlKey) {
+            this.paste();
             return;
         }
         switch (event.key) {
@@ -995,13 +1005,6 @@ class Excel {
             return;
         this.inputBox.element.style.display = "none";
         this.mouse.horizontal = event.shiftKey && event.altKey;
-    }
-    /**
-     * Triggers the marching ants animation
-     */
-    copyCells() {
-        this.activeFunctions.copy = true;
-        this.render();
     }
     /**
      * Updates the dash offset (Recursive call)
@@ -1187,17 +1190,22 @@ class Excel {
      * wrapper method for highlight selection
      */
     setSelection() {
-        this.highlightCells();
+        this.highlightSelectionCells();
+        this.highlightClipboardCells();
     }
     /**
      * Highlights the selection
      * @returns void
      */
-    highlightCells() {
-        let context = this.canvas.ctx;
+    highlightSelectionCells() {
+        let context = this.canvas.ctx, activeSelection = false;
         const selectedArea = this.selectionMode.selectedArea;
         if (!context || !selectedArea.length)
             return;
+        if (this.clipboard.data.length)
+            activeSelection =
+                selectedArea.length === this.clipboard.data.length &&
+                    selectedArea[0].length === this.clipboard.data[0].length;
         const startCell = selectedArea[0][0];
         const endCell = selectedArea[selectedArea.length - 1][selectedArea[selectedArea.length - 1].length - 1];
         const leftX1 = Math.min(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
@@ -1226,10 +1234,6 @@ class Excel {
         context.beginPath();
         context.strokeStyle = Colors.PRIMARY;
         context.lineWidth = 4;
-        if (this.activeFunctions.copy) {
-            context.setLineDash([6, 2]);
-            context.lineDashOffset = this.selectionMode.lineDashOffset;
-        }
         context.moveTo(leftX1 - 4, topX1 - 2);
         context.lineTo(leftX2 + 1, topX1 - 2);
         context.lineTo(leftX2 + 1, topX2 + 1);
@@ -1254,6 +1258,35 @@ class Excel {
             });
             selectedArea[0].forEach((cell) => this.drawHeaderCell(this.header.data[0][cell.col], true));
         }
+    }
+    highlightClipboardCells() {
+        let context = this.canvas.ctx;
+        const selectedArea = this.clipboard.data;
+        if (!context || !selectedArea.length)
+            return;
+        const startCell = selectedArea[0][0];
+        const endCell = selectedArea[selectedArea.length - 1][selectedArea[selectedArea.length - 1].length - 1];
+        const leftX1 = Math.min(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
+        const leftX2 = Math.max(startCell.left, endCell.left, startCell.left + startCell.width, endCell.left + endCell.width);
+        const topX1 = Math.min(startCell.top, endCell.top + endCell.height, startCell.top + startCell.height, endCell.top);
+        const topX2 = Math.max(startCell.top, endCell.top + endCell.height, startCell.top + startCell.height, endCell.top);
+        context.translate(-this.mouse.animatex, -this.mouse.animatey);
+        context.beginPath();
+        context.strokeStyle = Colors.PRIMARY;
+        context.lineWidth = 4;
+        if (this.clipboard) {
+            context.setLineDash([6, 2]);
+            context.lineDashOffset = this.selectionMode.lineDashOffset;
+        }
+        context.moveTo(leftX1, topX1);
+        context.lineTo(leftX2 - 1, topX1);
+        context.lineTo(leftX2 - 1, topX2);
+        context.lineTo(leftX1, topX2 - 1);
+        context.lineTo(leftX1, topX1 - 1);
+        context.save();
+        context.stroke();
+        context.restore();
+        context.setTransform(1, 0, 0, 1, 0, 0);
     }
     /**
      * Creates the given chart
@@ -1391,6 +1424,60 @@ class Excel {
         if (!ncount)
             sum = Infinity;
         return { count, max, min, sum, avg };
+    }
+    /**
+     * Copies the cells to clipboard and sets the selected cells in 2d array
+     */
+    copy() {
+        this.clipboard.data = this.selectionMode.selectedArea;
+        this.clipboard.mode = "COPY";
+        const csvString = this.generateCSVString(this.selectionMode.selectedArea);
+        navigator.clipboard.writeText(csvString);
+        this.render();
+    }
+    cut() {
+        this.clipboard.data = this.selectionMode.selectedArea;
+        this.clipboard.mode = "CUT";
+        const csvString = this.generateCSVString(this.selectionMode.selectedArea);
+        navigator.clipboard.writeText(csvString);
+        this.render();
+    }
+    paste() {
+        let startCell = this.selectionMode.startSelectionCell;
+        /**
+         * Check for data overflow
+         */
+        if (this.canvas.data.length - startCell.row > this.clipboard.data.length) {
+            this.extendData(100, "Y");
+        }
+        if (!this.clipboard.data.length)
+            return;
+        if (this.canvas.data[0].length - startCell.col >
+            this.clipboard.data[0].length) {
+            this.extendData(100, "X");
+        }
+        let newSelectionArea = [];
+        for (let i = 0; i < this.clipboard.data.length; i++) {
+            const row = this.clipboard.data[i];
+            const newSelectionAreaRow = [];
+            for (let j = 0; j < row.length; j++) {
+                const col = row[j];
+                console.log(col);
+                this.canvas.data[startCell.row + i][startCell.col + j].data = col.data;
+                newSelectionAreaRow.push(this.canvas.data[startCell.row + i][startCell.col + j]);
+                if (this.clipboard.mode === "CUT") {
+                    col.data = "";
+                }
+            }
+            newSelectionArea.push(newSelectionAreaRow);
+        }
+        this.clipboard.mode = null;
+        this.selectionMode.selectedArea = newSelectionArea;
+        this.clipboard.data = [];
+        this.render();
+    }
+    generateCSVString(data) {
+        return data.map((row) => row.map((col) => col.data).join(",")).join("\n");
     }
 }
 class AppChart {
