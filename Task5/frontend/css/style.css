@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   font-family: Arial, Helvetica, sans-serif;
+  transition-duration: 200ms;
 }
 
 body {
@@ -40,9 +41,62 @@ body {
   background-color: white;
   border-radius: 5px;
   height: 100%;
+  display: flex;
+  padding: 8px 0;
+  box-sizing: border-box;
 }
-.ribbon .ribbon-container .functions-container {
-  border-right: 1px solid #959595;
+.ribbon .ribbon-container .functions-container-wrapper .functions-container {
+  border-right: 1px solid #d8d8d8;
+  display: flex;
+  gap: 10px;
+  padding: 10px 20px;
+}
+.ribbon .ribbon-container .functions-container-wrapper .functions-container button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.ribbon .ribbon-container .functions-container-wrapper .functions-container button:hover {
+  scale: 1.04;
+}
+.ribbon .ribbon-container .functions-container-wrapper .functions-container button img {
+  height: 50px;
+  width: 50px;
+  padding: 4px;
+}
+.ribbon .ribbon-container .functions-container-wrapper .functions-container .find-replace {
+  background-color: white;
+  border-radius: 5px;
+  padding: 34px 28px;
+  box-shadow: 1px 1px 7px #e7e7e7;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+}
+.ribbon .ribbon-container .functions-container-wrapper .functions-container .find-replace input {
+  font-size: medium;
+  display: block;
+  padding: 8px;
+  border: 1px solid;
+  outline: none;
+  margin-bottom: 10px;
+}
+.ribbon .ribbon-container .functions-container-wrapper .functions-container .find-replace .btn-container {
+  font-size: medium;
+  display: flex;
+  gap: 10px;
+}
+.ribbon .ribbon-container .functions-container-wrapper .functions-container .find-replace .btn-container button {
+  padding: 10px;
+  flex-grow: 1;
+  border: 1px solid black;
+}
+.ribbon .ribbon-container .functions-container-wrapper .container-label {
+  text-align: center;
+  font-size: small;
+  color: #959595;
 }
 
 .menus {

@@ -759,11 +759,11 @@ class Excel {
                 let selectedArr = [];
                 for (let i = 0; i < this.canvas.data.length; i++) {
                     const row = this.canvas.data[i];
-                    selectedArr.push(row[cell.col]);
+                    selectedArr.push([row[cell.col]]);
                 }
-                this.selectionMode.selectedArea = [selectedArr];
+                this.selectionMode.selectedArea = selectedArr;
                 this.header.selected_cells = cell.col;
-                this.selectionMode.startSelectionCell = selectedArr[0];
+                this.selectionMode.startSelectionCell = selectedArr[0][0];
                 this.render();
             }
             this.header.cell_extend = false;
@@ -1249,7 +1249,9 @@ class Excel {
             context.stroke();
         }
         if (selectedArea.length) {
-            selectedArea.forEach((row) => this.drawSidebarCell(this.sidebar.data[row[0].row][0], true));
+            selectedArea.forEach((row) => {
+                this.drawSidebarCell(this.sidebar.data[row[0].row][0], true);
+            });
             selectedArea[0].forEach((cell) => this.drawHeaderCell(this.header.data[0][cell.col], true));
         }
     }
@@ -1409,10 +1411,15 @@ class AppChart {
         chartWrapper.appendChild(chartcanva);
         chartWrapper.style.position = "absolute";
         chartWrapper.style.backgroundColor = "white";
+        chartWrapper.style.padding = "16px";
+        chartWrapper.style.boxShadow = "16px";
+        chartWrapper.style.border = "1px solid #959595";
         chartWrapper.style.top = `${this.config.position.x}px`;
         chartWrapper.style.left = `${this.config.position.x}px`;
         chartWrapper.style.width = `${this.config.width}px`;
         chartWrapper.style.height = `${this.config.height}px`;
+        chartcanva.style.height = `${chartWrapper.offsetHeight}px`;
+        chartcanva.style.width = `${chartWrapper.offsetWidth}px`;
         this.ctx = ctx;
         this.wrapper.appendChild(chartWrapper);
     }
@@ -1425,11 +1432,17 @@ class AppChart {
             responsive: true,
         };
         console.log(chartConfig);
+        // // @ts-ignore
+        // Chart.defaults.backgroundColor = "#9BD0F5";
+        // // @ts-ignore
+        // Chart.defaults.borderColor = "#36A2EB";
+        // // @ts-ignore
+        // Chart.defaults.color = "#000";
         // @ts-ignore
         new Chart(this.ctx, chartConfig);
     }
     /**
-     *
+     * Converts 2D array to Chart.js config object
      * @param data
      * @returns
      */
@@ -1440,7 +1453,7 @@ class AppChart {
         const datasets = [];
         for (let i = 0; i < data[0].length; i++) {
             const dataset = {
-                label: labels[i],
+                label: data[0][i].data,
                 data: [],
                 borderWidth: 1,
                 backgroundColor: [
