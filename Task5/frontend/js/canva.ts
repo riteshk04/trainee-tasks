@@ -1825,14 +1825,14 @@ class Excel {
       const newSelectionAreaRow = [];
       for (let j = 0; j < row.length; j++) {
         const col = row[j];
-        console.log(col);
-        this.canvas.data[startCell.row + i][startCell.col + j].data = col.data;
-        newSelectionAreaRow.push(
-          this.canvas.data[startCell.row + i][startCell.col + j]
-        );
+        const data = col.data;
         if (this.clipboard.mode === "CUT") {
           col.data = "";
         }
+        this.canvas.data[startCell.row + i][startCell.col + j].data = data;
+        newSelectionAreaRow.push(
+          this.canvas.data[startCell.row + i][startCell.col + j]
+        );
       }
       newSelectionArea.push(newSelectionAreaRow);
     }
