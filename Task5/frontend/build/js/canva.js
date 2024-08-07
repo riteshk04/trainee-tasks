@@ -1476,6 +1476,20 @@ class Excel {
         this.clipboard.data = [];
         this.render();
     }
+    sort(desc = false) {
+        let selectedArea = this.selectionMode.selectedArea;
+        if (!selectedArea.length)
+            return;
+        let tMat = [];
+        tMat = [...new Array(selectedArea[0].length)];
+        tMat = tMat.map(() => [...new Array(selectedArea.length)]);
+        for (let i = 0; i < selectedArea[0].length; i++) {
+            for (let j = 0; j < selectedArea.length; j++) {
+                tMat[i][j] = selectedArea[j][i];
+            }
+        }
+        //  https://stackoverflow.com/questions/16096872/how-to-sort-2-dimensional-array-by-column-value
+    }
     generateCSVString(data) {
         return data.map((row) => row.map((col) => col.data).join(",")).join("\n");
     }

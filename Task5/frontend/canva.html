@@ -54,8 +54,17 @@
               <div>Find & Replace</div>
             </button>
             <button class="sort-btn">
+              <img
+                src="./images/sort.png"
+                class="sort-img"
+                style="transform: rotate(180deg)"
+                alt=""
+              />
+              <div>Sort Ascending</div>
+            </button>
+            <button class="sort-dsc-btn">
               <img src="./images/sort.png" class="sort-img" alt="" />
-              <div>Sort</div>
+              <div>Sort Decending</div>
             </button>
             <div class="find-replace">
               <input type="text" placeholder="Find" />
@@ -131,6 +140,7 @@
       49,Willey,Argentina,wlowles1c@epa.gov,Male,165-220-1555,,Ingenio La Esperanza,Room 1012,Suite 44,3/19/2006,575565,693976,704634,816251,919419
       50,Othello,Indonesia,oarmfield1d@umn.edu,Male,242-404-4498,,Cibunut,Suite 25,Suite 39,11/25/2002,595115,639182,729153,848788,1042480
       `;
+
       $(".find-replace").hide();
 
       $(function () {
@@ -156,16 +166,15 @@
         }
         setStats();
 
+        // Charts
         $(".line-chart-btn").click(function () {
           canva.createChart("LINE");
         });
-
-        $(".toggle-find").click(function () {
-          $(".find-replace").toggle({
-            duration: 60,
-          });
+        $(".bar-chart-btn").click(function () {
+          canva.createChart("BAR");
         });
 
+        // Clipboard
         $(".copy-btn").click(function () {
           canva.copy();
         });
@@ -177,6 +186,21 @@
         });
         $(".btn-cancel").click(function () {
           $(".find-replace").hide();
+        });
+
+        // Find & Replace
+        $(".toggle-find").click(function () {
+          $(".find-replace").toggle({
+            duration: 60,
+          });
+        });
+
+        // Sort
+        $(".sort-btn").click(function () {
+          canva.sort();
+        });
+        $(".sort-dsc-btn").click(function () {
+          canva.sort(true);
         });
       });
     </script>
