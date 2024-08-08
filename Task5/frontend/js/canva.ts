@@ -1885,8 +1885,8 @@ class AppChart {
       y: 0,
     },
     prevPos: {
-      top: 0,
-      left: 0,
+      x: 0,
+      y: 0,
     },
     active: false,
   };
@@ -2056,6 +2056,7 @@ class AppChart {
       this.resizeConfig.height = this.chartWrapper.offsetHeight;
     } else {
       this.dragConfig.startCords = { x, y };
+      // this.dragConfig.prevPos = this.config.position;
       this.dragConfig.active = true;
     }
   }
@@ -2065,9 +2066,10 @@ class AppChart {
 
     if (this.dragConfig.active) {
       const newLeft =
-        this.dragConfig.prevPos.top + x - this.dragConfig.startCords.x;
+      this.dragConfig.prevPos.x + x - this.dragConfig.startCords.x;
       const newTop =
-        this.dragConfig.prevPos.top + y - this.dragConfig.startCords.y;
+        this.dragConfig.prevPos.y + y - this.dragConfig.startCords.y;
+        console.log(newLeft, newTop)
       this.config.position.x = Math.max(newLeft, 0);
       this.config.position.y = Math.max(newTop, 0);
       this.render();
@@ -2084,12 +2086,12 @@ class AppChart {
       if (this.resizeConfig.currentMode === 1) {
         const diffX = x - this.resizeConfig.startCords.x;
         const newWidth = this.resizeConfig.width + diffX;
-        this.config.width = newWidth;
+        this.config.width = Math.max(200, newWidth);
       }
       if (this.resizeConfig.currentMode === 2) {
         const diffY = y - this.resizeConfig.startCords.y;
         const newHeight = this.resizeConfig.height + diffY;
-        this.config.height = newHeight;
+        this.config.height = Math.max(200, newHeight);
       }
       this.render();
     }
@@ -2098,5 +2100,6 @@ class AppChart {
     this.dragConfig.active = false;
     this.resizeConfig.active = false;
     this.resizeConfig.currentMode = 0;
+    // this.dragConfig.prevPos = this.config.position
   }
 }
