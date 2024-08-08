@@ -514,7 +514,7 @@ class Excel {
    * @param count Column or Row count
    * @param axis Specify X for columns or Y for rows
    */
-  extendData(count: number, axis: "X" | "Y") {
+  async extendData(count: number, axis: "X" | "Y") {
     if (!this.canvas.data.length) {
       this.canvas.data.push([
         {
@@ -664,7 +664,6 @@ class Excel {
       }
     }
     this.selectionMode.selectedArea = newSelectedArea;
-    console.log(this.selectionMode.selectedArea);
     this.render();
   }
 
@@ -1444,7 +1443,7 @@ class Excel {
           activeCell.left + this.cellwidth * 2 >
           this.mouse.scrollX + this.canvas.element!.offsetWidth
         ) {
-          this.mouse.scrollX += this.cellwidth;
+          this.mouse.scrollX += this.cellwidth * 10;
         }
         break;
       case "BOTTOM":
@@ -1459,7 +1458,7 @@ class Excel {
           activeCell.top + this.cellheight * 2 >
           this.mouse.scrollY + this.canvas.element!.offsetHeight
         ) {
-          this.mouse.scrollY += this.cellheight;
+          this.mouse.scrollY += this.cellheight * 10;
         }
         break;
     }
@@ -1645,8 +1644,8 @@ class Excel {
    */
   createChart(type: ChartType) {
     const chartConfig = {
-      height: 600,
-      width: 600,
+      height: 300,
+      width: 300,
       position: { x: 10, y: 10 },
     };
     const chart = new AppChart(
@@ -1892,6 +1891,26 @@ class AppChart {
     active: false,
   };
 
+  resizeConfig = {
+    active: false,
+    currentMode: 0,
+    height: 0,
+    width: 0,
+    startPos: {
+      x: 0,
+      y: 0,
+    },
+    startCords: {
+      x: 0,
+      y: 0,
+    },
+  };
+
+  mouse = {
+    x: 0,
+    y: 0,
+  };
+
   constructor(
     data: Cell[][],
     wrapper: HTMLElement,
@@ -1915,8 +1934,8 @@ class AppChart {
   setPosition() {
     this.chartWrapper.style.top = `${this.config.position.y}px`;
     this.chartWrapper.style.left = `${this.config.position.x}px`;
-    // this.chartWrapper.style.width = `${this.config.width}px`;
-    // this.chartWrapper.style.height = `${this.config.height}px`;
+    this.chartWrapper.style.width = `${this.config.width}px`;
+    this.chartWrapper.style.height = `${this.config.height}px`;
   }
   create() {
     this.createMarkup();
@@ -1924,7 +1943,6 @@ class AppChart {
     this.attachEvents();
   }
   createMarkup() {
-    console.log("called");
     const chartWrapper = document.createElement("div");
     const chartcanva = document.createElement("canvas");
     const ctx = chartcanva.getContext("2d");
@@ -1950,20 +1968,11 @@ class AppChart {
     this.wrapper.appendChild(chartWrapper);
   }
   attachEvents() {
-    this.chartWrapper.addEventListener(
-      "mousedown",
-      this.wrapperMouseDown.bind(this)
-    );
-    this.chartWrapper.addEventListener(
-      "mousemove",
-      this.wrapperMouseMove.bind(this)
-    );
-    this.chartWrapper.addEventListener(
-      "mouseup",
-      this.wrapperMouseUp.bind(this)
-    );
+    window.addEventListener("mousedown", this.wrapperMouseDown.bind(this));
+    window.addEventListener("mousemove", this.wrapperMouseMove.bind(this));
+    window.addEventListener("mouseup", this.wrapperMouseUp.bind(this));
 
-    this.chartWrapper.addEventListener("mouseout", () => {
+    window.addEventListener("mouseout", () => {
       this.dragConfig.active = false;
     });
   }
@@ -1975,7 +1984,6 @@ class AppChart {
       data: this.data,
       responsive: true,
     };
-    console.log(chartConfig);
     // // @ts-ignore
     // Chart.defaults.backgroundColor = "#9BD0F5";
     // // @ts-ignore
@@ -1984,6 +1992,21 @@ class AppChart {
     // Chart.defaults.color = "#000";
     // @ts-ignore
     new Chart(this.ctx, chartConfig);
+  }
+  checkInteraction(event: MouseEvent) {
+    const { x, y } = this.config.position;
+    if (this.resizeConfig.active) return;
+
+    if (x + this.chartWrapper.offsetWidth - this.mouse.x < 10) {
+      this.resizeConfig.currentMode = 1;
+      this.chartWrapper.style.cursor = "e-resize";
+    } else if (y + this.chartWrapper.offsetHeight - this.mouse.y < 10) {
+      this.resizeConfig.currentMode = 2;
+      this.chartWrapper.style.cursor = "n-resize";
+    } else {
+      this.resizeConfig.currentMode = 0;
+      this.chartWrapper.style.cursor = "all-scroll";
+    }
   }
 
   /**
@@ -2025,25 +2048,55 @@ class AppChart {
 
   wrapperMouseDown(event: MouseEvent) {
     const { x, y } = this.context.getCoordinates(event);
-    this.dragConfig.startCords = { x, y };
-    this.dragConfig.active = true;
+    if (this.resizeConfig.currentMode) {
+      this.resizeConfig.active = true;
+      this.resizeConfig.startCords = { x, y };
+      this.resizeConfig.startPos = this.config.position;
+      this.resizeConfig.width = this.chartWrapper.offsetWidth;
+      this.resizeConfig.height = this.chartWrapper.offsetHeight;
+    } else {
+      this.dragConfig.startCords = { x, y };
+      this.dragConfig.active = true;
+    }
   }
-  wrapperMouseMove(event: MouseEvent) {
-    if (this.dragConfig.active) {
-      const { x, y } = this.context.getCoordinates(event);
 
+  wrapperMouseMove(event: MouseEvent) {
+    const { x, y } = this.context.getCoordinates(event);
+
+    if (this.dragConfig.active) {
       const newLeft =
         this.dragConfig.prevPos.top + x - this.dragConfig.startCords.x;
       const newTop =
         this.dragConfig.prevPos.top + y - this.dragConfig.startCords.y;
-
       this.config.position.x = Math.max(newLeft, 0);
       this.config.position.y = Math.max(newTop, 0);
+      this.render();
+    }
 
+    this.mouse.x = x;
+    this.mouse.y = y;
+
+    this.checkInteraction(event);
+
+    if (this.resizeConfig.active) {
+      const { x, y } = this.context.getCoordinates(event);
+
+      if (this.resizeConfig.currentMode === 1) {
+        const diffX = x - this.resizeConfig.startCords.x;
+        const newWidth = this.resizeConfig.width + diffX;
+        this.config.width = newWidth;
+      }
+      if (this.resizeConfig.currentMode === 2) {
+        const diffY = y - this.resizeConfig.startCords.y;
+        const newHeight = this.resizeConfig.height + diffY;
+        this.config.height = newHeight;
+      }
       this.render();
     }
   }
-  wrapperMouseUp(event: MouseEvent) {
+  wrapperMouseUp() {
     this.dragConfig.active = false;
+    this.resizeConfig.active = false;
+    this.resizeConfig.currentMode = 0;
   }
 }
