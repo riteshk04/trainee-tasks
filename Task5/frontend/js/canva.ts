@@ -1308,17 +1308,17 @@ class Excel {
   /**
    * Gets the co-ordinates of the mouse relative to the canvas
    * @param event Mouse event
-   * @param canvasElement Canvas to get the co-ordinates of
+   * @param element Canvas to get the co-ordinates of
    * @returns Co-ordinates
    */
   getCoordinates(
     event: MouseEvent,
-    canvasElement?: HTMLCanvasElement
+    element?: HTMLElement
   ): { x: number; y: number } {
-    if (!canvasElement) {
-      canvasElement = this.canvas.element!;
+    if (!element) {
+      element = this.canvas.element!;
     }
-    let rect = canvasElement.getBoundingClientRect();
+    let rect = element.getBoundingClientRect();
     let x =
       Math.max(0, event.clientX - rect.left + this.mouse.scrollX) *
       this.mouse.scale;
@@ -1653,9 +1653,10 @@ class Excel {
       this.selectionMode.selectedArea,
       this.inputBoxWrapper,
       chartConfig,
-      type
+      type,
+      this
     );
-    chart.render();
+    chart.create();
   }
 
   /**
@@ -1874,10 +1875,20 @@ class AppChart {
   wrapper: HTMLElement;
   chartWrapper!: HTMLElement;
   config: ChartConfig;
+  context: Excel;
   type: ChartType;
   ctx!: CanvasRenderingContext2D;
+  busy: any;
+
   dragConfig = {
-    startCords: [0, 0],
+    startCords: {
+      x: 0,
+      y: 0,
+    },
+    prevPos: {
+      top: 0,
+      left: 0,
+    },
     active: false,
   };
 
@@ -1885,19 +1896,35 @@ class AppChart {
     data: Cell[][],
     wrapper: HTMLElement,
     config: ChartConfig,
-    type: ChartType
+    type: ChartType,
+    canvaContext: Excel
   ) {
     this.data = this.parseData(data);
     this.type = type;
     this.config = config;
     this.wrapper = wrapper;
+    this.context = canvaContext;
   }
   render() {
+    if (this.busy) return;
+    this.busy = requestAnimationFrame(() => {
+      this.busy = null;
+      this.setPosition();
+    });
+  }
+  setPosition() {
+    this.chartWrapper.style.top = `${this.config.position.y}px`;
+    this.chartWrapper.style.left = `${this.config.position.x}px`;
+    // this.chartWrapper.style.width = `${this.config.width}px`;
+    // this.chartWrapper.style.height = `${this.config.height}px`;
+  }
+  create() {
     this.createMarkup();
     this.initChart();
     this.attachEvents();
   }
   createMarkup() {
+    console.log("called");
     const chartWrapper = document.createElement("div");
     const chartcanva = document.createElement("canvas");
     const ctx = chartcanva.getContext("2d");
@@ -1909,13 +1936,14 @@ class AppChart {
     chartWrapper.style.padding = "16px";
     chartWrapper.style.boxShadow = "16px";
     chartWrapper.style.border = "1px solid #959595";
-    chartWrapper.style.top = `${this.config.position.x}px`;
+    chartWrapper.style.top = `${this.config.position.y}px`;
     chartWrapper.style.left = `${this.config.position.x}px`;
     chartWrapper.style.width = `${this.config.width}px`;
     chartWrapper.style.height = `${this.config.height}px`;
-
     chartcanva.style.height = `${chartWrapper.offsetHeight}px`;
     chartcanva.style.width = `${chartWrapper.offsetWidth}px`;
+    chartWrapper.style.animationDuration = "0s";
+    chartWrapper.style.transitionDuration = "0s";
 
     this.ctx = ctx!;
     this.chartWrapper = chartWrapper;
@@ -1934,6 +1962,10 @@ class AppChart {
       "mouseup",
       this.wrapperMouseUp.bind(this)
     );
+
+    this.chartWrapper.addEventListener("mouseout", () => {
+      this.dragConfig.active = false;
+    });
   }
   initChart() {
     if (!this.ctx) return;
@@ -1991,14 +2023,27 @@ class AppChart {
     return { labels, datasets };
   }
 
-  wrapperMouseDown() {
+  wrapperMouseDown(event: MouseEvent) {
+    const { x, y } = this.context.getCoordinates(event);
+    this.dragConfig.startCords = { x, y };
     this.dragConfig.active = true;
   }
   wrapperMouseMove(event: MouseEvent) {
     if (this.dragConfig.active) {
+      const { x, y } = this.context.getCoordinates(event);
+
+      const newLeft =
+        this.dragConfig.prevPos.top + x - this.dragConfig.startCords.x;
+      const newTop =
+        this.dragConfig.prevPos.top + y - this.dragConfig.startCords.y;
+
+      this.config.position.x = Math.max(newLeft, 0);
+      this.config.position.y = Math.max(newTop, 0);
+
+      this.render();
     }
   }
-  wrapperMouseUp() {
+  wrapperMouseUp(event: MouseEvent) {
     this.dragConfig.active = false;
   }
 }
