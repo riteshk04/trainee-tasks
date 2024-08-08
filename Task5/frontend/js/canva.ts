@@ -120,6 +120,31 @@ class Excel {
   }
 
   /**
+   * Executes functions for successful rendering
+   */
+  render_internal() {
+    this.smoothUpdate();
+    this.drawHeader();
+    this.drawSidebar();
+    this.drawData();
+    this.setSelection();
+    this.positionInputBox();
+    if (this.clipboard.mode) {
+      this.marchingAnts();
+    }
+  }
+  /**
+   * Renders the whole app layout based on the new state
+   */
+  render() {
+    if (this.busy) return;
+
+    this.busy = requestAnimationFrame(() => {
+      this.busy = null;
+      this.render_internal();
+    });
+  }
+  /**
    * Creates the markup and appends it to the given container/wrapper
    */
   createMarkup() {
@@ -220,30 +245,6 @@ class Excel {
     this.wrapper.appendChild(this.scrollYWrapper);
 
     this.resizeEventHandler();
-  }
-  /**
-   * Executes functions for successful rendering
-   */
-  render_internal() {
-    this.smoothUpdate();
-    this.drawHeader();
-    this.drawSidebar();
-    this.drawData();
-    this.setSelection();
-    if (this.clipboard.mode) {
-      this.marchingAnts();
-    }
-  }
-  /**
-   * Renders the whole app layout based on the new state
-   */
-  render() {
-    if (this.busy) return;
-
-    this.busy = requestAnimationFrame(() => {
-      this.busy = null;
-      this.render_internal();
-    });
   }
   /**
    * To remove the contents of the excel object from the DOM
@@ -501,13 +502,6 @@ class Excel {
     this.header.endCell = this.header.data[0][finalCol];
     this.canvas.startCell = this.canvas.data[initialRow][initialCol];
     this.canvas.endCell = this.canvas.data[finalRow][finalCol];
-
-    this.inputBox.element!.style.top = `${
-      this.inputBox.top - this.mouse.animatey - 0.5
-    }px`;
-    this.inputBox.element!.style.left = `${
-      this.inputBox.left - this.mouse.animatex - 0.5
-    }px`;
     this.infiniteYDiv.style.height = `${
       window.outerHeight + this.canvas.data.length * this.cellheight
     }px`;
@@ -662,7 +656,8 @@ class Excel {
       let cell = newSelectedArea[0][0];
 
       if (this.checkSameCell(this.selectionMode.selectedArea[0][0], cell)) {
-        this.createInputBox();
+        this.positionInputBox();
+        this.showInputBox();
       } else {
         this.inputBox.element!.style.display = "none";
         // this.setActiveCell();
@@ -1214,12 +1209,14 @@ class Excel {
       case "Backspace":
         if (this.selectionMode.selectedArea.length) {
           this.selectionMode.selectedArea[0][0].data = "";
-          this.createInputBox();
+          this.positionInputBox();
+          this.showInputBox();
         }
         break;
       default:
         if (event.key.match(/^\w$/)) {
-          this.createInputBox();
+          this.positionInputBox();
+          this.showInputBox();
         }
         return;
     }
@@ -1370,18 +1367,27 @@ class Excel {
    * Creates the input box at active cell's position
    * @returns void
    */
-  createInputBox(): void {
+  positionInputBox(): void {
+    const { top, left } = this.selectionMode.selectedArea[0][0];
+    this.inputBox.top = top - this.mouse.animatey;
+    this.inputBox.left = left - this.mouse.animatex;
+    this.inputBox.element!.style.top = `${this.inputBox.top}px`;
+    this.inputBox.element!.style.left = `${this.inputBox.left}px`;
+  }
+
+  /**
+   * Changes the visibility
+   */
+  showInputBox() {
     if (!this.selectionMode.selectedArea.length) return;
     let inputBox = this.inputBox.element!;
 
-    const { top, left, width, height, font, fontSize, data, row, col } =
-      this.selectionMode.selectedArea[0][0];
+    const { row, col, width, height, font, fontSize, data } =
+      this.selectionMode.startSelectionCell!;
 
-    this.inputBox.top = top - this.mouse.animatey;
-    this.inputBox.left = left - this.mouse.animatex;
-
-    inputBox.style.top = `${this.inputBox.top}px`;
-    inputBox.style.left = `${this.inputBox.left}px`;
+    inputBox.style.display = `block`;
+    inputBox.style.animationDuration = `0s`;
+    inputBox.style.transitionDuration = `0s`;
     inputBox.style.width = `${width - 1}px`;
     inputBox.style.height = `${height - 1}px`;
     inputBox.style.font = `${font}`;
@@ -1389,7 +1395,6 @@ class Excel {
     inputBox.style.padding = `4px`;
     inputBox.style.border = `1px solid white`;
     inputBox.value = `${data}`;
-    inputBox.style.display = `block`;
     inputBox.focus();
     inputBox.onchange = (e: any) => {
       e.stopPropagation();
@@ -1846,7 +1851,6 @@ class Excel {
     let selectedArea = this.selectionMode.selectedArea;
 
     if (!selectedArea.length) return;
-
     let tMat: Cell[][] = [];
 
     tMat = [...new Array(selectedArea[0].length)];
@@ -1857,7 +1861,7 @@ class Excel {
         tMat[i][j] = selectedArea[j][i];
       }
     }
-    //  https://stackoverflow.com/questions/16096872/how-to-sort-2-dimensional-array-by-column-value
+    this.render();
   }
 
   generateCSVString(data: Cell[][]): string {
@@ -1868,9 +1872,14 @@ class Excel {
 class AppChart {
   data: ChartData;
   wrapper: HTMLElement;
+  chartWrapper!: HTMLElement;
   config: ChartConfig;
   type: ChartType;
   ctx!: CanvasRenderingContext2D;
+  dragConfig = {
+    startCords: [0, 0],
+    active: false,
+  };
 
   constructor(
     data: Cell[][],
@@ -1886,6 +1895,7 @@ class AppChart {
   render() {
     this.createMarkup();
     this.initChart();
+    this.attachEvents();
   }
   createMarkup() {
     const chartWrapper = document.createElement("div");
@@ -1895,6 +1905,7 @@ class AppChart {
     chartWrapper.appendChild(chartcanva);
     chartWrapper.style.position = "absolute";
     chartWrapper.style.backgroundColor = "white";
+    chartWrapper.style.cursor = "all-scroll";
     chartWrapper.style.padding = "16px";
     chartWrapper.style.boxShadow = "16px";
     chartWrapper.style.border = "1px solid #959595";
@@ -1907,7 +1918,22 @@ class AppChart {
     chartcanva.style.width = `${chartWrapper.offsetWidth}px`;
 
     this.ctx = ctx!;
+    this.chartWrapper = chartWrapper;
     this.wrapper.appendChild(chartWrapper);
+  }
+  attachEvents() {
+    this.chartWrapper.addEventListener(
+      "mousedown",
+      this.wrapperMouseDown.bind(this)
+    );
+    this.chartWrapper.addEventListener(
+      "mousemove",
+      this.wrapperMouseMove.bind(this)
+    );
+    this.chartWrapper.addEventListener(
+      "mouseup",
+      this.wrapperMouseUp.bind(this)
+    );
   }
   initChart() {
     if (!this.ctx) return;
@@ -1963,5 +1989,16 @@ class AppChart {
       datasets.push(dataset);
     }
     return { labels, datasets };
+  }
+
+  wrapperMouseDown() {
+    this.dragConfig.active = true;
+  }
+  wrapperMouseMove(event: MouseEvent) {
+    if (this.dragConfig.active) {
+    }
+  }
+  wrapperMouseUp() {
+    this.dragConfig.active = false;
   }
 }
