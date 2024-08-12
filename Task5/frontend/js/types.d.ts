@@ -54,6 +54,7 @@ type ExcelInputBox = {
   element: HTMLInputElement | null;
   top: number;
   left: number;
+  outMode: boolean;
 };
 type KeysPressed = {
   shift: boolean;
@@ -95,4 +96,10 @@ type ChartType = "LINE" | "BAR";
 type AppClipboard = {
   mode: "CUT" | "COPY" | null;
   data: Cell[][];
+};
+
+type FindReplaceState = {
+  find: string;
+  replace: string;
+  cells: Cell[];
 };

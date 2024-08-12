@@ -36,6 +36,7 @@ class Excel {
     element: null,
     left: 0,
     top: 0,
+    outMode: false,
   };
   canvas: Canvas = {
     ctx: null,
@@ -89,6 +90,12 @@ class Excel {
   clipboard: AppClipboard = {
     mode: null,
     data: [],
+  };
+
+  findReplace: FindReplaceState = {
+    find: "",
+    replace: "",
+    cells: [],
   };
 
   /**
@@ -218,7 +225,7 @@ class Excel {
     this.scrollXWrapper = document.createElement("div");
     this.scrollXWrapper.style.overflowX = "scroll";
     this.infiniteXDiv = document.createElement("div");
-    this.infiniteXDiv.style.height = "10px";
+    this.infiniteXDiv.style.height = "1px";
 
     this.scrollXWrapper.appendChild(this.infiniteXDiv);
     this.scrollXWrapper.style.position = "absolute";
@@ -228,7 +235,7 @@ class Excel {
     this.scrollYWrapper = document.createElement("div");
     this.scrollYWrapper.style.overflowY = "scroll";
     this.infiniteYDiv = document.createElement("div");
-    this.infiniteYDiv.style.width = "30px";
+    this.infiniteYDiv.style.width = "1px";
 
     this.scrollYWrapper.appendChild(this.infiniteYDiv);
     this.scrollYWrapper.style.position = "absolute";
@@ -1175,6 +1182,8 @@ class Excel {
       return;
     }
 
+    if (this.inputBox.outMode) return;
+
     switch (event.key) {
       case "ArrowDown":
         this.moveActiveCell("BOTTOM");
@@ -1213,6 +1222,8 @@ class Excel {
         }
         break;
       default:
+        console.log(event.target);
+        if (event.target !== this.canvas.element) return;
         if (event.key.match(/^\w$/)) {
           this.positionInputBox();
           this.showInputBox();
@@ -1443,7 +1454,7 @@ class Excel {
           activeCell.left + this.cellwidth * 2 >
           this.mouse.scrollX + this.canvas.element!.offsetWidth
         ) {
-          this.mouse.scrollX += this.cellwidth * 10;
+          this.mouse.scrollX += this.cellwidth;
         }
         break;
       case "BOTTOM":
@@ -1458,7 +1469,7 @@ class Excel {
           activeCell.top + this.cellheight * 2 >
           this.mouse.scrollY + this.canvas.element!.offsetHeight
         ) {
-          this.mouse.scrollY += this.cellheight * 10;
+          this.mouse.scrollY += this.cellheight;
         }
         break;
     }
@@ -1864,6 +1875,54 @@ class Excel {
     this.render();
   }
 
+  find(text: string) {
+    this.findReplace.find = text;
+    this.findReplace.cells = [];
+    for (let i = 0; i < this.canvas.data.length; i++) {
+      const row = this.canvas.data[i];
+      for (let j = 0; j < row.length; j++) {
+        const cell = row[j];
+        if (cell.data.match(String(text))) {
+          this.findReplace.cells.push(cell);
+        }
+      }
+    }
+
+    return {
+      count: this.findReplace.cells.length,
+      goto: (target: number) => {
+        if (target > 0 && target <= this.findReplace.cells.length) {
+          this.selectionMode.selectedArea = [
+            [this.findReplace.cells[target - 1]],
+          ];
+          this.selectionMode.startSelectionCell =
+            this.findReplace.cells[target - 1];
+          console.log(
+            "🚀 ~ Excel ~ find ~ this.selectionMode.startSelectionCell:",
+            this.selectionMode.selectedArea
+          );
+          // console.log("goto")
+          this.render();
+        }
+      },
+    };
+  }
+
+  replace() {}
+
+  /**
+   * To stop window events for outside operations
+   * @param mode boolean
+   */
+  outsideInputMode(mode: boolean) {
+    this.inputBox.outMode = mode;
+  }
+
+  /**
+   * Generates CSV string from 2D array
+   * @param data 2D array input
+   * @returns CSV string
+   */
   generateCSVString(data: Cell[][]): string {
     return data.map((row) => row.map((col) => col.data).join(",")).join("\n");
   }
@@ -2066,10 +2125,10 @@ class AppChart {
 
     if (this.dragConfig.active) {
       const newLeft =
-      this.dragConfig.prevPos.x + x - this.dragConfig.startCords.x;
+        this.dragConfig.prevPos.x + x - this.dragConfig.startCords.x;
       const newTop =
         this.dragConfig.prevPos.y + y - this.dragConfig.startCords.y;
-        console.log(newLeft, newTop)
+      console.log(newLeft, newTop);
       this.config.position.x = Math.max(newLeft, 0);
       this.config.position.y = Math.max(newTop, 0);
       this.render();
