@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using TodoApi.Models;
+using ExcelApi.Models;
+using MySqlConnector;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddTransient(x =>
+  new MySqlConnection(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddControllers();
-builder.Services.AddDbContext<TodoContext>(opt =>
-    opt.UseInMemoryDatabase("TodoList"));
+builder.Services.AddDbContext<FilesContext>(opt =>
+    opt.UseMySQL("server=localhost;user=root;password=root;database=excel"));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
