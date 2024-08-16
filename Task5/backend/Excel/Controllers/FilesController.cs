@@ -47,7 +47,7 @@ namespace Excel.Controllers
                 return NotFound();
             }
 
-            rmqService.SendMessage(ProducerRequest("PUT", id.ToString()));
+            rmqService.SendMessage(ProducerRequest("PUT", JsonConvert.SerializeObject(new { id = id.ToString() })));
 
             return Ok(JsonConvert.SerializeObject(file));
         }
@@ -72,7 +72,7 @@ namespace Excel.Controllers
                 return NotFound();
             }
 
-            rmqService.SendMessage(ProducerRequest("DELETE", id.ToString()));
+            rmqService.SendMessage(ProducerRequest("DELETE", JsonConvert.SerializeObject(new { id = id.ToString() })));
 
             return NoContent();
         }
@@ -82,12 +82,12 @@ namespace Excel.Controllers
             return _context.Files.Any(e => e.Id == id);
         }
 
-        private string ProducerRequest(string requestType, string request)
+        private string ProducerRequest(string requestType, string Data)
         {
             var payload = new
             {
-                type = requestType,
-                request
+                Type = requestType,
+                Data
             };
             return JsonConvert.SerializeObject(payload);
         }
