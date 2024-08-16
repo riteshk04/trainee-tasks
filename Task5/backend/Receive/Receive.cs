@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -34,7 +31,6 @@ _mysqlConnection.Open();
 // Start listening for messages
 listen();
 
-
 void listen()
 {
     Console.WriteLine(" [*] Waiting for messages.");
@@ -59,47 +55,40 @@ void listen()
 
 void RequestHandler(string message)
 {
-    dynamic request = JsonConvert.DeserializeObject(message);
-    dynamic data = request["Data"];
-    dynamic type = request["Type"];
-
-    if (type == "POST")
-    {
-        Console.WriteLine("POSt request");
-        dynamic name = data["Data"]["Name"];
-        Console.WriteLine(name);
-        dynamic extension = data["Extension"];
-        int size = data["Size"];
-        insertIntoDB(name, extension, size);
-
-    }
-    if (type == "PUT")
-    {
-        // Console.WriteLine("PUT request");
-        // string name = data["Name"];
-        // string extension = data["Extension"];
-        // int size = data["Size"];
-
-        // insertIntoDB(name, extension, size);
-    }
-    if (type == "DELETE")
-    {
-        // Console.WriteLine("DELETE request");
-        // string name = data["Name"];
-        // string extension = data["Extension"];
-        // int size = data["Size"];
-
-        // insertIntoDB(name, extension, size);
-    }
-
-}
-
-async Task insertIntoDB(dynamic name, dynamic extension, int size)
-{
-
     try
     {
-        Console.WriteLine("query...");
+        Request request = JsonConvert.DeserializeObject<Request>(message);
+        File file = JsonConvert.DeserializeObject<File>(request.Data);
+        string type = request.Type;
+
+        if (type == "POST")
+        {
+            insertFileIntoDB(file.Name, file.Extension, (int)file.Size).Wait();
+        }
+        if (type == "PUT")
+        {
+            insertFileIntoDB(file.Name, file.Extension, (int)file.Size).Wait();
+        }
+        if (type == "DELETE")
+        {
+            // Handle DELETE operation if needed
+        }
+    }
+    catch (JsonException jsonEx)
+    {
+        Console.WriteLine($"JSON Error: {jsonEx.Message}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+    }
+}
+
+async Task insertFileIntoDB(string name, string extension, int size)
+{
+    try
+    {
+        Console.WriteLine("Inserting into DB...");
         using var command = new MySqlCommand("INSERT INTO excel_files (name, size, extension) VALUES (@name, @size, @extension)", _mysqlConnection);
         command.Parameters.AddWithValue("@name", name);
         command.Parameters.AddWithValue("@size", size);
@@ -112,32 +101,18 @@ async Task insertIntoDB(dynamic name, dynamic extension, int size)
     }
 }
 
-void Dispose()
+
+class Request
 {
-    _channel?.Close();
-    _rabbitConnection?.Close();
-    _mysqlConnection?.Close();
+    public string Type { get; set; } = string.Empty;
+    public string Data { get; set; } = "";
 }
 
-// class Request
-// {
-//     // [JsonPropertyName("type")]
-//     public string Type { get; set; } = string.Empty;
-
-//     public File Data { get; set; } = new();
-// }
-
-// class File
-// {
-//     public long Id { get; set; }
-
-// public string Name { get; set; }
-
-// public string Data { get; set; }
-
-// public string Extension { get; set; }
-
-// public int Progress { get; set; }
-
-// public long Size { get; set; }
-// }
+class File
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? Extension { get; set; }
+    public int Progress { get; set; }
+    public int Size { get; set; }
+}
