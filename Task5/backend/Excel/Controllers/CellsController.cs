@@ -7,55 +7,55 @@ namespace Excel.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class FilesController(Context context) : ControllerBase
+    public class CellsController(Context context) : ControllerBase
     {
         private readonly Context _context = context;
         private readonly RabbitMQService rmqService = new();
 
-        // GET: api/files
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ExcelApi.Models.File>>> GetFiles()
+        // GET: api/cells/file/5
+        [HttpGet("file/{id}")]
+        public async Task<ActionResult<IEnumerable<ExcelApi.Models.Cell>>> GetCells(long id)
         {
-            return await _context.Files.ToListAsync();
+            return await _context.Cells.Where(x => x.File == id).ToListAsync();
         }
 
-        // GET: api/files/5
+        // GET: api/cells/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ExcelApi.Models.File>> GetTodoItem(long id)
+        public async Task<ActionResult<ExcelApi.Models.Cell>> GetCell(long id)
         {
-            var todoItem = await _context.Files.FindAsync(id);
+            var cell = await _context.Cells.FindAsync(id);
 
-            if (todoItem == null)
+            if (cell == null)
             {
                 return NotFound();
             }
 
-            return todoItem;
+            return cell;
         }
 
         // PUT: api/files/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public IActionResult PutTodoItem(long id, ExcelApi.Models.File file)
+        public IActionResult PutCell(long id, ExcelApi.Models.Cell cell)
         {
-            if (id != file.Id)
+            if (id != cell.Id)
             {
                 return BadRequest();
             }
-            if (!FileExists(id))
+            if (!CellExists(id))
             {
                 return NotFound();
             }
 
             rmqService.SendMessage(ProducerRequest("PUT", JsonConvert.SerializeObject(new { id = id.ToString() })));
 
-            return Ok(JsonConvert.SerializeObject(file));
+            return Ok(JsonConvert.SerializeObject(cell));
         }
 
         // POST: api/files
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult<ExcelApi.Models.File> FileUpload(ExcelApi.Models.File file)
+        public ActionResult<ExcelApi.Models.Cell> CreateCell(ExcelApi.Models.Cell file)
         {
             rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(file)));
 
@@ -64,10 +64,10 @@ namespace Excel.Controllers
 
         // DELETE: api/files/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTodoItem(long id)
+        public async Task<IActionResult> DeleteCell(long id)
         {
-            var todoItem = await _context.Files.FindAsync(id);
-            if (todoItem == null)
+            var cell = await _context.Cells.FindAsync(id);
+            if (cell == null)
             {
                 return NotFound();
             }
@@ -77,9 +77,9 @@ namespace Excel.Controllers
             return NoContent();
         }
 
-        private bool FileExists(long id)
+        private bool CellExists(long id)
         {
-            return _context.Files.Any(e => e.Id == id);
+            return _context.Cells.Any(e => e.Id == id);
         }
 
         private string ProducerRequest(string requestType, string Data)
@@ -87,7 +87,7 @@ namespace Excel.Controllers
             var payload = new
             {
                 Type = requestType,
-                ObjectType = "FILE",
+                ObjectType = "CELL",
                 Data
             };
             return JsonConvert.SerializeObject(payload);
