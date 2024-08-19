@@ -72,7 +72,8 @@ namespace Excel.Controllers
                 return NotFound();
             }
 
-            rmqService.SendMessage(ProducerRequest("DELETE", JsonConvert.SerializeObject(new { id = id.ToString() })));
+            _context.Cells.Remove(cell);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
