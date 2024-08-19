@@ -21,7 +21,7 @@ namespace Excel.Controllers
 
         // GET: api/files/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ExcelApi.Models.File>> GetTodoItem(long id)
+        public async Task<ActionResult<ExcelApi.Models.File>> GetFile(long id)
         {
             var todoItem = await _context.Files.FindAsync(id);
 
@@ -36,7 +36,7 @@ namespace Excel.Controllers
         // PUT: api/files/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public IActionResult PutTodoItem(long id, ExcelApi.Models.File file)
+        public IActionResult PutFile(long id, ExcelApi.Models.File file)
         {
             if (id != file.Id)
             {
@@ -55,7 +55,7 @@ namespace Excel.Controllers
         // POST: api/files
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult<ExcelApi.Models.File> FileUpload(ExcelApi.Models.File file)
+        public ActionResult<ExcelApi.Models.File> FileUpload(ExcelApi.Models.NewFile file)
         {
             rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(file)));
 
@@ -64,7 +64,7 @@ namespace Excel.Controllers
 
         // DELETE: api/files/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTodoItem(long id)
+        public async Task<IActionResult> DeleteFile(long id)
         {
             var todoItem = await _context.Files.FindAsync(id);
             if (todoItem == null)

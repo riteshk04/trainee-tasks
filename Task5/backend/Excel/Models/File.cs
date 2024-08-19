@@ -9,4 +9,9 @@ namespace ExcelApi.Models
         public long Size { get; set; }
 
     }
+
+    public class NewFile : File
+    {
+        public required string Data { get; set; }
+    }
 }

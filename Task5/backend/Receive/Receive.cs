@@ -61,6 +61,8 @@ void RequestHandler(string message)
         File file = JsonConvert.DeserializeObject<File>(request.Data);
         string type = request.Type;
 
+        Console.WriteLine("Request Data: " + file.Data);
+
         if (type == "POST")
         {
             insertFileIntoDB(file.Name, file.Extension, (int)file.Size).Wait();
@@ -89,7 +91,7 @@ async Task insertFileIntoDB(string name, string extension, int size)
     try
     {
         Console.WriteLine("Inserting into DB...");
-        using var command = new MySqlCommand("INSERT INTO excel_files (name, size, extension) VALUES (@name, @size, @extension)", _mysqlConnection);
+        using var command = new MySqlCommand("INSERT INTO files (name, size, extension) VALUES (@name, @size, @extension)", _mysqlConnection);
         command.Parameters.AddWithValue("@name", name);
         command.Parameters.AddWithValue("@size", size);
         command.Parameters.AddWithValue("@extension", extension);
@@ -113,6 +115,7 @@ class File
     public int Id { get; set; }
     public string? Name { get; set; }
     public string? Extension { get; set; }
+    public string? Data { get; set; }
     public int Progress { get; set; }
     public int Size { get; set; }
 }
