@@ -9,45 +9,10 @@ using MySqlConnector;
 string _hostname = "localhost";
 string _queueName = "excel_broker";
 string _connectionString = "server=localhost;user=root;password=root;database=excel";
-
 IModel _channel;
 IConnection _rabbitConnection;
+Stopwatch stopwatch;
 
-// Initialize RabbitMQ connection
-var factory = new ConnectionFactory { HostName = _hostname };
-_rabbitConnection = factory.CreateConnection();
-_channel = _rabbitConnection.CreateModel();
-
-// Declare RabbitMQ queue
-_channel.QueueDeclare(queue: _queueName,
-                     durable: false,
-                     exclusive: false,
-                     autoDelete: false,
-                     arguments: null);
-
-// Start listening for messages
-var stopwatch = new Stopwatch();
-listen();
-
-void listen()
-{
-    Console.WriteLine(" [*] Waiting for messages.");
-
-    var consumer = new EventingBasicConsumer(_channel);
-    consumer.Received += async (model, ea) =>
-    {
-        var body = ea.Body.ToArray();
-        var message = Encoding.UTF8.GetString(body);
-        await RequestHandlerAsync(message);
-    };
-
-    _channel.BasicConsume(queue: _queueName,
-                         autoAck: true,
-                         consumer: consumer);
-
-    Console.WriteLine(" Press [enter] to exit.");
-    Console.ReadLine();
-}
 
 async Task RequestHandlerAsync(string message)
 {
@@ -104,10 +69,6 @@ async Task<int> fileExists(string name)
     return fileId;
 }
 
-string secureData(string data)
-{
-    return MySqlHelper.EscapeString(data);
-}
 
 async Task<int> getLastInsertedRow(int fileId)
 {
@@ -173,7 +134,6 @@ async Task insertFileIntoDB(string name, string extension, int size, string csv)
     insertAsync(query);
 }
 
-
 async Task insertAsync(string query)
 {
 
@@ -183,7 +143,6 @@ async Task insertAsync(string query)
     await ecommand.ExecuteNonQueryAsync();
     sconnection.Close();
 }
-
 
 async Task insertCellIntoDB(int row, int col, string data, int fileId)
 {
@@ -198,36 +157,44 @@ async Task insertCellIntoDB(int row, int col, string data, int fileId)
     connection.Close();
 }
 
-class Request
+string secureData(string data)
 {
-    public string Type { get; set; } = string.Empty;
-    public string ObjectType { get; set; } = string.Empty;
-    public string Data { get; set; } = "";
+    return MySqlHelper.EscapeString(data);
 }
 
-class File
+void listen()
 {
-    public int Id { get; set; }
-    public string? Name { get; set; }
-    public string? Extension { get; set; }
-    public string? Data { get; set; }
-    public int Progress { get; set; }
-    public int Size { get; set; }
+    stopwatch = new Stopwatch();
+    Console.WriteLine(" [*] Waiting for messages.");
+    var consumer = new EventingBasicConsumer(_channel);
+
+    consumer.Received += async (model, ea) =>
+    {
+        var body = ea.Body.ToArray();
+        var message = Encoding.UTF8.GetString(body);
+        await RequestHandlerAsync(message);
+    };
+
+    _channel.BasicConsume(queue: _queueName,
+                         autoAck: true,
+                         consumer: consumer);
+
+    Console.WriteLine(" Press [enter] to exit.");
+    Console.ReadLine();
 }
 
-
-public class Cell
+void main()
 {
-    public long Id { get; set; }
-    public int Row { get; set; }
-    public int Col { get; set; }
-    public int FontSize { get; set; }
-    public int File { get; set; }
-    public required string Data { get; set; }
-    public required string Align { get; set; }
-    public required string Font { get; set; }
-    public bool Bold { get; set; }
-    public bool Italic { get; set; }
-    public bool Underline { get; set; }
+    var factory = new ConnectionFactory { HostName = _hostname };
+    _rabbitConnection = factory.CreateConnection();
 
+    _channel = _rabbitConnection.CreateModel();
+    _channel.QueueDeclare(queue: _queueName,
+                         durable: false,
+                         exclusive: false,
+                         autoDelete: false,
+                         arguments: null);
+
+    listen();
 }
+main();
