@@ -36,7 +36,7 @@ namespace Excel.Controllers
         // PUT: api/files/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public IActionResult PutFile(long id, ExcelApi.Models.File file)
+        public async Task<IActionResult> PutFile(long id, ExcelApi.Models.File file)
         {
             if (id != file.Id)
             {
@@ -47,7 +47,8 @@ namespace Excel.Controllers
                 return NotFound();
             }
 
-            rmqService.SendMessage(ProducerRequest("PUT", JsonConvert.SerializeObject(new { id = id.ToString() })));
+            _context.Entry(file).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
 
             return Ok(JsonConvert.SerializeObject(file));
         }

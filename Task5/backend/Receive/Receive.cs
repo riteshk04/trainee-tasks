@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Diagnostics;
 using MySqlConnector;
 
 
@@ -25,6 +26,7 @@ _channel.QueueDeclare(queue: _queueName,
                      arguments: null);
 
 // Start listening for messages
+var stopwatch = new Stopwatch();
 listen();
 
 void listen()
@@ -63,27 +65,24 @@ void RequestHandler(string message)
             File file = JsonConvert.DeserializeObject<File>(request.Data);
             if (type == "POST")
             {
+                stopwatch.Start();
                 insertFileIntoDB(file.Name, file.Extension, (int)file.Size, file.Data).Wait();
-            }
-            if (type == "PUT")
-            {
-                // 
-            }
-
-        }
-        else if (objectType == "CELL")
-        {
-            Cell cell = JsonConvert.DeserializeObject<Cell>(request.Data);
-
-            if (type == "POST")
-            {
-
-            }
-            if (type == "PUT")
-            {
-
+                stopwatch.Stop();
+                Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds}ms");
             }
         }
+        // else if (objectType == "CELL")
+        // {
+        //     Cell cell = JsonConvert.DeserializeObject<Cell>(request.Data);
+
+        //     if (type == "POST")
+        //     {
+        //         stopwatch.Start();
+        //         insertCellIntoDB(cell.Row, cell.Col, cell.Data, cell.File).Wait();
+        //         stopwatch.Stop();
+        //         Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds}ms");
+        //     }
+        // }
     }
     catch (JsonException jsonEx)
     {
@@ -124,9 +123,24 @@ string secureData(string data)
     return MySqlHelper.EscapeString(data);
 }
 
+async Task<int> getLastInsertedRow(int fileId)
+{
+    using var connection = new MySqlConnection(_connectionString);
+    await connection.OpenAsync();
+    using var command = new MySqlCommand("SELECT MAX(`row`) FROM cells WHERE file = @fileId", connection);
+    command.Parameters.AddWithValue("@fileId", fileId);
+    using var reader = await command.ExecuteReaderAsync();
+    reader.Read();
+    if (!reader.HasRows)
+        return reader.GetInt32(0);
+
+    return 0;
+}
+
 async Task insertFileIntoDB(string name, string extension, int size, string csv)
 {
     int fileId = await fileExists(name);
+    int lastRowCount = 0;
 
     if (fileId.Equals(-1))
     {
@@ -153,15 +167,17 @@ async Task insertFileIntoDB(string name, string extension, int size, string csv)
         }
     }
 
+    lastRowCount = await getLastInsertedRow(fileId);
+
     string query = "INSERT INTO cells (`row`, col, data, file) VALUES ";
-    int i = 0, j = 0;
+    int j = 0;
     foreach (var row in csv.Split('\n'))
     {
-        ++i;
+        ++lastRowCount;
         foreach (var col in row.Split(','))
         {
             ++j;
-            query += "(" + i + ", " + j + ", '" + secureData(col) + "', " + fileId + "),";
+            query += "(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + fileId + "),";
         }
     }
     query = query.Remove(query.Length - 1);
@@ -174,6 +190,17 @@ async Task insertFileIntoDB(string name, string extension, int size, string csv)
     sconnection.Close();
 }
 
+async Task insertCellIntoDB(int row, int col, string data, int fileId){
+    using var connection = new MySqlConnection(_connectionString);
+    await connection.OpenAsync();
+    using var command = new MySqlCommand("INSERT INTO cells (`row`, col, data, file) VALUES (@row, @col, @data, @file)", connection);
+    command.Parameters.AddWithValue("@row", row);
+    command.Parameters.AddWithValue("@col", col);
+    command.Parameters.AddWithValue("@data", data);
+    command.Parameters.AddWithValue("@file", fileId);
+    await command.ExecuteNonQueryAsync();
+    connection.Close();
+}
 
 class Request
 {

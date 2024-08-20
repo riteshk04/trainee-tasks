@@ -36,7 +36,7 @@ namespace Excel.Controllers
         // PUT: api/files/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public IActionResult PutCell(long id, ExcelApi.Models.Cell cell)
+        public async Task<IActionResult> PutCell(long id, ExcelApi.Models.Cell cell)
         {
             if (id != cell.Id)
             {
@@ -47,7 +47,8 @@ namespace Excel.Controllers
                 return NotFound();
             }
 
-            rmqService.SendMessage(ProducerRequest("PUT", JsonConvert.SerializeObject(new { id = id.ToString() })));
+            _context.Entry(cell).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
 
             return Ok(JsonConvert.SerializeObject(cell));
         }
@@ -55,11 +56,11 @@ namespace Excel.Controllers
         // POST: api/files
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult<ExcelApi.Models.Cell> CreateCell(ExcelApi.Models.Cell file)
+        public ActionResult<ExcelApi.Models.Cell> PostCell(ExcelApi.Models.Cell file)
         {
-            rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(file)));
-
-            return Created(nameof(file), new { success = true });
+            _context.Cells.Add(file);
+            _context.SaveChanges();
+            return file;
         }
 
         // DELETE: api/files/5
