@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using ExcelApi.Models;
+using System.Diagnostics;
 
 namespace Excel.Controllers
 {
@@ -59,29 +60,31 @@ namespace Excel.Controllers
         public ActionResult<ExcelApi.Models.File> FileUpload(ExcelApi.Models.NewFile file)
         {
             string csv = file.Data.Trim();
-            string[] rows = csv.Split('\n');
 
-            int i = 0;
-            string temp = "";
             NewFile? newFile;
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
 
-            foreach (var row in rows)
+            Console.WriteLine("File uploading...");
+
+            int chunkSize = 10000;
+            var chunks = csv.Split("\n")
+                .Select((item, index) => new { Item = item, Index = index })
+                .GroupBy(x => x.Index / chunkSize)
+                .Select(g => g.Select(x => x.Item).ToList())
+                .ToList();
+
+            foreach (var chunk in chunks)
             {
-                temp += row + "\n";
-                i++;
+                Console.WriteLine(chunk.Count);
 
-                if (i % 10 == 0)
-                {
-                    newFile = file;
-                    newFile.Data = temp.Trim();
-                    rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(file)));
-                    temp = "";
-                }
+                newFile = file;
+                newFile.Data = string.Join("\n", chunk);
+                rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(file)));
+                Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds}ms");
             }
 
-            newFile = file;
-            newFile.Data = temp.Trim();
-            rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(newFile)));
+            stopwatch.Stop();
 
             return Created(nameof(file), new { success = true });
         }

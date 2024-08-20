@@ -34,13 +34,11 @@ void listen()
     Console.WriteLine(" [*] Waiting for messages.");
 
     var consumer = new EventingBasicConsumer(_channel);
-    consumer.Received += (model, ea) =>
+    consumer.Received += async (model, ea) =>
     {
         var body = ea.Body.ToArray();
         var message = Encoding.UTF8.GetString(body);
-        RequestHandler(message);
-
-        // Console.WriteLine($" [x] Received {message}");
+        await RequestHandlerAsync(message);
     };
 
     _channel.BasicConsume(queue: _queueName,
@@ -51,7 +49,7 @@ void listen()
     Console.ReadLine();
 }
 
-void RequestHandler(string message)
+async Task RequestHandlerAsync(string message)
 {
     try
     {
@@ -65,24 +63,12 @@ void RequestHandler(string message)
             File file = JsonConvert.DeserializeObject<File>(request.Data);
             if (type == "POST")
             {
-                stopwatch.Start();
-                insertFileIntoDB(file.Name, file.Extension, (int)file.Size, file.Data).Wait();
-                stopwatch.Stop();
-                Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds}ms");
+                stopwatch.Restart();
+                await insertFileIntoDB(file.Name, file.Extension, file.Size, file.Data);
+                // stopwatch.Stop();
+                Console.WriteLine($"Time taken: {stopwatch.Elapsed}s");
             }
         }
-        // else if (objectType == "CELL")
-        // {
-        //     Cell cell = JsonConvert.DeserializeObject<Cell>(request.Data);
-
-        //     if (type == "POST")
-        //     {
-        //         stopwatch.Start();
-        //         insertCellIntoDB(cell.Row, cell.Col, cell.Data, cell.File).Wait();
-        //         stopwatch.Stop();
-        //         Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds}ms");
-        //     }
-        // }
     }
     catch (JsonException jsonEx)
     {
@@ -167,9 +153,11 @@ async Task insertFileIntoDB(string name, string extension, int size, string csv)
         }
     }
 
-    lastRowCount = await getLastInsertedRow(fileId);
+    // lastRowCount = await getLastInsertedRow(fileId);
 
-    string query = "INSERT INTO cells (`row`, col, data, file) VALUES ";
+    StringBuilder queryBuilder = new StringBuilder();
+    queryBuilder.Append("INSERT INTO cells (`row`, col, data, file) VALUES ");
+
     int j = 0;
     foreach (var row in csv.Split('\n'))
     {
@@ -177,11 +165,17 @@ async Task insertFileIntoDB(string name, string extension, int size, string csv)
         foreach (var col in row.Split(','))
         {
             ++j;
-            query += "(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + fileId + "),";
+            queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + fileId + "),");
         }
     }
-    query = query.Remove(query.Length - 1);
+    Console.WriteLine(j);
+    string query = queryBuilder.ToString().Remove(queryBuilder.Length - 1);
+    insertAsync(query);
+}
 
+
+async Task insertAsync(string query)
+{
 
     using var sconnection = new MySqlConnection(_connectionString);
     await sconnection.OpenAsync();
@@ -190,7 +184,9 @@ async Task insertFileIntoDB(string name, string extension, int size, string csv)
     sconnection.Close();
 }
 
-async Task insertCellIntoDB(int row, int col, string data, int fileId){
+
+async Task insertCellIntoDB(int row, int col, string data, int fileId)
+{
     using var connection = new MySqlConnection(_connectionString);
     await connection.OpenAsync();
     using var command = new MySqlCommand("INSERT INTO cells (`row`, col, data, file) VALUES (@row, @col, @data, @file)", connection);

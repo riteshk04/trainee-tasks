@@ -55,8 +55,6 @@ public class RabbitMQService : IDisposable
                                   routingKey: _queueName,
                                   basicProperties: null,
                                   body: body);
-
-            Console.WriteLine($" [x] Sent {message}");
         }
         catch (AlreadyClosedException ex)
         {
