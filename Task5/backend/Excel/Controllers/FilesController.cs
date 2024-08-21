@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using ExcelApi.Models;
 using System.Diagnostics;
+using System.Threading.Tasks.Dataflow;
 
 namespace Excel.Controllers
 {
@@ -57,16 +58,27 @@ namespace Excel.Controllers
         // POST: api/files
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult<ExcelApi.Models.File> FileUpload(ExcelApi.Models.NewFile file)
+        public ActionResult<ExcelApi.Models.File> FileUpload(ExcelApi.Models.NewFile dataFile)
         {
-            string csv = file.Data.Trim();
 
-            NewFile? newFile;
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            ExcelApi.Models.File file = new()
+            {
+                Name = dataFile.Name,
+                Extension = dataFile.Extension,
+                Progress = 0,
+                Size = dataFile.Size,
+            };
+
+            _context.Files.Add(file);
+            _context.SaveChanges();
+
+            long lastInsertedId = _context.Files.Max(x => x.Id);
+            dataFile.Id = lastInsertedId;
+            Console.WriteLine(dataFile.Id);
 
             Console.WriteLine("File uploading...");
 
+            string csv = dataFile.Data.Trim();
             int chunkSize = 10000;
             var chunks = csv.Split("\n")
                 .Select((item, index) => new { Item = item, Index = index })
@@ -76,17 +88,11 @@ namespace Excel.Controllers
 
             foreach (var chunk in chunks)
             {
-                Console.WriteLine(chunk.Count);
-
-                newFile = file;
-                newFile.Data = string.Join("\n", chunk);
-                rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(file)));
-                Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds}ms");
+                dataFile.Data = string.Join("\n", chunk);
+                rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(dataFile)));
             }
 
-            stopwatch.Stop();
-
-            return Created(nameof(file), new { success = true });
+            return Created(nameof(dataFile), new { success = true });
         }
 
         // DELETE: api/files/5

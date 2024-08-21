@@ -28,9 +28,9 @@ async Task RequestHandlerAsync(string message)
             File file = JsonConvert.DeserializeObject<File>(request.Data);
             if (type == "POST")
             {
-                stopwatch.Restart();
-                await insertFileIntoDB(file.Name, file.Extension, file.Size, file.Data);
-                // stopwatch.Stop();
+                stopwatch.Start();
+                await insertFileIntoDB(file.Id, file.Data, 0);
+                stopwatch.Stop();
                 Console.WriteLine($"Time taken: {stopwatch.Elapsed}s");
             }
         }
@@ -45,78 +45,9 @@ async Task RequestHandlerAsync(string message)
     }
 }
 
-async Task<int> fileExists(string name)
+async Task insertFileIntoDB(int id, string csv, int lastRowCount)
 {
-    using var connection = new MySqlConnection(_connectionString);
-    await connection.OpenAsync();
-
-    using var command = new MySqlCommand("SELECT * FROM files WHERE name = @name", connection);
-    command.Parameters.AddWithValue("@name", name);
-    using var reader = await command.ExecuteReaderAsync();
-
-    int fileId = -1;
-
-    if (reader.HasRows)
-    {
-        while (reader.Read())
-        {
-            fileId = reader.GetInt32(0);
-        }
-    }
-
-    connection.Close();
-
-    return fileId;
-}
-
-
-async Task<int> getLastInsertedRow(int fileId)
-{
-    using var connection = new MySqlConnection(_connectionString);
-    await connection.OpenAsync();
-    using var command = new MySqlCommand("SELECT MAX(`row`) FROM cells WHERE file = @fileId", connection);
-    command.Parameters.AddWithValue("@fileId", fileId);
-    using var reader = await command.ExecuteReaderAsync();
-    reader.Read();
-    if (!reader.HasRows)
-        return reader.GetInt32(0);
-
-    return 0;
-}
-
-async Task insertFileIntoDB(string name, string extension, int size, string csv)
-{
-    int fileId = await fileExists(name);
-    int lastRowCount = 0;
-
-    if (fileId.Equals(-1))
-    {
-        try
-        {
-            using var connection = new MySqlConnection(_connectionString);
-            await connection.OpenAsync();
-            Console.WriteLine("Inserting into DB...");
-            using var icommand = new MySqlCommand("INSERT INTO files (name, size, extension) VALUES (@name, @size, @extension)", connection);
-            icommand.Parameters.AddWithValue("@name", name);
-            icommand.Parameters.AddWithValue("@size", size);
-            icommand.Parameters.AddWithValue("@extension", extension);
-            await icommand.ExecuteNonQueryAsync();
-
-            fileId = (int)icommand.LastInsertedId;
-
-            Console.WriteLine("Insertion successful");
-
-            connection.Close();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-    }
-
-    // lastRowCount = await getLastInsertedRow(fileId);
-
-    StringBuilder queryBuilder = new StringBuilder();
+    StringBuilder queryBuilder = new();
     queryBuilder.Append("INSERT INTO cells (`row`, col, data, file) VALUES ");
 
     int j = 0;
@@ -126,35 +57,20 @@ async Task insertFileIntoDB(string name, string extension, int size, string csv)
         foreach (var col in row.Split(','))
         {
             ++j;
-            queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + fileId + "),");
+            queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + id + "),");
         }
     }
-    Console.WriteLine(j);
     string query = queryBuilder.ToString().Remove(queryBuilder.Length - 1);
-    insertAsync(query);
+    await insertAsync(query);
 }
 
 async Task insertAsync(string query)
 {
-
     using var sconnection = new MySqlConnection(_connectionString);
     await sconnection.OpenAsync();
     using var ecommand = new MySqlCommand(query, sconnection);
     await ecommand.ExecuteNonQueryAsync();
     sconnection.Close();
-}
-
-async Task insertCellIntoDB(int row, int col, string data, int fileId)
-{
-    using var connection = new MySqlConnection(_connectionString);
-    await connection.OpenAsync();
-    using var command = new MySqlCommand("INSERT INTO cells (`row`, col, data, file) VALUES (@row, @col, @data, @file)", connection);
-    command.Parameters.AddWithValue("@row", row);
-    command.Parameters.AddWithValue("@col", col);
-    command.Parameters.AddWithValue("@data", data);
-    command.Parameters.AddWithValue("@file", fileId);
-    await command.ExecuteNonQueryAsync();
-    connection.Close();
 }
 
 string secureData(string data)
@@ -197,4 +113,5 @@ void main()
 
     listen();
 }
+
 main();
