@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
 * {
   margin: 0;
   padding: 0;
@@ -128,4 +129,432 @@ body {
   display: flex;
   gap: 10px;
   text-transform: capitalize;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  transition-duration: 200ms;
+}
+
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.container .action-btn, .container .files-actions .actions .bulk-actions .action-btn {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border-radius: 5px;
+  border: 0;
+  padding: 10px 20px;
+  transition-duration: 200ms;
+  border: 1px solid #03723c;
+  background-color: #ffffff;
+  color: #03723c;
+  box-shadow: 0 0 5px #d6d6d6;
+}
+.container .action-btn:hover, .container .files-actions .actions .bulk-actions .action-btn:hover {
+  color: #ffffff;
+  background-color: #03723c;
+}
+.container .action-btn.primary, .container .files-actions .actions .bulk-actions .primary.action-btn {
+  color: #ffffff;
+  background-color: #03723c;
+  border: 1px solid #03723c;
+}
+.container .action-btn.primary:hover, .container .files-actions .actions .bulk-actions .primary.action-btn:hover {
+  color: #03723c;
+  background-color: #ffffff;
+}
+.container .nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  background-color: #03723c;
+  margin-bottom: 1rem;
+}
+.container .nav img {
+  height: 50px;
+}
+.container .nav .user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.container .nav .user img {
+  height: 36px;
+  width: 36px;
+  border-radius: 50%;
+}
+.container .nav .user .label {
+  align-content: center;
+  color: rgba(235, 235, 235, 0.8);
+}
+.container .user-actions {
+  padding: 1rem 20px;
+}
+.container .user-actions .actions {
+  display: flex;
+  gap: 10px;
+}
+.container .dialogue-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  background-color: rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(4px);
+}
+.container .dialogue-wrapper .upload-container {
+  max-width: 400px;
+  width: 100%;
+  border-radius: 30px;
+  box-shadow: 0 0 24px #a3a3a3;
+  animation: fade-in 300ms linear 1;
+}
+.container .dialogue-wrapper .upload-container .header {
+  background-color: white;
+  border-top-right-radius: 30px;
+  border-top-left-radius: 30px;
+  padding: 30px;
+  padding-bottom: 20px;
+  display: flex;
+  gap: 14px;
+  border-bottom: 1px solid #959595;
+}
+.container .dialogue-wrapper .upload-container .header i {
+  font-size: larger;
+  padding: 14px;
+  border-radius: 50%;
+  border: 1px solid #959595;
+}
+.container .dialogue-wrapper .upload-container .header i:last-child {
+  margin-left: auto;
+  border: 0;
+  padding: 14px 0;
+}
+.container .dialogue-wrapper .upload-container .header i:last-child:hover {
+  color: #959595;
+}
+.container .dialogue-wrapper .upload-container .header .title-container .title {
+  font-size: large;
+  margin-bottom: 4px;
+}
+.container .dialogue-wrapper .upload-container .header .title-container .text-muted, .container .dialogue-wrapper .upload-container .header .title-container .files-wrapper .files .file-card .card-content .dates, .container .files-wrapper .files .file-card .card-content .dialogue-wrapper .upload-container .header .title-container .dates {
+  color: #959595;
+  font-size: 14px;
+}
+.container .dialogue-wrapper .upload-container .main {
+  padding: 24px;
+  background-color: white;
+  border-bottom: 1px solid #959595;
+}
+.container .dialogue-wrapper .upload-container .main .dotted {
+  padding: 24px 14px;
+  border-radius: 10px;
+  border: 2px dotted #959595;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.container .dialogue-wrapper .upload-container .main .dotted .title {
+  font-size: large;
+  margin-bottom: 10px;
+}
+.container .dialogue-wrapper .upload-container .main .dotted .text-muted, .container .dialogue-wrapper .upload-container .main .dotted .files-wrapper .files .file-card .card-content .dates, .container .files-wrapper .files .file-card .card-content .dialogue-wrapper .upload-container .main .dotted .dates {
+  color: #959595;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.container .dialogue-wrapper .upload-container .main .dotted label input {
+  display: none;
+}
+.container .dialogue-wrapper .upload-container .main .dotted label span {
+  margin-top: 5px;
+  display: inline-block;
+  padding: 10px 20px;
+  border: 1px solid #959595;
+  border-radius: 5px;
+  background-color: white;
+}
+.container .dialogue-wrapper .upload-container .main .dotted label span:hover {
+  background-color: rgba(235, 235, 235, 0.8);
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file {
+  padding: 10px;
+  border-radius: 5px;
+  background-color: rgba(235, 235, 235, 0.8);
+  display: flex;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file img {
+  height: 50px;
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content {
+  flex-grow: 1;
+  position: relative;
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content i.fa-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content .title {
+  font-size: large;
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content .size {
+  font-size: 14px;
+  color: #959595;
+  margin-bottom: 6px;
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content .progress-bar {
+  border-radius: 5px;
+  background-color: #a0a0a0;
+}
+.container .dialogue-wrapper .upload-container .main .file-uploads .file .content .progress-bar .progress {
+  padding: 4px;
+  width: 50%;
+  background-color: #03723c;
+  border-radius: 5px;
+}
+.container .dialogue-wrapper .upload-container .footer {
+  background-color: white;
+  border-bottom-right-radius: 30px;
+  border-bottom-left-radius: 30px;
+  padding: 20px;
+}
+.container .dialogue-wrapper .upload-container .footer .btn-upload {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 5px;
+  background-color: #7684f1;
+  color: white;
+  cursor: pointer;
+  margin: 0 auto;
+}
+.container .dialogue-wrapper .upload-container .footer .btn-upload:hover {
+  background-color: #4d569c;
+}
+.container .files-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 20px;
+}
+.container .files-actions .labels .header {
+  font-size: large;
+}
+.container .files-actions .labels .counts {
+  font-size: small;
+  color: #4e4e4e;
+}
+.container .files-actions .actions {
+  display: flex;
+  gap: 5rem;
+}
+.container .files-actions .actions .bulk-actions {
+  display: flex;
+  gap: 14px;
+  margin-left: 4rem;
+}
+.container .files-actions .actions .bulk-actions .label {
+  align-content: center;
+}
+.container .files-actions .actions .bulk-actions select {
+  outline: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  background-color: rgba(235, 235, 235, 0.8);
+  border: 0;
+}
+.container .files-actions .actions .bulk-actions .action-btn {
+  box-shadow: none;
+}
+.container .files-actions .actions .sort-actions {
+  display: flex;
+  gap: 10px;
+}
+.container .files-actions .actions .sort-actions .label {
+  align-content: center;
+}
+.container .files-actions .actions .sort-actions select {
+  outline: none;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: rgba(235, 235, 235, 0.8);
+  border: 0;
+}
+.container .files-actions .actions .sort-actions .asc-dsc {
+  align-content: center;
+  font-size: large;
+  color: #03723c;
+}
+.container .files-empty {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.container .files-empty .content img {
+  height: 20rem;
+}
+.container .files-empty .content .helper {
+  color: #4e4e4e;
+  text-align: center;
+}
+.container .files-wrapper {
+  flex-grow: 1;
+}
+.container .files-wrapper .files {
+  display: grid;
+  width: 100%;
+  flex-wrap: wrap;
+  padding: 1rem 20px;
+  gap: 20px;
+  box-sizing: border-box;
+  grid-template-columns: auto auto auto auto;
+}
+.container .files-wrapper .files .file-card {
+  display: flex;
+  gap: 20px;
+  padding: 14px 24px;
+  border-radius: 2px;
+  box-shadow: 0 0 5px #d6d6d6;
+  transition-duration: 200ms;
+  min-width: 350px;
+  position: relative;
+}
+.container .files-wrapper .files .file-card:hover {
+  cursor: pointer;
+  box-shadow: 0 0 16px #d6d6d6;
+}
+.container .files-wrapper .files .file-card img {
+  height: 60px;
+}
+.container .files-wrapper .files .file-card .card-content {
+  flex-grow: 1;
+}
+.container .files-wrapper .files .file-card .card-content .card-title {
+  font-size: large;
+  margin-bottom: 8px;
+}
+.container .files-wrapper .files .file-card .card-content .text-muted, .container .files-wrapper .files .file-card .card-content .dates {
+  color: #4e4e4e;
+  font-size: smaller;
+}
+.container .files-wrapper .files .file-card .card-content .dates {
+  display: flex;
+  justify-content: space-between;
+}
+.container .files-wrapper .files .file-card .menus {
+  position: absolute;
+  top: 0px;
+  right: 10px;
+  font-size: large;
+  padding: 10px;
+}
+.container .files-wrapper .files .file-card .menus:hover {
+  color: #03723c;
+}
+.container .files-wrapper .files .file-card .menus:hover .menu-content {
+  display: flex;
+}
+.container .files-wrapper .files .file-card .menus .menu-content {
+  display: none;
+  border-radius: 5px;
+  position: absolute;
+  top: 40px;
+  right: -10px;
+  width: 10rem;
+  flex-direction: column;
+  box-shadow: 0 0 20px #d6d6d6;
+  background-color: white;
+  z-index: 1;
+  animation: fade-in 300ms linear 1;
+}
+.container .files-wrapper .files .file-card .menus .menu-content::before {
+  content: "";
+  position: absolute;
+  top: -16px;
+  right: 14px;
+  border: 8px solid transparent;
+  border-bottom: 8px solid white;
+}
+.container .files-wrapper .files .file-card .menus .menu-content .menu-item {
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 0;
+  text-align: start;
+}
+.container .files-wrapper .files .file-card .menus .menu-content .menu-item:hover {
+  background-color: rgba(235, 235, 235, 0.8);
+}
+.container .files-wrapper .files .file-card .menus .menu-content .menu-item:has(.fa-trash) {
+  color: red;
+}
+.container .footer {
+  font-size: 14px;
+  color: #4e4e4e;
+  padding: 10px;
+  background-color: rgba(235, 235, 235, 0.8);
+  text-align: center;
+}
+.container .functions {
+  padding: 1rem;
+}
+.container .excel {
+  flex-grow: 1;
+  width: 100vw;
+  overflow-x: scroll;
+  position: relative;
+}
+.container .excel canvas {
+  margin: 0;
+  cursor: cell;
+  border: 1px solid;
+  box-sizing: border-box;
+}
+.container .excel input {
+  outline: none;
+  font-size: 16px;
+  border-top: 3px solid #000000;
+  border-left: 3px solid #000000;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  box-sizing: border-box;
+  position: absolute;
+  padding: 0 4px;
+  transition: none;
+  display: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }/*# sourceMappingURL=style.css.map */
