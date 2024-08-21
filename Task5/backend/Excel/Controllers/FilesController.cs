@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using ExcelApi.Models;
-using System.Diagnostics;
-using System.Threading.Tasks.Dataflow;
 
 namespace Excel.Controllers
 {
@@ -74,9 +72,6 @@ namespace Excel.Controllers
 
             long lastInsertedId = _context.Files.Max(x => x.Id);
             dataFile.Id = lastInsertedId;
-            Console.WriteLine(dataFile.Id);
-
-            Console.WriteLine("File uploading...");
 
             string csv = dataFile.Data.Trim();
             int chunkSize = 10000;

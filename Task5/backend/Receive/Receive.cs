@@ -61,7 +61,7 @@ async Task insertFileIntoDB(int id, string csv, int lastRowCount)
         }
     }
     string query = queryBuilder.ToString().Remove(queryBuilder.Length - 1);
-    await insertAsync(query);
+    insertAsync(query);
 }
 
 async Task insertAsync(string query)

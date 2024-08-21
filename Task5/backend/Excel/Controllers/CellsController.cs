@@ -10,7 +10,6 @@ namespace Excel.Controllers
     public class CellsController(Context context) : ControllerBase
     {
         private readonly Context _context = context;
-        private readonly RabbitMQService rmqService = new();
 
         // GET: api/cells/file/5
         [HttpGet("file/{id}")]
@@ -82,17 +81,6 @@ namespace Excel.Controllers
         private bool CellExists(long id)
         {
             return _context.Cells.Any(e => e.Id == id);
-        }
-
-        private string ProducerRequest(string requestType, string Data)
-        {
-            var payload = new
-            {
-                Type = requestType,
-                ObjectType = "CELL",
-                Data
-            };
-            return JsonConvert.SerializeObject(payload);
         }
     }
 }
