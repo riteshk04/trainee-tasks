@@ -13,6 +13,7 @@ public class File
     public string? Data { get; set; }
     public int Progress { get; set; }
     public int Size { get; set; }
+    public int StartRow { get; set; } = 1;
 }
 
 

@@ -14,7 +14,7 @@ IConnection _rabbitConnection;
 Stopwatch stopwatch;
 
 
-async Task RequestHandlerAsync(string message)
+void RequestHandler(string message)
 {
     try
     {
@@ -22,14 +22,13 @@ async Task RequestHandlerAsync(string message)
         string type = request.Type;
         string objectType = request.ObjectType;
 
-
         if (objectType == "FILE")
         {
             File file = JsonConvert.DeserializeObject<File>(request.Data);
             if (type == "POST")
             {
                 stopwatch.Start();
-                await insertFileIntoDB(file.Id, file.Data, 0);
+                insertFileIntoDB(file);
                 stopwatch.Stop();
                 Console.WriteLine($"Time taken: {stopwatch.Elapsed}s");
             }
@@ -45,22 +44,25 @@ async Task RequestHandlerAsync(string message)
     }
 }
 
-async Task insertFileIntoDB(int id, string csv, int lastRowCount)
+void insertFileIntoDB(File file)
 {
     StringBuilder queryBuilder = new();
     queryBuilder.Append("INSERT INTO cells (`row`, col, data, file) VALUES ");
-
+    int lastRowCount = file.StartRow;
     int j = 0;
-    foreach (var row in csv.Split('\n'))
+    foreach (var row in file.Data.Split('\n'))
     {
         ++lastRowCount;
         foreach (var col in row.Split(','))
         {
             ++j;
-            queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + id + "),");
+            // Console.WriteLine(lastRowCount.ToString() + ", " + j);
+            queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + file.Id + "),");
         }
+        j = 0;
     }
     string query = queryBuilder.ToString().Remove(queryBuilder.Length - 1);
+
     insertAsync(query);
 }
 
@@ -84,11 +86,11 @@ void listen()
     Console.WriteLine(" [*] Waiting for messages.");
     var consumer = new EventingBasicConsumer(_channel);
 
-    consumer.Received += async (model, ea) =>
+    consumer.Received += (model, ea) =>
     {
         var body = ea.Body.ToArray();
         var message = Encoding.UTF8.GetString(body);
-        await RequestHandlerAsync(message);
+        RequestHandler(message);
     };
 
     _channel.BasicConsume(queue: _queueName,

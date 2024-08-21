@@ -13,5 +13,6 @@ namespace ExcelApi.Models
     public class NewFile : File
     {
         public required string Data { get; set; }
+        public int StartRow { get; set; } = 0;
     }
 }

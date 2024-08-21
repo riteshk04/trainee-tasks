@@ -84,7 +84,8 @@ namespace Excel.Controllers
             foreach (var chunk in chunks)
             {
                 dataFile.Data = string.Join("\n", chunk);
-                rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(dataFile)));
+                rmqService.SendMessage(ProducerRequest(POST", JsonConvert.SerializeObject(dataFile)));
+                dataFile.StartRow += chunk.Count + 1;
             }
 
             return Created(nameof(dataFile), new { success = true });
