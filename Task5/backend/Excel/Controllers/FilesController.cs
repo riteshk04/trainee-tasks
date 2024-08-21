@@ -88,7 +88,7 @@ namespace Excel.Controllers
                 dataFile.StartRow += chunk.Count + 1;
             }
 
-            return Created(nameof(dataFile), new { success = true });
+            return file;
         }
 
         // DELETE: api/files/5
