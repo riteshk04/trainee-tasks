@@ -7,6 +7,8 @@ namespace ExcelApi.Models
         public required string Extension { get; set; }
         public int Progress { get; set; }
         public long Size { get; set; }
+        public DateTime? Uploaded { get; set; }
+        public DateTime? Modified { get; set; }
 
     }
 

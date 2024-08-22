@@ -16,14 +16,14 @@ const fileUploadMarkup = (id, name, size, progress) => {
     </div>`;
 };
 
-const fileCardMarkup = ({ id, name, size, dateModified, dateUploaded }) => {
+const fileCardMarkup = ({ id, name, size, modified, uploaded }) => {
   return `
     <div class="file-card" data-id="${id}">
         <div class="menus">
             <i class="fas fa-ellipsis-v"></i>
             <div class="menu-content">
                 <button class="menu-item"><i class="fa fa-circle-info"></i> Info</button>
-                <button class="menu-item"><i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <button class="menu-item open-btn" data-id="${id}"><i class="fa-solid fa-arrow-up-right-from-square"></i>
                     Open</button>
                 <button class="menu-item delete-btn" data-id="${id}"><i class="fa fa-trash"></i> Delete</button>
             </div>
@@ -31,14 +31,14 @@ const fileCardMarkup = ({ id, name, size, dateModified, dateUploaded }) => {
         <img src="./images/fileicon.png" alt="">
         <div class="card-content">
             <div class="card-title">${name}</div>
-            <div class="text-muted">Size: ${size / 1000}KB</div>
+            <div class="text-muted">Size: ${size / 1024}KB</div>
             <div class="dates">
-                <div class="date-uploaded">Uploaded: ${new Date(dateUploaded)
+                <div class="date-uploaded">Uploaded: ${new Date(uploaded)
                   .toString()
                   .split(" ")
                   .filter((e, i) => i < 4)
                   .join(" ")}</div>
-                <d4v class="date-modified">Modified: ${new Date(dateModified)
+                <d4v class="date-modified">Modified: ${new Date(modified)
                   .toString()
                   .split(" ")
                   .filter((e, i) => i < 4)
@@ -64,17 +64,12 @@ function fileListRefresher() {
     }
     $(".files-empty").show();
   }
+
   $(".file-uploads").html(
     uploadedFiles
       .filter((f) => f.progress < 100)
       .map((f, i) => fileUploadMarkup(i, f.name, f.size, 100))
   );
-
-  $(".file-uploads .file .fa.fa-close").click(function () {
-    uploadedFiles.splice($(this).attr("data-id"), 1);
-    $(this).parent().parent().remove();
-    fileListRefresher();
-  });
 
   $(".file-card .delete-btn").click(function () {
     let id = parseInt($(this).attr("data-id"));
@@ -85,6 +80,14 @@ function fileListRefresher() {
       uploadedFiles.splice(index, 1);
       fileListRefresher();
     });
+  });
+
+  $(".file-card .open-btn").click(function () {
+    let id = parseInt($(this).attr("data-id"));
+    window.open(
+      window.location.origin + "/Task5/frontend/canva.html?id=" + id,
+      "_blank"
+    );
   });
 }
 
@@ -106,17 +109,18 @@ $(function () {
 
       reader.onload = function (event) {
         const data = event.target.result;
+        const payload = {
+          name: file.name,
+          extension: file.type.split("/")[1],
+          progress: 0,
+          size: file.size,
+          data: data,
+          file: -1,
+        };
 
         fetch(FILEUPLOAD_API_URL, {
           method: "POST",
-          body: JSON.stringify({
-            name: file.name,
-            extension: file.type.split("/")[1],
-            progress: 0,
-            size: file.size,
-            data: data,
-            file: -1,
-          }),
+          body: JSON.stringify(payload),
           headers: {
             "Content-Type": "application/json",
           },
@@ -142,6 +146,28 @@ $(function () {
       return;
     }
     $(".dialogue-wrapper").toggleClass("hidden");
+  });
+
+  $(".new-file-btn").click(function () {
+    fetch(FILEUPLOAD_API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        name: "untitled.csv",
+        extension: "csv",
+        progress: 0,
+        size: 1024,
+        data: "",
+        file: -1,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((response) => {
+      response.json().then((data) => {
+        uploadedFiles.push(data);
+        fileListRefresher();
+      });
+    });
   });
 
   fetch(FILEUPLOAD_API_URL).then((response) => {
