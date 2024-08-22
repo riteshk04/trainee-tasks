@@ -82,14 +82,17 @@ namespace Excel.Controllers
                 .GroupBy(x => x.Index / chunkSize)
                 .Select(g => g.Select(x => x.Item).ToList())
                 .ToList();
+            int progress = (100 / chunks.Count) + 1;
+            Console.WriteLine(progress);
 
             foreach (var chunk in chunks)
             {
+                dataFile.Progress = progress;
                 dataFile.Data = string.Join("\n", chunk);
                 rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(dataFile)));
                 dataFile.StartRow += chunk.Count + 1;
             }
-
+            file.Progress = 0;
             return file;
         }
 

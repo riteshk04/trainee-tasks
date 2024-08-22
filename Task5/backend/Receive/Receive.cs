@@ -49,6 +49,7 @@ void insertFileIntoDB(File file)
     StringBuilder queryBuilder = new();
     queryBuilder.Append("INSERT INTO cells (`row`, col, data, file) VALUES ");
     int lastRowCount = file.StartRow;
+    int progress = file.Progress;
     int j = 0;
     foreach (var row in file.Data.Split('\n'))
     {
@@ -56,23 +57,43 @@ void insertFileIntoDB(File file)
         foreach (var col in row.Split(','))
         {
             ++j;
-            // Console.WriteLine(lastRowCount.ToString() + ", " + j);
             queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + file.Id + "),");
         }
         j = 0;
     }
     string query = queryBuilder.ToString().Remove(queryBuilder.Length - 1);
 
-    insertAsync(query);
+    insertAsync(query, file.Id, progress);
 }
 
-async Task insertAsync(string query)
+async Task insertAsync(string query, int fileId, int progress)
 {
     using var sconnection = new MySqlConnection(_connectionString);
     await sconnection.OpenAsync();
     using var ecommand = new MySqlCommand(query, sconnection);
     await ecommand.ExecuteNonQueryAsync();
     sconnection.Close();
+    updateProgressAsync(fileId, progress);
+}
+
+async Task updateProgressAsync(int fileId, int progress)
+{
+    try
+    {
+        using var sconnection = new MySqlConnection(_connectionString);
+        await sconnection.OpenAsync();
+        using var ecommand = new MySqlCommand($"SELECT progress FROM files WHERE id = {fileId}", sconnection);
+
+        int prevProgress = Convert.ToInt32(await ecommand.ExecuteScalarAsync());
+
+        using var ecommand2 = new MySqlCommand($"UPDATE files SET progress = {Math.Min(100, prevProgress + progress)} WHERE id = {fileId}", sconnection);
+        await ecommand2.ExecuteNonQueryAsync();
+        sconnection.Close();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
 }
 
 string secureData(string data)
