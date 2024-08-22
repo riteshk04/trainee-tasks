@@ -65,6 +65,8 @@ namespace Excel.Controllers
                 Extension = dataFile.Extension,
                 Progress = 0,
                 Size = dataFile.Size,
+                Modified = DateTime.Now,
+                Uploaded = DateTime.Now,
             };
 
             _context.Files.Add(file);
