@@ -73,7 +73,7 @@ async Task insertAsync(string query, int fileId, int progress)
     using var ecommand = new MySqlCommand(query, sconnection);
     await ecommand.ExecuteNonQueryAsync();
     sconnection.Close();
-    updateProgressAsync(fileId, progress);
+    // await updateProgressAsync(fileId, progress);
 }
 
 async Task updateProgressAsync(int fileId, int progress)
@@ -82,8 +82,7 @@ async Task updateProgressAsync(int fileId, int progress)
     {
         using var sconnection = new MySqlConnection(_connectionString);
         await sconnection.OpenAsync();
-        Console.WriteLine("Progress: " + progress);
-        using var ecommand2 = new MySqlCommand($"UPDATE files SET progress = LEAST(100, (progress + {progress})) WHERE id = {fileId}", sconnection);
+        using var ecommand2 = new MySqlCommand($"UPDATE files SET progress = (progress + {progress}) WHERE id = {fileId}", sconnection);
         await ecommand2.ExecuteNonQueryAsync();
         sconnection.Close();
     }

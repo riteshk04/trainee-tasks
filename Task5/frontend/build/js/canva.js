@@ -9,9 +9,10 @@ class Excel {
     /**
      * Creates and initializes the App object
      * @param container Specify container to draw the app layout
-     * @param csv CSV file as a string
+     * @param json 1D array of cells to be rendered
      */
-    constructor(container, csv) {
+    constructor(container, json = []) {
+        this.jsonData = [];
         this.offset = 0.5;
         this.cellheight = 30;
         this.cellwidth = 100;
@@ -92,7 +93,7 @@ class Excel {
             cells: [],
         };
         this.wrapper = container;
-        this.csvString = (csv || "").trim();
+        this.jsonData = json;
         this.busy = null;
         this.init();
     }
@@ -279,42 +280,44 @@ class Excel {
      */
     async createData() {
         this.canvas.data = await new Promise((res) => {
-            let data = [];
-            let rows = this.csvString.split("\n");
-            rows.forEach((row, i) => {
-                let cols = row.split(",");
-                let dataRow = [];
-                cols.forEach((col, j) => {
-                    let cell = {
-                        data: col,
-                        top: i * this.cellheight,
-                        left: j * this.cellwidth,
-                        height: this.cellheight,
-                        width: this.cellwidth,
-                        row: i,
-                        col: j,
-                        isbold: false,
-                        strokeStyle: Colors.STROKE,
-                        lineWidth: 1,
-                        fontSize: 16,
-                        font: "Arial",
-                        align: "LEFT",
-                    };
-                    dataRow.push(cell);
-                });
-                data.push(dataRow);
+            let rowmax = 0;
+            let colmax = 0;
+            for (let i = 0; i < this.jsonData.length; i++) {
+                rowmax = Math.max(rowmax, this.jsonData[i].row);
+                colmax = Math.max(colmax, this.jsonData[i].col);
+            }
+            let arr2D = [...new Array(rowmax).fill(0)].map(() => new Array(colmax).fill(0));
+            this.jsonData.forEach((jsonCell, j) => {
+                const row = jsonCell.row - 1;
+                const col = (jsonCell.col - 1) % colmax;
+                let cell = {
+                    data: jsonCell.data,
+                    top: row * this.cellheight,
+                    left: col * this.cellwidth,
+                    height: this.cellheight,
+                    width: this.cellwidth,
+                    row: row,
+                    col: col,
+                    isbold: false,
+                    strokeStyle: Colors.STROKE,
+                    lineWidth: 1,
+                    fontSize: 16,
+                    font: "Arial",
+                    align: "LEFT",
+                };
+                arr2D[jsonCell.row - 1][jsonCell.col - 1] = cell;
             });
-            res(data);
+            if (rowmax < 100) {
+                this.extendData(100 - rowmax, "Y");
+            }
+            if (colmax < 100) {
+                this.extendData(100 - colmax, "X");
+            }
+            this.selectionMode.selectedArea = [[arr2D[0][0]]];
+            this.selectionMode.startSelectionCell =
+                this.selectionMode.selectedArea[0][0];
+            res(arr2D);
         });
-        if (this.canvas.data.length < 100) {
-            this.extendData(100 - this.canvas.data.length, "Y");
-        }
-        if (this.canvas.data[0].length < 100) {
-            this.extendData(100 - this.canvas.data[0].length, "X");
-        }
-        this.selectionMode.selectedArea = [[this.canvas.data[0][0]]];
-        this.selectionMode.startSelectionCell =
-            this.selectionMode.selectedArea[0][0];
         this.render();
     }
     /**
@@ -993,7 +996,6 @@ class Excel {
                 }
                 break;
             default:
-                console.log(event.target);
                 if (event.target !== this.canvas.element)
                     return;
                 if (event.key.match(/^\w$/)) {
@@ -1531,8 +1533,6 @@ class Excel {
                     ];
                     this.selectionMode.startSelectionCell =
                         this.findReplace.cells[target - 1];
-                    console.log("🚀 ~ Excel ~ find ~ this.selectionMode.startSelectionCell:", this.selectionMode.selectedArea);
-                    // console.log("goto")
                     this.render();
                 }
             },
@@ -1731,7 +1731,6 @@ class AppChart {
         if (this.dragConfig.active) {
             const newLeft = this.dragConfig.prevPos.x + x - this.dragConfig.startCords.x;
             const newTop = this.dragConfig.prevPos.y + y - this.dragConfig.startCords.y;
-            console.log(newLeft, newTop);
             this.config.position.x = Math.max(newLeft, 0);
             this.config.position.y = Math.max(newTop, 0);
             this.render();
