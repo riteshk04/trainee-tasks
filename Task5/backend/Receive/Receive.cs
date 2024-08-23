@@ -82,11 +82,8 @@ async Task updateProgressAsync(int fileId, int progress)
     {
         using var sconnection = new MySqlConnection(_connectionString);
         await sconnection.OpenAsync();
-        using var ecommand = new MySqlCommand($"SELECT progress FROM files WHERE id = {fileId}", sconnection);
-
-        int prevProgress = Convert.ToInt32(await ecommand.ExecuteScalarAsync());
-
-        using var ecommand2 = new MySqlCommand($"UPDATE files SET progress = {Math.Min(100, prevProgress + progress)} WHERE id = {fileId}", sconnection);
+        Console.WriteLine("Progress: " + progress);
+        using var ecommand2 = new MySqlCommand($"UPDATE files SET progress = LEAST(100, (progress + {progress})) WHERE id = {fileId}", sconnection);
         await ecommand2.ExecuteNonQueryAsync();
         sconnection.Close();
     }
