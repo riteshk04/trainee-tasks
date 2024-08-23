@@ -92,6 +92,7 @@ function fileListRefresher() {
 }
 
 $(function () {
+  const fileRefresherInterval = null;
   $(".upload-csv-btn").click(function () {
     $(".dialogue-wrapper").toggleClass("hidden");
   });
@@ -128,6 +129,7 @@ $(function () {
           response.json().then((data) => {
             uploadedFiles.push(data);
             fileListRefresher();
+            console.log(uploadedFiles);
           });
         });
       };
@@ -170,10 +172,17 @@ $(function () {
     });
   });
 
-  fetch(FILEUPLOAD_API_URL).then((response) => {
-    response.json().then((data) => {
-      uploadedFiles = data;
-      fileListRefresher();
+  function getAllFiles() {
+    fetch(FILEUPLOAD_API_URL).then((response) => {
+      response.json().then((data) => {
+        uploadedFiles = data;
+        fileListRefresher();
+        // if (fileRefresherInterval) clearInterval(fileRefresherInterval);
+        // fileRefresherInterval = setInterval(() => {
+        //   uploadedFiles.some((f) => f.progress < 100) && getAllFiles();
+        // }, 4000);
+      });
     });
-  });
+  }
+  getAllFiles();
 });
