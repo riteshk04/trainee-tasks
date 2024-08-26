@@ -11,7 +11,7 @@ class Excel {
      * @param container Specify container to draw the app layout
      * @param json 1D array of cells to be rendered
      */
-    constructor(container, json = []) {
+    constructor(container, json = [], fileId = "-1") {
         this.jsonData = [];
         this.offset = 0.5;
         this.cellheight = 30;
@@ -92,16 +92,22 @@ class Excel {
             replace: "",
             cells: [],
         };
+        this.API = null;
+        this.currentFile = -1;
         this.wrapper = container;
         this.jsonData = json;
+        this.currentFile = parseInt(fileId);
         this.busy = null;
         this.init();
+        this.API = this.getExcelAPIUrls("http://localhost:5165/api/Cells/");
     }
     /**
      * Initializes the app
      */
     init() {
-        this.createData();
+        this.extendCells(100, "X");
+        this.extendCells(100, "Y");
+        this.fillData();
         this.createMarkup();
         this.extendHeader(100);
         this.extendSidebar(100);
@@ -278,26 +284,21 @@ class Excel {
      *
      * Sets the active cell
      */
-    async createData() {
-        this.canvas.data = await new Promise((res) => {
+    async fillData() {
+        await new Promise((res) => {
             let rowmax = 0;
             let colmax = 0;
             for (let i = 0; i < this.jsonData.length; i++) {
                 rowmax = Math.max(rowmax, this.jsonData[i].row);
                 colmax = Math.max(colmax, this.jsonData[i].col);
             }
-            let arr2D = [...new Array(rowmax).fill(0)].map(() => new Array(colmax).fill(0));
             this.jsonData.forEach((jsonCell, j) => {
-                const row = jsonCell.row - 1;
-                const col = (jsonCell.col - 1) % colmax;
                 let cell = {
-                    data: jsonCell.data,
-                    top: row * this.cellheight,
-                    left: col * this.cellwidth,
+                    ...jsonCell,
+                    top: jsonCell.row * this.cellheight,
+                    left: jsonCell.col * this.cellwidth,
                     height: this.cellheight,
                     width: this.cellwidth,
-                    row: row,
-                    col: col,
                     isbold: false,
                     strokeStyle: Colors.STROKE,
                     lineWidth: 1,
@@ -305,18 +306,22 @@ class Excel {
                     font: "Arial",
                     align: "LEFT",
                 };
-                arr2D[jsonCell.row - 1][jsonCell.col - 1] = cell;
+                try {
+                    this.canvas.data[jsonCell.row][jsonCell.col] = {
+                        ...this.canvas.data[jsonCell.row][jsonCell.col],
+                        ...cell,
+                    };
+                }
+                catch (e) {
+                    console.log(e);
+                }
+                this.currentFile = jsonCell.file;
             });
-            if (rowmax < 100) {
-                this.extendData(100 - rowmax, "Y");
-            }
-            if (colmax < 100) {
-                this.extendData(100 - colmax, "X");
-            }
-            this.selectionMode.selectedArea = [[arr2D[0][0]]];
+            this.selectionMode.selectedArea = [[this.canvas.data[0][0]]];
             this.selectionMode.startSelectionCell =
                 this.selectionMode.selectedArea[0][0];
-            res(arr2D);
+            this.inputBox.element.value = this.selectionMode.selectedArea[0][0].data;
+            res(this.canvas.data);
         });
         this.render();
     }
@@ -402,10 +407,10 @@ class Excel {
                 break;
         }
         if (Math.abs(finalRow - this.canvas.data.length) < 50) {
-            this.extendData(100, "Y");
+            this.extendCells(100, "Y");
         }
         if (Math.abs(initialCol - this.canvas.data[0].length) < 50) {
-            this.extendData(100, "X");
+            this.extendCells(100, "X");
         }
         this.clearData();
         for (let i = Math.max(initialRow - this.extracells, 0); i < Math.min(finalRow + this.extracells, this.canvas.data.length); i++) {
@@ -425,10 +430,11 @@ class Excel {
      * @param count Column or Row count
      * @param axis Specify X for columns or Y for rows
      */
-    async extendData(count, axis) {
+    async extendCells(count, axis) {
         if (!this.canvas.data.length) {
             this.canvas.data.push([
                 {
+                    id: -1,
                     data: "",
                     top: 0,
                     left: 0,
@@ -442,6 +448,7 @@ class Excel {
                     fontSize: 16,
                     font: "Arial",
                     align: "CENTER",
+                    file: this.currentFile,
                 },
             ]);
         }
@@ -454,6 +461,7 @@ class Excel {
                     let top = row[row.length - 1].top;
                     let height = row[row.length - 1].height;
                     let cell = {
+                        id: -1,
                         data: "",
                         top: top,
                         left: left,
@@ -467,6 +475,7 @@ class Excel {
                         fontSize: 16,
                         font: "Arial",
                         align: "LEFT",
+                        file: this.currentFile,
                     };
                     row.push(cell);
                 }
@@ -483,6 +492,7 @@ class Excel {
                     let top = prev[j].top + prev[j].height;
                     let width = prev[j].width;
                     let cell = {
+                        id: -1,
                         data: "",
                         top: top,
                         left: left,
@@ -496,6 +506,7 @@ class Excel {
                         fontSize: 16,
                         font: "Arial",
                         align: "LEFT",
+                        file: this.currentFile,
                     };
                     row.push(cell);
                 }
@@ -530,6 +541,19 @@ class Excel {
         //   this.activeFunctions.copy = false;
         // }
         const { cell } = this.getCell(event);
+        if (this.selectionMode.startSelectionCell?.id === -1) {
+            if (this.inputBox.element?.value?.trim() !== "") {
+                this.API?.createCell({
+                    ...this.selectionMode.startSelectionCell,
+                    data: this.inputBox.element?.value || "",
+                });
+            }
+        }
+        // else if (this.selectionMode.startSelectionCell)
+        //   this.API?.updateCell({
+        //     ...this.selectionMode.startSelectionCell,
+        //     data: this.inputBox.element?.value || "",
+        //   });
         this.selectionMode.startSelectionCell = cell;
         this.selectionMode.active = true;
         this.header.selected_cells = -1;
@@ -681,6 +705,7 @@ class Excel {
         if (!this.header.data.length) {
             this.header.data.push([
                 {
+                    id: -1,
                     data: this.toLetters(1),
                     top: 0,
                     left: 0,
@@ -694,6 +719,7 @@ class Excel {
                     fontSize: 16,
                     font: "Arial",
                     align: "CENTER",
+                    file: this.currentFile,
                 },
             ]);
         }
@@ -705,6 +731,7 @@ class Excel {
                 let height = row[j - 1].height;
                 let width = this.cellwidth;
                 let cell = {
+                    id: -1,
                     data: this.toLetters(j + 1),
                     top: top,
                     left: left,
@@ -718,6 +745,7 @@ class Excel {
                     fontSize: 16,
                     font: "Arial",
                     align: "CENTER",
+                    file: this.currentFile,
                 };
                 row.push(cell);
             }
@@ -891,6 +919,7 @@ class Excel {
         if (!this.sidebar.data.length) {
             this.sidebar.data.push([
                 {
+                    id: -1,
                     data: String(1),
                     top: 0,
                     left: 0,
@@ -904,6 +933,7 @@ class Excel {
                     fontSize: 16,
                     font: "Arial",
                     align: "CENTER",
+                    file: this.currentFile,
                 },
             ]);
         }
@@ -914,6 +944,7 @@ class Excel {
             let height = this.sidebar.data[j - 1][0].height;
             let width = this.mincellwidth;
             let cell = {
+                id: -1,
                 data: String(j + 1),
                 top: top,
                 left: left,
@@ -927,6 +958,7 @@ class Excel {
                 fontSize: 16,
                 font: "Arial",
                 align: "CENTER",
+                file: this.currentFile,
             };
             this.sidebar.data.push([cell]);
         }
@@ -1470,13 +1502,13 @@ class Excel {
          * Check for data overflow
          */
         if (this.canvas.data.length - startCell.row > this.clipboard.data.length) {
-            this.extendData(100, "Y");
+            this.extendCells(100, "Y");
         }
         if (!this.clipboard.data.length)
             return;
         if (this.canvas.data[0].length - startCell.col >
             this.clipboard.data[0].length) {
-            this.extendData(100, "X");
+            this.extendCells(100, "X");
         }
         let newSelectionArea = [];
         for (let i = 0; i < this.clipboard.data.length; i++) {
@@ -1553,6 +1585,39 @@ class Excel {
      */
     generateCSVString(data) {
         return data.map((row) => row.map((col) => col.data).join(",")).join("\n");
+    }
+    getExcelAPIUrls(host) {
+        return {
+            updateCell: (data) => fetch(host + data.id, {
+                method: "PUT",
+                body: JSON.stringify({
+                    ...data,
+                    row: data.row + 1,
+                    col: data.col + 1,
+                }),
+                headers: {
+                    "Content-Type": "application/json",
+                    "Response-Type": "application/json",
+                },
+            }).then((response) => response.json()),
+            createCell: async (data) => {
+                const response = await fetch(host, {
+                    method: "POST",
+                    body: JSON.stringify(data),
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Response-Type": "application/json",
+                    },
+                });
+                return await response.json();
+            },
+            deleteCell: async (id) => {
+                const response = await fetch(host + id, {
+                    method: "DELETE",
+                });
+                return await response.json();
+            },
+        };
     }
 }
 class AppChart {

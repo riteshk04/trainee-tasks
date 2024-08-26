@@ -1,4 +1,5 @@
 type Cell = {
+  id: number;
   data: string;
   top: number;
   left: number;
@@ -12,6 +13,7 @@ type Cell = {
   fontSize: number;
   font: string;
   align: "LEFT" | "CENTER" | "RIGHT";
+  file: number;
 };
 type Pointer = {
   x: number;
@@ -102,4 +104,10 @@ type FindReplaceState = {
   find: string;
   replace: string;
   cells: Cell[];
+};
+
+type ExcelAPIUrls = {
+  updateCell: (data: Cell) => Promise<WorkbookStats>;
+  createCell: (data: Cell) => Promise<WorkbookStats>;
+  deleteCell: (id: number) => Promise<WorkbookStats>;
 };

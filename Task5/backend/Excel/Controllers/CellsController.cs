@@ -55,11 +55,18 @@ namespace Excel.Controllers
         // POST: api/files
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult<ExcelApi.Models.Cell> PostCell(ExcelApi.Models.Cell file)
+        public ActionResult<ExcelApi.Models.Cell> PostCell(ExcelApi.Models.Cell cell)
         {
-            _context.Cells.Add(file);
+            if (cell.Id == -1)
+            {
+                cell.Id = _context.Cells.Max(x => x.Id) + 1;
+                _context.Cells.Add(cell);
+                _context.SaveChanges();
+                return cell;
+            }
+            _context.Cells.Add(cell);
             _context.SaveChanges();
-            return file;
+            return cell;
         }
 
         // DELETE: api/files/5

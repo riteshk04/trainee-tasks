@@ -48,9 +48,9 @@ void insertFileIntoDB(File file)
 {
     StringBuilder queryBuilder = new();
     queryBuilder.Append("INSERT INTO cells (`row`, col, data, file) VALUES ");
-    int lastRowCount = file.StartRow;
+    int lastRowCount = file.StartRow - 1;
     int progress = file.Progress;
-    int j = 0;
+    int j = -1;
     foreach (var row in file.Data.Split('\n'))
     {
         ++lastRowCount;
@@ -59,7 +59,7 @@ void insertFileIntoDB(File file)
             ++j;
             queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + file.Id + "),");
         }
-        j = 0;
+        j = -1;
     }
     string query = queryBuilder.ToString().Remove(queryBuilder.Length - 1);
 
