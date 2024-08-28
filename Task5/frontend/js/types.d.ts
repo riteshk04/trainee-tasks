@@ -108,6 +108,6 @@ type FindReplaceState = {
 
 type ExcelAPIUrls = {
   updateCell: (data: Cell) => Promise<WorkbookStats>;
-  createCell: (data: Cell) => Promise<WorkbookStats>;
+  createCell: (data: Cell) => Promise<Cell>;
   deleteCell: (id: number) => Promise<WorkbookStats>;
 };

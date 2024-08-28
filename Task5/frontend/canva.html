@@ -199,14 +199,8 @@
         const fileId = new URL(window.location.href).searchParams.get("id");
 
         if (fileId) {
-          fetch("http://localhost:5165/api/Cells/file/" + fileId).then(
-            (response) => {
-              response.json().then((data) => {
-                canva = new Excel(wrapper, data, fileId);
-                // canva.render();
-              });
-            }
-          );
+          canva = new Excel(wrapper, fileId);
+          // canva.render();
         }
       });
     </script>

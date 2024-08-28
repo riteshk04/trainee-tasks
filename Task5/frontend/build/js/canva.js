@@ -11,7 +11,7 @@ class Excel {
      * @param container Specify container to draw the app layout
      * @param json 1D array of cells to be rendered
      */
-    constructor(container, json = [], fileId = "-1") {
+    constructor(container, fileId = "-1") {
         this.jsonData = [];
         this.offset = 0.5;
         this.cellheight = 30;
@@ -92,10 +92,9 @@ class Excel {
             replace: "",
             cells: [],
         };
-        this.API = null;
         this.currentFile = -1;
         this.wrapper = container;
-        this.jsonData = json;
+        this.jsonData = [];
         this.currentFile = parseInt(fileId);
         this.busy = null;
         this.init();
@@ -105,12 +104,12 @@ class Excel {
      * Initializes the app
      */
     init() {
+        this.createMarkup();
         this.extendCells(100, "X");
         this.extendCells(100, "Y");
-        this.fillData();
-        this.createMarkup();
         this.extendHeader(100);
         this.extendSidebar(100);
+        this.fetchData();
         this.attachEvents();
         this.smoothUpdate();
         this.drawHeader();
@@ -284,14 +283,9 @@ class Excel {
      *
      * Sets the active cell
      */
-    async fillData() {
+    async fillData(data) {
         await new Promise((res) => {
-            let rowmax = 0;
-            let colmax = 0;
-            for (let i = 0; i < this.jsonData.length; i++) {
-                rowmax = Math.max(rowmax, this.jsonData[i].row);
-                colmax = Math.max(colmax, this.jsonData[i].col);
-            }
+            this.jsonData = data;
             this.jsonData.forEach((jsonCell, j) => {
                 let cell = {
                     ...jsonCell,
@@ -540,23 +534,34 @@ class Excel {
         // if (this.activeFunctions.copy) {
         //   this.activeFunctions.copy = false;
         // }
+        const prevCell = this.selectionMode.startSelectionCell;
+        const prevValue = this.inputBox.element.value;
         const { cell } = this.getCell(event);
-        if (this.selectionMode.startSelectionCell?.id === -1) {
-            if (this.inputBox.element?.value?.trim() !== "") {
-                this.API?.createCell({
-                    ...this.selectionMode.startSelectionCell,
-                    data: this.inputBox.element?.value || "",
+        if (prevCell.id === -1) {
+            if (this.inputBox.element.value !== "") {
+                this.API.createCell({
+                    ...prevCell,
+                    data: this.inputBox.element.value,
+                }).then(() => {
+                    this.canvas.data[prevCell.row][prevCell.col] = {
+                        ...this.canvas.data[prevCell.row][prevCell.col],
+                        data: prevValue,
+                    };
                 });
             }
         }
-        // else if (this.selectionMode.startSelectionCell)
-        //   this.API?.updateCell({
-        //     ...this.selectionMode.startSelectionCell,
-        //     data: this.inputBox.element?.value || "",
-        //   });
+        else {
+            this.API.updateCell({
+                ...prevCell,
+                data: this.inputBox.element.value,
+            }).then(() => {
+                this.canvas.data[prevCell.row][prevCell.col].data = prevValue;
+            });
+        }
         this.selectionMode.startSelectionCell = cell;
         this.selectionMode.active = true;
         this.header.selected_cells = -1;
+        this.inputBox.element.value = cell.data;
         this.render();
     }
     /**
@@ -1618,6 +1623,15 @@ class Excel {
                 return await response.json();
             },
         };
+    }
+    fetchData() {
+        if (this.currentFile) {
+            fetch("http://localhost:5165/api/Cells/file/" + this.currentFile)
+                .then((response) => response.json())
+                .then((data) => {
+                this.fillData(data);
+            });
+        }
     }
 }
 class AppChart {
