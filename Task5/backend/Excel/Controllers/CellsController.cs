@@ -32,6 +32,31 @@ namespace Excel.Controllers
             return cell;
         }
 
+        [HttpGet("file/{id}/{page}")]
+        public async Task<ActionResult<IEnumerable<ExcelApi.Models.Cell>>> GetCells(long id, long page)
+        {
+            // Validate page parameter
+            if (page <= 0)
+            {
+                return BadRequest("Page number must be greater than zero.");
+            }
+
+            // Constants for pagination
+            const int pageSize = 100;
+            long startRow = (page - 1) * pageSize;
+            long endRow = startRow + pageSize;
+
+            // Perform the query with filtering and pagination
+            var cells = await _context.Cells
+                .AsNoTracking()
+                .Where(c => c.File == id && c.Row >= startRow && c.Row < endRow)
+                .OrderBy(c => c.Row)
+                .Select(c => new { c.Id, c.Row, c.File, c.Col, c.Data }) // Select only required columns
+                .ToListAsync();
+
+            return Ok(cells);
+        }
+
         // PUT: api/files/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]

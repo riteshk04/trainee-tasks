@@ -101,6 +101,7 @@ class Excel {
 
   API: ExcelAPIUrls;
   currentFile: number = -1;
+  currentPageY: number = 0;
 
   /**
    * Creates and initializes the App object
@@ -158,6 +159,19 @@ class Excel {
       this.busy = null;
       this.render_internal();
     });
+  }
+  paginate() {
+    fetch(
+      "http://localhost:5165/api/Cells/file/" +
+        this.currentFile +
+        "/" +
+        this.currentPageY
+    )
+      .then((response) => response.json())
+      .then((data: Cell[]) => {
+        this.fillData(data);
+        this.currentPageY++;
+      });
   }
   /**
    * Creates the markup and appends it to the given container/wrapper
@@ -359,9 +373,11 @@ class Excel {
 
         this.currentFile = jsonCell.file;
       });
-      this.selectionMode.selectedArea = [[this.canvas.data[0][0]]];
-      this.selectionMode.startSelectionCell =
-        this.selectionMode.selectedArea[0][0];
+      if (this.selectionMode.selectedArea.length == 0)
+        this.selectionMode.selectedArea = [[this.canvas.data[0][0]]];
+      if (!this.selectionMode.startSelectionCell)
+        this.selectionMode.startSelectionCell =
+          this.selectionMode.selectedArea[0][0];
       this.inputBox.element!.value = this.selectionMode.selectedArea[0][0].data;
       res(this.canvas.data);
     });
