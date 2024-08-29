@@ -1255,7 +1255,7 @@ class Excel {
       case "Delete":
         this.selectionMode.selectedArea.forEach((row) =>
           row.forEach((c) => {
-            this.API.deleteCell(c.id);
+            if (c.id !== -1) this.API.deleteCell(c.id);
             c.data = "";
           })
         );
@@ -1891,13 +1891,15 @@ class Excel {
         const data = col.data;
         if (this.clipboard.mode === "CUT") {
           col.data = "";
-          this.API.deleteCell(col.id);
+          if (col.id !== -1) this.API.deleteCell(col.id);
+          col.id = -1;
         }
         this.canvas.data[startCell.row + i][startCell.col + j].data = data;
-        this.API.createOrUpdateCell({
-          ...this.canvas.data[startCell.row + i][startCell.col + j],
-          data,
-        });
+        if (col.id !== -1)
+          this.API.createOrUpdateCell({
+            ...this.canvas.data[startCell.row + i][startCell.col + j],
+            data,
+          });
         newSelectionAreaRow.push(
           this.canvas.data[startCell.row + i][startCell.col + j]
         );

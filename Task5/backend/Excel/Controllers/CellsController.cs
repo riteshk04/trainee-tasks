@@ -41,9 +41,16 @@ namespace Excel.Controllers
             {
                 return BadRequest();
             }
-            if (cell.Id == -1 || !CellExists(id))
+            if (cell.Id == -1 && !CellExists(id))
             {
-                cell.Id = _context.Cells.Max(x => x.Id) + 1;
+                    cell.Id = _context.Cells.Max(x => x.Id) + 1;
+                // dynamic newCell = new
+                // {
+                //     File = cell.File,
+                //     Row = cell.Row,
+                //     Col = cell.Col,
+                //     Data = cell.Data
+                // };
                 _context.Cells.Add(cell);
                 _context.SaveChanges();
                 return Ok(JsonConvert.SerializeObject(cell));
