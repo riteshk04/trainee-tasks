@@ -57,6 +57,7 @@ type ExcelInputBox = {
   top: number;
   left: number;
   outMode: boolean;
+  prevValue: string;
 };
 type KeysPressed = {
   shift: boolean;
@@ -107,7 +108,6 @@ type FindReplaceState = {
 };
 
 type ExcelAPIUrls = {
-  updateCell: (data: Cell) => Promise<WorkbookStats>;
-  createCell: (data: Cell) => Promise<Cell>;
+  createOrUpdateCell: (data: Cell) => Promise<WorkbookStats>;
   deleteCell: (id: number) => Promise<WorkbookStats>;
 };

@@ -4,6 +4,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Diagnostics;
 using MySqlConnector;
+using System.Text.RegularExpressions;
 
 
 string _hostname = "localhost";
@@ -18,17 +19,19 @@ void RequestHandler(string message)
 {
     try
     {
-        Request request = JsonConvert.DeserializeObject<Request>(message);
+        Request? request = JsonConvert.DeserializeObject<Request>(message);
+        if (request == null) return;
         string type = request.Type;
         string objectType = request.ObjectType;
 
         if (objectType == "FILE")
         {
-            File file = JsonConvert.DeserializeObject<File>(request.Data);
+            File? file = JsonConvert.DeserializeObject<File>(request.Data);
             if (type == "POST")
             {
                 stopwatch.Start();
-                insertFileIntoDB(file);
+                if (file != null)
+                    insertFileIntoDB(file);
                 stopwatch.Stop();
                 Console.WriteLine($"Time taken: {stopwatch.Elapsed}s");
             }
@@ -51,19 +54,20 @@ void insertFileIntoDB(File file)
     int lastRowCount = file.StartRow - 1;
     int progress = file.Progress;
     int j = -1;
-    foreach (var row in file.Data.Split('\n'))
-    {
-        ++lastRowCount;
-        foreach (var col in row.Split(','))
+    if (file.Data != null)
+        foreach (var row in file.Data.Split('\n'))
         {
-            ++j;
-            queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + file.Id + "),");
+            ++lastRowCount;
+            foreach (var col in row.Split(','))
+            {
+                ++j;
+                queryBuilder.Append("(" + lastRowCount + ", " + j + ", '" + secureData(col) + "', " + file.Id + "),");
+            }
+            j = -1;
         }
-        j = -1;
-    }
     string query = queryBuilder.ToString().Remove(queryBuilder.Length - 1);
 
-    insertAsync(query, file.Id, progress);
+    _ = insertAsync(query, file.Id, progress);
 }
 
 async Task insertAsync(string query, int fileId, int progress)
@@ -76,21 +80,21 @@ async Task insertAsync(string query, int fileId, int progress)
     // await updateProgressAsync(fileId, progress);
 }
 
-async Task updateProgressAsync(int fileId, int progress)
-{
-    try
-    {
-        using var sconnection = new MySqlConnection(_connectionString);
-        await sconnection.OpenAsync();
-        using var ecommand2 = new MySqlCommand($"UPDATE files SET progress = (progress + {progress}) WHERE id = {fileId}", sconnection);
-        await ecommand2.ExecuteNonQueryAsync();
-        sconnection.Close();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex.Message);
-    }
-}
+// async Task updateProgressAsync(int fileId, int progress)
+// {
+//     try
+//     {
+//         using var sconnection = new MySqlConnection(_connectionString);
+//         await sconnection.OpenAsync();
+//         using var ecommand2 = new MySqlCommand($"UPDATE files SET progress = (progress + {progress}) WHERE id = {fileId}", sconnection);
+//         await ecommand2.ExecuteNonQueryAsync();
+//         sconnection.Close();
+//     }
+//     catch (Exception ex)
+//     {
+//         Console.WriteLine(ex.Message);
+//     }
+// }
 
 string secureData(string data)
 {

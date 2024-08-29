@@ -37,6 +37,7 @@ class Excel {
     left: 0,
     top: 0,
     outMode: false,
+    prevValue: "",
   };
   canvas: Canvas = {
     ctx: null,
@@ -633,37 +634,39 @@ class Excel {
    * @param event Mousedown event
    */
   canvasMouseDownHandler(event: MouseEvent) {
-    // if (this.activeFunctions.copy) {
-    //   this.activeFunctions.copy = false;
-    // }
     const prevCell = this.selectionMode.startSelectionCell!;
     const prevValue = this.inputBox.element!.value;
     const { cell } = this.getCell(event);
 
     if (prevCell.id === -1) {
       if (this.inputBox.element!.value !== "") {
-        this.API.createCell({
+        this.API.createOrUpdateCell({
           ...prevCell,
           data: this.inputBox.element!.value,
-        }).then(() => {
+        }).then((data) => {
           this.canvas.data[prevCell.row][prevCell.col] = {
             ...this.canvas.data[prevCell.row][prevCell.col],
-            data: prevValue,
+            ...data,
           };
         });
       }
     } else {
-      this.API.updateCell({
-        ...prevCell,
-        data: this.inputBox.element!.value,
-      }).then(() => {
-        this.canvas.data[prevCell.row][prevCell.col].data = prevValue;
-      });
+      if (this.inputBox.element!.value.trim().length === 0) {
+        this.API.deleteCell(prevCell.id).then(() => {
+          this.canvas.data[prevCell.row][prevCell.col].data = prevValue;
+        });
+      } else {
+        this.API.createOrUpdateCell({
+          ...prevCell,
+          data: this.inputBox.element!.value,
+        }).then(() => {
+          this.canvas.data[prevCell.row][prevCell.col].data = prevValue;
+        });
+      }
     }
     this.selectionMode.startSelectionCell = cell;
     this.selectionMode.active = true;
     this.header.selected_cells = -1;
-    this.inputBox.element!.value = cell.data;
     this.render();
   }
   /**
@@ -1251,7 +1254,10 @@ class Excel {
         break;
       case "Delete":
         this.selectionMode.selectedArea.forEach((row) =>
-          row.forEach((c) => (c.data = ""))
+          row.forEach((c) => {
+            this.API.deleteCell(c.id);
+            c.data = "";
+          })
         );
         break;
       case "Backspace":
@@ -1270,9 +1276,9 @@ class Excel {
         return;
     }
     if (!this.keys.ctrl && this.selectionMode.selectedArea.length > 1) {
-      this.selectionMode.selectedArea.forEach((row) =>
-        row.forEach((c) => this.drawDataCell(c))
-      );
+      // this.selectionMode.selectedArea.forEach((row) =>
+      //   row.forEach((c) => this.drawDataCell(c))
+      // );
     }
     this.render();
   }
@@ -1417,11 +1423,13 @@ class Excel {
    * @returns void
    */
   positionInputBox(): void {
-    const { top, left } = this.selectionMode.selectedArea[0][0];
+    const { top, left, data } = this.selectionMode.selectedArea[0][0];
     this.inputBox.top = top - this.mouse.animatey;
     this.inputBox.left = left - this.mouse.animatex;
     this.inputBox.element!.style.top = `${this.inputBox.top}px`;
     this.inputBox.element!.style.left = `${this.inputBox.left}px`;
+    this.inputBox.element!.setAttribute("data-value", data);
+    this.inputBox.element!.value = data;
   }
 
   /**
@@ -1883,8 +1891,13 @@ class Excel {
         const data = col.data;
         if (this.clipboard.mode === "CUT") {
           col.data = "";
+          this.API.deleteCell(col.id);
         }
         this.canvas.data[startCell.row + i][startCell.col + j].data = data;
+        this.API.createOrUpdateCell({
+          ...this.canvas.data[startCell.row + i][startCell.col + j],
+          data,
+        });
         newSelectionAreaRow.push(
           this.canvas.data[startCell.row + i][startCell.col + j]
         );
@@ -1963,30 +1976,17 @@ class Excel {
 
   getExcelAPIUrls(host: string) {
     return {
-      updateCell: (data: Cell) =>
+      createOrUpdateCell: (data: Cell) =>
         fetch(host + data.id, {
           method: "PUT",
           body: JSON.stringify({
             ...data,
-            row: data.row + 1,
-            col: data.col + 1,
           }),
           headers: {
             "Content-Type": "application/json",
             "Response-Type": "application/json",
           },
         }).then((response) => response.json()),
-      createCell: async (data: Cell) => {
-        const response = await fetch(host, {
-          method: "POST",
-          body: JSON.stringify(data),
-          headers: {
-            "Content-Type": "application/json",
-            "Response-Type": "application/json",
-          },
-        });
-        return await response.json();
-      },
       deleteCell: async (id: number) => {
         const response = await fetch(host + id, {
           method: "DELETE",

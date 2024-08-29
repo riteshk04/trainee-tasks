@@ -41,9 +41,12 @@ namespace Excel.Controllers
             {
                 return BadRequest();
             }
-            if (!CellExists(id))
+            if (cell.Id == -1 || !CellExists(id))
             {
-                return NotFound();
+                cell.Id = _context.Cells.Max(x => x.Id) + 1;
+                _context.Cells.Add(cell);
+                _context.SaveChanges();
+                return Ok(JsonConvert.SerializeObject(cell));
             }
 
             _context.Entry(cell).State = EntityState.Modified;
@@ -54,20 +57,20 @@ namespace Excel.Controllers
 
         // POST: api/files
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public ActionResult<ExcelApi.Models.Cell> PostCell(ExcelApi.Models.Cell cell)
-        {
-            if (cell.Id == -1)
-            {
-                cell.Id = _context.Cells.Max(x => x.Id) + 1;
-                _context.Cells.Add(cell);
-                _context.SaveChanges();
-                return cell;
-            }
-            _context.Cells.Add(cell);
-            _context.SaveChanges();
-            return cell;
-        }
+        // [HttpPost]
+        // public ActionResult<ExcelApi.Models.Cell> PostCell(ExcelApi.Models.Cell cell)
+        // {
+        //     if (cell.Id == -1)
+        //     {
+        //         cell.Id = _context.Cells.Max(x => x.Id) + 1;
+        //         _context.Cells.Add(cell);
+        //         _context.SaveChanges();
+        //         return cell;
+        //     }
+        //     _context.Cells.Add(cell);
+        //     _context.SaveChanges();
+        //     return cell;
+        // }
 
         // DELETE: api/files/5
         [HttpDelete("{id}")]
