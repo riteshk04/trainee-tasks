@@ -1395,7 +1395,7 @@ class Excel {
     const { x, y } = this.getCoordinates(event);
 
     for (
-      let i = !global ? Math.max(this.canvas.startCell!.row - 1, 0) : 0;
+      let i = !global ? this.canvas.startCell!.row : 0;
       i < this.canvas.data.length;
       i++
     ) {
@@ -1406,7 +1406,9 @@ class Excel {
         j++
       ) {
         const cell = row[j];
+
         if (
+          cell &&
           cell.left < x &&
           x <= cell.left + cell.width &&
           cell.top < y &&
@@ -1889,17 +1891,16 @@ class Excel {
       for (let j = 0; j < row.length; j++) {
         const col = row[j];
         const data = col.data;
+        this.canvas.data[startCell.row + i][startCell.col + j].data = data;
+        this.API.createOrUpdateCell({
+          ...this.canvas.data[startCell.row + i][startCell.col + j],
+          data,
+        });
         if (this.clipboard.mode === "CUT") {
           col.data = "";
           if (col.id !== -1) this.API.deleteCell(col.id);
           col.id = -1;
         }
-        this.canvas.data[startCell.row + i][startCell.col + j].data = data;
-        if (col.id !== -1)
-          this.API.createOrUpdateCell({
-            ...this.canvas.data[startCell.row + i][startCell.col + j],
-            data,
-          });
         newSelectionAreaRow.push(
           this.canvas.data[startCell.row + i][startCell.col + j]
         );
@@ -1990,15 +1991,16 @@ class Excel {
           },
         }).then((response) => response.json()),
       deleteCell: async (id: number) => {
-        const response = await fetch(host + id, {
+        await fetch(host + id, {
           method: "DELETE",
         });
-        return await response.json();
       },
     };
   }
 
   fetchData() {
+    this.selectionMode.startSelectionCell = this.canvas.data[0][0];
+    this.selectionMode.selectedArea = [[this.canvas.data[0][0]]];
     if (this.currentFile) {
       fetch("http://localhost:5165/api/Cells/file/" + this.currentFile)
         .then((response) => response.json())

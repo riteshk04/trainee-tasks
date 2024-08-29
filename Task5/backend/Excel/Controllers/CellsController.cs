@@ -39,27 +39,37 @@ namespace Excel.Controllers
         {
             if (id != cell.Id)
             {
-                return BadRequest();
+                return BadRequest("ID mismatch");
             }
-            if (cell.Id == -1 && !CellExists(id))
+
+            var existingCell = await _context.Cells.FindAsync(id);
+            // if (existingCell == null)
+            // {
+            //     return NotFound("Cell not found");
+            // }
+
+            if (cell.Id == -1 || existingCell == null)
             {
-                    cell.Id = _context.Cells.Max(x => x.Id) + 1;
-                // dynamic newCell = new
-                // {
-                //     File = cell.File,
-                //     Row = cell.Row,
-                //     Col = cell.Col,
-                //     Data = cell.Data
-                // };
+                // Handle the case where a new cell should be added
+                cell.Id = 0; // Assuming 0 will be overwritten by the auto-increment field
                 _context.Cells.Add(cell);
-                _context.SaveChanges();
-                return Ok(JsonConvert.SerializeObject(cell));
+            }
+            else
+            {
+                // Update the existing cell
+                _context.Entry(existingCell).CurrentValues.SetValues(cell);
             }
 
-            _context.Entry(cell).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return Ok(JsonConvert.SerializeObject(cell));
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(cell);
+            }
+            catch (DbUpdateException ex)
+            {
+                // Handle the exception, log the error, etc.
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while saving the cell");
+            }
         }
 
         // POST: api/files
