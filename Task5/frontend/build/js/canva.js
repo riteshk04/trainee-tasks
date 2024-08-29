@@ -1152,9 +1152,9 @@ class Excel {
      */
     getCell(event, global = false) {
         const { x, y } = this.getCoordinates(event);
-        for (let i = !global ? this.canvas.startCell.row : 0; i < this.canvas.data.length; i++) {
+        for (let i = !global ? Math.max(this.canvas.startCell.row - 1, 0) : 0; i < this.canvas.data.length; i++) {
             const row = this.canvas.data[i];
-            for (let j = !global ? this.canvas.startCell.col : 0; j < row.length; j++) {
+            for (let j = !global ? Math.max(this.canvas.startCell.col - 1, 0) : 0; j < row.length; j++) {
                 const cell = row[j];
                 if (cell.left < x &&
                     x <= cell.left + cell.width &&
