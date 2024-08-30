@@ -32,29 +32,34 @@ namespace Excel.Controllers
             return cell;
         }
 
-        [HttpGet("file/{id}/{page}")]
-        public async Task<ActionResult<IEnumerable<ExcelApi.Models.Cell>>> GetCells(long id, long page)
+        [HttpGet("file/{id}/{pageX}/{pageY}")]
+        public async Task<ActionResult<IEnumerable<ExcelApi.Models.Cell>>> GetCells(long id, long pageX, long pageY)
         {
             // Validate page parameter
-            if (page <= 0)
+            if (pageX < 0 && pageY < 0)
             {
-                return BadRequest("Page number must be greater than zero.");
+                return BadRequest("Page number must be positive.");
             }
 
             // Constants for pagination
             const int pageSize = 100;
-            long startRow = (page - 1) * pageSize;
-            long endRow = startRow + pageSize;
+            long startRowX = pageX * pageSize;
+            long endRowX = startRowX + pageSize;
 
-            // Perform the query with filtering and pagination
+            long startRowY = pageY * pageSize;
+            long endRowY = startRowY + pageSize;
+            Console.WriteLine($"startRowX: {startRowX}, endRowX: {endRowX}, startRowY: {startRowY}, endRowY: {endRowY}");
+
             var cells = await _context.Cells
                 .AsNoTracking()
-                .Where(c => c.File == id && c.Row >= startRow && c.Row < endRow)
+                .Where(c => c.Row >= startRowY && c.Row <= endRowY)
+                // .Where(c => c.Col >= startRowX && c.Col <= endRowX)
+                .Where(c => c.File == id)
                 .OrderBy(c => c.Row)
-                .Select(c => new { c.Id, c.Row, c.File, c.Col, c.Data }) // Select only required columns
                 .ToListAsync();
-
+            Console.WriteLine(cells.Count);
             return Ok(cells);
+
         }
 
         // PUT: api/files/5

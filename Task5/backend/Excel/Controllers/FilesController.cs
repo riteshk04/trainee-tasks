@@ -76,7 +76,7 @@ namespace Excel.Controllers
             dataFile.Id = lastInsertedId;
 
             string csv = dataFile.Data.Trim();
-            int chunkSize = 10000;
+            int chunkSize = 10;
             var chunks = csv.Split("\n")
                 .Select((item, index) => new { Item = item, Index = index })
                 .GroupBy(x => x.Index / chunkSize)
@@ -84,13 +84,14 @@ namespace Excel.Controllers
                 .ToList();
             int progress = (100 / chunks.Count) + 1;
             Console.WriteLine(progress);
+            dataFile.StartRow = 0;
 
             foreach (var chunk in chunks)
             {
                 dataFile.Progress = progress;
                 dataFile.Data = string.Join("\n", chunk);
                 rmqService.SendMessage(ProducerRequest("POST", JsonConvert.SerializeObject(dataFile)));
-                dataFile.StartRow += chunk.Count + 1;
+                dataFile.StartRow += chunk.Count;
             }
             file.Progress = 0;
             return file;

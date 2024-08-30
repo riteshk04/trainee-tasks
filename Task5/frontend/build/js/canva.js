@@ -95,6 +95,7 @@ class Excel {
         };
         this.currentFile = -1;
         this.currentPageY = 0;
+        this.currentPageX = 1;
         this.wrapper = container;
         this.jsonData = [];
         this.currentFile = parseInt(fileId);
@@ -107,11 +108,13 @@ class Excel {
      */
     init() {
         this.createMarkup();
-        this.extendCells(100, "X");
-        this.extendCells(100, "Y");
-        this.extendHeader(100);
-        this.extendSidebar(100);
-        this.fetchData();
+        this.extendCells(110, "X");
+        this.extendCells(110, "Y");
+        this.extendHeader(200);
+        this.extendSidebar(200);
+        this.setActiveCells();
+        this.paginate("horizontal");
+        this.paginate("vertical");
         this.attachEvents();
         this.smoothUpdate();
         this.drawHeader();
@@ -144,16 +147,26 @@ class Excel {
             this.render_internal();
         });
     }
-    paginate() {
+    paginate(direction) {
         fetch("http://localhost:5165/api/Cells/file/" +
             this.currentFile +
+            "/" +
+            this.currentPageX +
             "/" +
             this.currentPageY)
             .then((response) => response.json())
             .then((data) => {
             this.fillData(data);
-            this.currentPageY++;
+            if ([data[0]].some(c => c.row === 0 && c.col === 0)) {
+                this.setActiveCells();
+            }
+            direction === "horizontal" && this.currentPageX++;
+            direction === "vertical" && this.currentPageY++;
         });
+    }
+    setActiveCells() {
+        this.selectionMode.startSelectionCell = this.canvas.data[0][0];
+        this.selectionMode.selectedArea = [[this.canvas.data[0][0]]];
     }
     /**
      * Creates the markup and appends it to the given container/wrapper
@@ -417,14 +430,23 @@ class Excel {
         }
         if (Math.abs(finalRow - this.canvas.data.length) < 50) {
             this.extendCells(100, "Y");
+            this.paginate("vertical");
         }
         if (Math.abs(initialCol - this.canvas.data[0].length) < 50) {
             this.extendCells(100, "X");
+            this.paginate("horizontal");
         }
         this.clearData();
         for (let i = Math.max(initialRow - this.extracells, 0); i < Math.min(finalRow + this.extracells, this.canvas.data.length); i++) {
             for (let j = Math.max(initialCol - this.extracells, 0); j < Math.min(finalCol + this.extracells, this.canvas.data[0].length); j++) {
-                this.drawDataCell(this.canvas.data[i][j]);
+                try {
+                    this.drawDataCell(this.canvas.data[i][j]);
+                }
+                catch (e) {
+                    console.log(this.canvas.data[i][j], i, j);
+                    console.log(this.canvas.data[i]);
+                    break;
+                }
             }
         }
         this.header.startCell = this.header.data[0][initialCol];
@@ -1645,8 +1667,6 @@ class Excel {
         };
     }
     fetchData() {
-        this.selectionMode.startSelectionCell = this.canvas.data[0][0];
-        this.selectionMode.selectedArea = [[this.canvas.data[0][0]]];
         if (this.currentFile) {
             fetch("http://localhost:5165/api/Cells/file/" + this.currentFile)
                 .then((response) => response.json())
