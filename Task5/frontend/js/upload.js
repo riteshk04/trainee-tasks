@@ -29,9 +29,9 @@ const fileCardMarkup = ({ id, name, size, modified, uploaded }) => {
             </div>
         </div>
         <img src="./images/fileicon.png" alt="">
-        <div class="card-content">
+        <div class="card-content open-btn" data-id="${id}">
             <div class="card-title">${name}</div>
-            <div class="text-muted">Size: ${size / 1024}KB</div>
+            <div class="text-muted">Size: ${Math.floor(size*10 / 1024)/10}KB</div>
             <div class="dates">
                 <div class="date-uploaded">Uploaded: ${new Date(uploaded)
                   .toString()

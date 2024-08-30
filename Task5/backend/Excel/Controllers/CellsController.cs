@@ -95,7 +95,7 @@ namespace Excel.Controllers
                 await _context.SaveChangesAsync();
                 return Ok(cell);
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 // Handle the exception, log the error, etc.
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while saving the cell");
