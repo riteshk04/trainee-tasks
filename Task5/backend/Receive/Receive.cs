@@ -4,16 +4,18 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Diagnostics;
 using MySqlConnector;
-using System.Text.RegularExpressions;
-
+using MongoDB.Driver;
+using MongoDB.Bson;
 
 string _hostname = "localhost";
 string _queueName = "excel_broker";
 string _connectionString = "server=localhost;user=root;password=root;database=excel";
+string _mongoConnectionString = "mongodb://127.0.0.1:27017";
+
 IModel _channel;
 IConnection _rabbitConnection;
 Stopwatch stopwatch;
-
+IMongoCollection<BsonDocument> collection;
 
 void RequestHandler(string message)
 {
@@ -23,6 +25,7 @@ void RequestHandler(string message)
         if (request == null) return;
         string type = request.Type;
         string objectType = request.ObjectType;
+        int order = request.Order;
 
         if (objectType == "FILE")
         {
@@ -30,8 +33,7 @@ void RequestHandler(string message)
             if (type == "POST")
             {
                 stopwatch.Start();
-                if (file != null)
-                    insertFileIntoDB(file);
+                insertFileIntoDB(file, order);
                 stopwatch.Stop();
                 Console.WriteLine($"Time taken: {stopwatch.Elapsed}s");
             }
@@ -47,7 +49,7 @@ void RequestHandler(string message)
     }
 }
 
-void insertFileIntoDB(File file)
+void insertFileIntoDB(File file, int order)
 {
     StringBuilder queryBuilder = new();
     queryBuilder.Append("INSERT INTO cells (`row`, col, data, file) VALUES ");
@@ -67,34 +69,61 @@ void insertFileIntoDB(File file)
         }
     string query = queryBuilder.ToString().Remove(queryBuilder.Length - 1);
 
-    _ = insertAsync(query, file.Id, progress);
+    try
+    {
+        _ = insertAsync(query, file, order, lastRowCount);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+    }
 }
 
-async Task insertAsync(string query, int fileId, int progress)
+async Task insertAsync(string query, File file, int order, int lastRowCount)
 {
     using var sconnection = new MySqlConnection(_connectionString);
     await sconnection.OpenAsync();
-    using var ecommand = new MySqlCommand(query, sconnection);
-    await ecommand.ExecuteNonQueryAsync();
+
+    using (var transaction = sconnection.BeginTransaction())
+    {
+        try
+        {
+            using (var ecommand = new MySqlCommand(query, sconnection, transaction))
+            {
+                ecommand.CommandTimeout = 600;
+                ecommand.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            Console.WriteLine($"Error during bulk insert: {ex.Message}");
+        }
+    }
+    Console.WriteLine("Here");
+    _ = insertLogMessage(file, order);
     sconnection.Close();
-    // await updateProgressAsync(fileId, progress);
 }
 
-// async Task updateProgressAsync(int fileId, int progress)
-// {
-//     try
-//     {
-//         using var sconnection = new MySqlConnection(_connectionString);
-//         await sconnection.OpenAsync();
-//         using var ecommand2 = new MySqlCommand($"UPDATE files SET progress = (progress + {progress}) WHERE id = {fileId}", sconnection);
-//         await ecommand2.ExecuteNonQueryAsync();
-//         sconnection.Close();
-//     }
-//     catch (Exception ex)
-//     {
-//         Console.WriteLine(ex.Message);
-//     }
-// }
+async Task insertLogMessage(File file, int order)
+{
+    try
+    {
+        var document = new BsonDocument
+    {
+        { "order", order },
+        { "file", file.Id },
+    };
+        await collection.InsertOneAsync(document);
+        Console.WriteLine("Inserted into DB" + order);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+    }
+}
 
 string secureData(string data)
 {
@@ -125,8 +154,20 @@ void listen()
 void main()
 {
     var factory = new ConnectionFactory { HostName = _hostname };
-    _rabbitConnection = factory.CreateConnection();
+    var _client = new MongoClient(_mongoConnectionString);
+    var db = _client.GetDatabase("excel");
 
+    var tables = db.ListCollectionNames().ToList();
+    if (!tables.Contains("logs"))
+    {
+        db.CreateCollection("logs");
+    }
+    collection = db.GetCollection<BsonDocument>("logs");
+
+    // // clear the collection
+    // collection.DeleteMany(new BsonDocument());
+
+    _rabbitConnection = factory.CreateConnection();
     _channel = _rabbitConnection.CreateModel();
     _channel.QueueDeclare(queue: _queueName,
                          durable: false,

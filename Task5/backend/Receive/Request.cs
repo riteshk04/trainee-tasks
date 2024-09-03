@@ -3,6 +3,7 @@ public class Request
     public string Type { get; set; } = string.Empty;
     public string ObjectType { get; set; } = string.Empty;
     public string Data { get; set; } = "";
+    public int Order { get; set; }
 }
 
 public class File
@@ -31,4 +32,11 @@ public class Cell
     public bool Italic { get; set; }
     public bool Underline { get; set; }
 
+}
+
+public class FileMongooo{
+
+    public long Id { get; set; }
+
+    public int Progress { get; set; }
 }

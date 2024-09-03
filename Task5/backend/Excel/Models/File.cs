@@ -5,7 +5,7 @@ namespace ExcelApi.Models
         public long Id { get; set; }
         public required string Name { get; set; }
         public required string Extension { get; set; }
-        public int Progress { get; set; }
+        public int ChuncksCount { get; set; }
         public long Size { get; set; }
         public DateTime? Uploaded { get; set; }
         public DateTime? Modified { get; set; }
