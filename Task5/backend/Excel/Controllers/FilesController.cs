@@ -16,8 +16,8 @@ namespace Excel.Controllers
         private readonly RabbitMQService rmqService = new();
         private static string _mongoConnectionString = "mongodb://127.0.0.1:27017";
 
-        static MongoDBService mongoDBService = new(_mongoConnectionString);
-        IMongoCollection<BsonDocument> collection = mongoDBService.collection;
+        static readonly MongoDBService mongoDBService = new(_mongoConnectionString);
+        readonly IMongoCollection<BsonDocument> collection = mongoDBService.collection;
 
         // GET: api/files
         [HttpGet]
@@ -106,13 +106,11 @@ namespace Excel.Controllers
         }
 
         // api to check if the file is uploaded
-        [HttpGet("{id}/{count}/status")]
-        public ActionResult<float> FileStatus(long id, int count)
+        [HttpGet("{id}/status")]
+        public ActionResult<float> FileStatus(long id)
         {
             var filter = Builders<BsonDocument>.Filter.Eq("file", id);
             var result = collection.Find(filter).ToList();
-            Console.WriteLine(result.Count);
-            
             return result.Count;
         }
 

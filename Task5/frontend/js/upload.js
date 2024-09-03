@@ -8,7 +8,7 @@ const fileUploadMarkup = (id, name, size, progress) => {
         <div class="content">
             <i class="fa fa-close"></i>
             <div class="title">${name}</div>
-            <div class="size">${size / 1000}KB</div>
+            <div class="size">${Math.round((size * 10) / 1024) / 10}KB</div>
             <div class="progress-bar">
                 <div class="progress" style="width: ${progress}%"></div>
             </div>
@@ -31,7 +31,9 @@ const fileCardMarkup = ({ id, name, size, modified, uploaded }) => {
         <img src="./images/fileicon.png" alt="">
         <div class="card-content open-btn" data-id="${id}">
             <div class="card-title">${name}</div>
-            <div class="text-muted">Size: ${Math.floor(size*10 / 1024)/10}KB</div>
+            <div class="text-muted">Size: ${
+              Math.floor((size * 10) / 1024) / 10
+            }KB</div>
             <div class="dates">
                 <div class="date-uploaded">Uploaded: ${new Date(uploaded)
                   .toString()
@@ -65,11 +67,23 @@ function fileListRefresher() {
     $(".files-empty").show();
   }
 
-  $(".file-uploads").html(
-    uploadedFiles
-      .filter((f) => f.progress < 100)
-      .map((f, i) => fileUploadMarkup(i, f.name, f.size, 100))
-  );
+  const filesMarkup = [];
+  const updateFileProgress = async (f) => {
+    const response = await fetch(FILEUPLOAD_API_URL + "/" + f.id + "/status");
+    response.json().then((chunkCount) => {
+      uploadedFiles[uploadedFiles.indexOf(f)].progress =
+        (chunkCount * 100) / f.chunkCount;
+      filesMarkup.push(fileUploadMarkup(f.id, f.name, f.size, f.progress));
+      if(f.progress < 100){
+        updateFileProgress(f);
+      }
+    });
+  };
+
+  Promise.all(uploadedFiles.map(updateFileProgress)).then(() => {
+    $(".file-uploads").html(filesMarkup.join(""));
+  });
+  console.log(uploadedFiles);
 
   $(".file-card .delete-btn").click(function () {
     let id = parseInt($(this).attr("data-id"));
@@ -92,7 +106,6 @@ function fileListRefresher() {
 }
 
 $(function () {
-  const fileRefresherInterval = null;
   $(".upload-csv-btn").click(function () {
     $(".dialogue-wrapper").toggleClass("hidden");
   });
